@@ -59,6 +59,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static final Logger log = Logger.getLogger(RunBerlinNoInnerCarTripsScenario.class);
 
 	public static void main(String[] args) {
+		if(args.length == 0){
+			args = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-10pct.config.test.xml"};
+		}
 		Config config = prepareConfig(args);
 		Scenario scenario = prepareScenario(config);
 		Controler controler = prepareControler(scenario);
@@ -98,24 +101,26 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		double totalOldWeightModeChoiceStrategies = 0;
 		for (StrategyConfigGroup.StrategySettings strategySetting : strategySettings) {
-			switch (strategySetting.getStrategyName()){
-				case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode :
-				case DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice:
-				case DefaultPlanStrategiesModule.DefaultStrategy.ChangeTripMode:
-				case DefaultPlanStrategiesModule.DefaultStrategy.ChangeLegMode:
-				case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleLegMode:
-				case DefaultPlanStrategiesModule.DefaultStrategy.TripSubtourModeChoice:
-					totalOldWeightModeChoiceStrategies += strategySetting.getWeight();
-					strategySetting.setWeight(0);
-					break;
-				case DefaultPlanStrategiesModule.DefaultStrategy.ReRoute:
-				case DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator_ReRoute:
-					rerouteSettings.add(strategySetting);
-				case DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta:
-					selector = strategySetting;
-					break;
-				default:
-					break;
+			if(strategySetting.getSubpopulation().equals("person")){
+				switch (strategySetting.getStrategyName()){
+					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode :
+					case DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice:
+					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeTripMode:
+					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeLegMode:
+					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleLegMode:
+					case DefaultPlanStrategiesModule.DefaultStrategy.TripSubtourModeChoice:
+						totalOldWeightModeChoiceStrategies += strategySetting.getWeight();
+						strategySetting.setWeight(0);
+						break;
+					case DefaultPlanStrategiesModule.DefaultStrategy.ReRoute:
+					case DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator_ReRoute:
+						rerouteSettings.add(strategySetting);
+					case DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta:
+						selector = strategySetting;
+						break;
+					default:
+						break;
+				}
 			}
 		}
 
@@ -145,8 +150,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 					.build());
 		}
 
-		Preconditions.checkArgument(drtConfigGroup.getDrtSpeedUpParams().isPresent(),
-				"you are using drt-speed-up. this scenario setup is meant for experiments without route choice, so basically, drt-speed-up should not be necessary.");
+		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
+				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
 		Preconditions.checkArgument(drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased),
 				"this scenario currently only works with serviceArea based drt configuration.");
 
@@ -159,7 +164,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			log.info("you are not using " + DrtFareParams.SET_NAME + "params.");
 		} else {
 			DrtFareParams fares = drtConfigGroup.getDrtFareParams().get();
-			log.warn("you are using " + DrtFareParams.SET_NAME + "params. " +
+			log.warn("you are using " + DrtFareParams.SET_NAME + " params. " +
 					"These will now be overridden, resulting in 0 fares. This is because this scenario is not meant to work with mode choice.\n" +
 					"In order to obtain clean score statistics, fares are neglected here and need to be computed as a post process.");
 			fares.setBaseFare(0);

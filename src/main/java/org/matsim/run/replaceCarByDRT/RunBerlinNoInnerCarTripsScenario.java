@@ -152,11 +152,17 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
 				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
-		Preconditions.checkArgument(drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased),
-				"this scenario currently only works with serviceArea based drt configuration.");
+
+		if(! drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)){
+			log.warn("you are not using service area based operational scheme for drt! Howver, this scenario currently reads the drt service area shp file specified in " + drtConfigGroup +
+					" for specifying the area where to ban car and ride from. Make sure that your stop network fit that area, otherwise you will most probably get unintented results!!");
+		}
+		Preconditions.checkNotNull(drtConfigGroup.getDrtServiceAreaShapeFile(),
+				"this scenario currently only works with a specified serviceArea for drt! Even if you assume a different operational scheme, the shp file is needed for banning cars and ride from" +
+						"the corresponding zone! Please provide a shape file and make sure that your stop network fits that area!");
 
 		if(! drtConfigGroup.isUseModeFilteredSubnetwork()){
-			log.warn("setting drtConfigGroup.isUseModeFilteredSubnetwork() to true...");
+			log.warn("setting drtConfigGroup.isUseModeFilteredSubnetwork() to true! Was false before......");
 			drtConfigGroup.setUseModeFilteredSubnetwork(true);
 		}
 

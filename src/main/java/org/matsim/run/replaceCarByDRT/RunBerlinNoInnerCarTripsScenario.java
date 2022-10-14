@@ -31,8 +31,10 @@ import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.run.BerlinExperimentalConfigGroup;
 import org.matsim.run.RunBerlinScenario;
@@ -60,10 +62,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	public static void main(String[] args) {
 		if(args.length == 0){
-			args = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-10pct.config.test.xml"};
+			args = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml"};
 		}
 		Config config = prepareConfig(args);
 		Scenario scenario = prepareScenario(config);
+
+		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
+
 		Controler controler = prepareControler(scenario);
 		controler.run();
 		RunBerlinScenario.runAnalysis(controler);
@@ -74,6 +79,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		disableModeChoiceAndDistributeStrategyWeights(config);
 
 		//TODO: adjust config (strategies, speedup,optDrt, drtFleet, etc.)
+
+		PlanCalcScoreConfigGroup.ActivityParams actParams = new PlanCalcScoreConfigGroup.ActivityParams(ReplaceCarByDRT.PR_ACTIVITY_TYPE);
+		actParams.setScoringThisActivityAtAll(false);
+		config.planCalcScore().addActivityParams(actParams);
 
 		//for the time being, assume one drt mode only
 		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
@@ -185,14 +194,25 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
 		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
 
-		//replace all inner car and ride trips within the drt service area by drt legs
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
-		ReplaceCarByDRT.replaceInnerTripsOfModesInAreaByMode(scenario,
+
+		//replace all inner car and ride trips within the drt service area by drt legs
+//		ReplaceCarByDRT.replaceInnerTripsOfModesInAreaByMode(scenario,
+//				Set.of(TransportMode.car, TransportMode.ride),
+//				drtCfg.getMode(),
+//				drtCfg.getDrtServiceAreaShapeFileURL(config.getContext()),
+//				mainModeIdentifier
+//				);
+
+		//replace all car+ride trips - cut broder-crossing trips in two parts assuming P+R stations
+		ReplaceCarByDRT.replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
 				drtCfg.getMode(),
 				drtCfg.getDrtServiceAreaShapeFileURL(config.getContext()),
-				mainModeIdentifier
-				);
+				Set.of(ReplaceCarByDRT.PR_SUEDKREUZ, ReplaceCarByDRT.PR_GESUNDBRUNNEN, ReplaceCarByDRT.PR_OSTKREUZ, ReplaceCarByDRT.PR_ZOB),
+				mainModeIdentifier,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity
+		);
 
 		return scenario;
 	}

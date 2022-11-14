@@ -21,6 +21,8 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -38,9 +40,11 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -95,23 +99,23 @@ class ReplaceCarByDRT {
 																				   Set<String> modesToBeReplaced,
 																				   String replacingMode,
 																				   URL url2CarFreeSingleGeomShapeFile,
-																				   Set<Id<Link>> borderLinkIds,
+																				   URL url2PRStations,
 																				   MainModeIdentifier mainModeIdentifier,
 																				   PRStationChoice prStationChoice){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
+		log.info("read input file for car ban area");
 		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
+
+		Set<Link> prStationLinks = readPRStationFileAndGetLinks(scenario, url2PRStations);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
 		MutableInt replacedTrips = new MutableInt();
 
-		Set<Link> borderLinks = scenario.getNetwork().getLinks().values().stream()
-				.filter(link -> borderLinkIds.contains(link.getId()))
-				.collect(Collectors.toSet());
 
 		StraightLineKnnFinder<Activity,Link> straightLineKnnFinder = new StraightLineKnnFinder<>(1, Activity::getCoord, l -> l.getToNode().getCoord());
 
@@ -178,7 +182,7 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							prStation =  straightLineKnnFinder.findNearest(act, borderLinks.stream())
+							prStation =  straightLineKnnFinder.findNearest(act, prStationLinks.stream())
 									.stream()
 									.findFirst()
 									.orElseThrow()
@@ -208,7 +212,7 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							prStation = straightLineKnnFinder.findNearest(act, borderLinks.stream())
+							prStation = straightLineKnnFinder.findNearest(act, prStationLinks.stream())
 									.stream()
 									.findFirst()
 									.orElseThrow()
@@ -234,6 +238,26 @@ class ReplaceCarByDRT {
 		}
 		log.info("nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");
+	}
+
+	private static Set<Link> readPRStationFileAndGetLinks(Scenario scenario, URL url2PRStations) {
+		log.info("read input file for P+R stations");
+		Set<Id<Link>> prStationLinkIds = new HashSet<>();
+		//assume tsv with a header and linkId in the last column
+		try {
+			CSVParser parser = CSVParser.parse(IOUtils.getBufferedReader(url2PRStations), CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader());
+			parser.getRecords().forEach(record -> {
+				Id<Link> linkId = Id.createLinkId(record.get(record.size() - 1));
+				log.info("adding the following link id as P+R station: " + linkId);
+				prStationLinkIds.add(linkId);
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Set<Link> prStationLinks = scenario.getNetwork().getLinks().values().stream()
+				.filter(link -> prStationLinkIds.contains(link.getId()))
+				.collect(Collectors.toSet());
+		return prStationLinks;
 	}
 
 	/**

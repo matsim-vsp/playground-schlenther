@@ -59,7 +59,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static final Logger log = Logger.getLogger(RunBerlinNoInnerCarTripsScenario.class);
 
-	private static URL URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
+	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
+	private static URL URL_2_PR_STATIONS;
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 
@@ -68,20 +69,20 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		String[] configArgs;
 		if ( args.length==0 ) {
 			//careful if you change this: you would probably want to adjust the drt service area as well!
-
-
 //			URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("D:/svn/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
-			URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
-			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.highway;
+			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
+			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
+			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/pr-stations.tsv");
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
 					"--config:controler.lastIteration", "0" ,
 					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-newNet"};
 		} else {
-			URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
+			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
-			configArgs = new String[args.length-2];
-			for(int i = 2; i < args.length; i++){
-				configArgs[i-2] = args[i];
+			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
+			configArgs = new String[args.length-3];
+			for(int i = 3; i < args.length; i++){
+				configArgs[i-3] = args[i];
 			}
 		}
 
@@ -217,16 +218,16 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		switch (ROAD_TYPES_CAR_ALLOWED) {
 			case nowhere:
 				break;
-			case highway:
-				roadTypesWithCarAllowed.add("highway");
+			case motorway:
+				roadTypesWithCarAllowed.add("motorway");
 				break;
-			case highwayAndPrimaryAndTrunk:
-				roadTypesWithCarAllowed.add("highway");
+			case motorwayAndPrimaryAndTrunk:
+				roadTypesWithCarAllowed.add("motorway");
 				roadTypesWithCarAllowed.add("primary");
 				roadTypesWithCarAllowed.add("trunk");
 				break;
 		}
-		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario, URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE ,roadTypesWithCarAllowed);
+		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario, URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,roadTypesWithCarAllowed);
 
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
 		//replace all inner car and ride trips within the drt service area by drt legs
@@ -241,8 +242,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		ReplaceCarByDRT.replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
 				drtCfg.getMode(),
-				URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
-				Set.of(ReplaceCarByDRT.PR_SUEDKREUZ, ReplaceCarByDRT.PR_GESUNDBRUNNEN, ReplaceCarByDRT.PR_OSTKREUZ, ReplaceCarByDRT.PR_ZOB),
+				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
+				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity
 		);
@@ -257,6 +258,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	}
 
 	private enum CarsAllowedOnRoadTypesInsideBanArea {
-		nowhere, highway, highwayAndPrimaryAndTrunk
+		nowhere, motorway, motorwayAndPrimaryAndTrunk
 	}
 }

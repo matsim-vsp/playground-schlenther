@@ -82,7 +82,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[2]);
+			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 			configArgs = new String[args.length-4];
 			for(int i = 4; i < args.length; i++){
 				configArgs[i-4] = args[i];

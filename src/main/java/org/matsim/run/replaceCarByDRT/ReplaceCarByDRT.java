@@ -29,9 +29,12 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.common.util.StraightLineKnnFinder;
+import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
@@ -183,8 +186,11 @@ class ReplaceCarByDRT {
 						}
 
 						lastCarPRStation = null;
+
+						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(replacingMode),
-								fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation),
+								parkAndRideAct,
 								fac.createLeg(mainMode));
 
 					} else if (tripType.equals(TripType.endingTrip)) {
@@ -210,8 +216,10 @@ class ReplaceCarByDRT {
 							if(mainMode.equals(TransportMode.car)) lastCarPRStation = prStation;
 						}
 
+						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(mainMode),
-									fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation),
+									parkAndRideAct,
 									fac.createLeg(replacingMode));
 					} else {
 						throw new IllegalArgumentException("unknown trip type: " + tripType);
@@ -282,6 +290,72 @@ class ReplaceCarByDRT {
 			throw new RuntimeException("should not happen");
 		}
 	}
+
+	/**
+	 *  1) modifies the allowedModes of all links within {@code carFreeGeoms} except for motorways such that they do not contain car neither ride.
+	 *  2) cleans the network
+	 *  3) deletes all car routes in the population, that touch the forbidden links
+	 *
+	 *
+	 * @param scenario
+	 * @param url2CarFreeSingleGeomShapeFile
+	 */
+	static final void banCarAndRideFromNetworkArea(Scenario scenario, URL url2CarFreeSingleGeomShapeFile, Set<String> excludedRoadTypes){
+		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
+
+		Set<Id<Link>> forbiddenLinks = scenario.getNetwork().getLinks().values().parallelStream()
+				.filter(l -> l.getAllowedModes().contains(TransportMode.car))
+				.filter(l -> {
+					String type = ((String) (l.getAttributes().getAttribute("type")));
+					return !(excludedRoadTypes.stream()
+							.filter(excludedType -> type.contains(excludedType))
+							.findAny()
+							.isPresent());}) // cars remain allowed on excludedRoadTypes
+				.filter(l -> ShpGeometryUtils.isCoordInPreparedGeometries(l.getToNode().getCoord(), carFreeGeoms))
+				.map(l -> l.getId())
+				.collect(Collectors.toSet());
+
+		forbiddenLinks.forEach(id -> {
+			Link l = scenario.getNetwork().getLinks().get(id);
+			Set<String> allowedModes = new HashSet<>(l.getAllowedModes());
+			allowedModes.remove(TransportMode.car);
+			allowedModes.remove(TransportMode.ride);
+			l.setAllowedModes(allowedModes);
+		});
+		log.info("clean car network");
+		cleanModalNetwork(scenario.getNetwork(),TransportMode.car);
+		log.info("clean ride network");
+		cleanModalNetwork(scenario.getNetwork(),TransportMode.ride);
+
+		deleteCarRoutesThatHaveForbiddenLinks(scenario.getPopulation(), forbiddenLinks);
+	}
+
+	private static void cleanModalNetwork(Network network, String mode) {
+		Set<String> modes = new HashSet<>();
+		modes.add(mode);
+		new MultimodalNetworkCleaner(network).run(modes);
+		log.info("finished");
+	}
+
+	private static void deleteCarRoutesThatHaveForbiddenLinks(Population population, Set<Id<Link>> forbiddenLinks) {
+		log.info("start deleting every car route that travels one or more links within car-free-zone");
+
+		population.getPersons().values().stream()
+				.forEach(person -> person.getPlans().stream().flatMap(plan ->
+						TripStructureUtils.getLegs(plan).stream())
+						.forEach(leg -> {
+							if(leg.getMode().equals(TransportMode.car)){
+								Route route = leg.getRoute();
+								boolean routeTouchesZone = (route instanceof NetworkRoute && ((NetworkRoute) route).getLinkIds().stream().filter(l -> forbiddenLinks.contains(l)).findAny().isPresent() );
+								if(routeTouchesZone || forbiddenLinks.contains(route.getStartLinkId()) || forbiddenLinks.contains(route.getEndLinkId()) ){
+									leg.setRoute(null);
+								}
+							}
+						}));
+
+		log.info(".... finished deleting every car route that travels one or more links within car-free-zone");
+	}
+
 
 	private enum TripType{
 		innerTrip, originatingTrip, endingTrip, outsideTrip

@@ -63,6 +63,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static URL URL_2_PR_STATIONS;
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
+	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -73,6 +74,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/pr-stations.tsv");
+			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
 					"--config:controler.lastIteration", "0" ,
 					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-newNet"};
@@ -80,9 +82,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-			configArgs = new String[args.length-3];
-			for(int i = 3; i < args.length; i++){
-				configArgs[i-3] = args[i];
+			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[2]);
+			configArgs = new String[args.length-4];
+			for(int i = 4; i < args.length; i++){
+				configArgs[i-4] = args[i];
 			}
 		}
 
@@ -245,7 +248,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
-				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity
+				PR_STATION_CHOICE
 		);
 
 		return scenario;

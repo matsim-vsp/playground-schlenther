@@ -73,11 +73,11 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //			URL2CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("D:/svn/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
-			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/pr-stations.tsv");
+			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-15-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
 					"--config:controler.lastIteration", "0" ,
-					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-newNet"};
+					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-actFromCoord-testOstkreuz"};
 		} else {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);

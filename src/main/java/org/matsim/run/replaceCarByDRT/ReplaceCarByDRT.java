@@ -191,7 +191,8 @@ class ReplaceCarByDRT {
 
 						lastCarPRStation = null;
 
-						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, scenario.getNetwork().getLinks().get(prStation).getToNode().getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(replacingMode),
 								parkAndRideAct,
@@ -220,7 +221,8 @@ class ReplaceCarByDRT {
 							if(mainMode.equals(TransportMode.car)) lastCarPRStation = prStation;
 						}
 
-						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, scenario.getNetwork().getLinks().get(prStation).getToNode().getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(mainMode),
 									parkAndRideAct,
@@ -240,6 +242,7 @@ class ReplaceCarByDRT {
 		log.info("finished modifying input plans....");
 	}
 
+	//TODO later we use coords (of the link to node), so rather retrieve coords here than links
 	private static Set<Link> readPRStationFileAndGetLinks(Scenario scenario, URL url2PRStations) {
 		log.info("read input file for P+R stations");
 		Set<Id<Link>> prStationLinkIds = new HashSet<>();

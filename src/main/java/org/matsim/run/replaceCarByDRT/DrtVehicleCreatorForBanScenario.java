@@ -89,7 +89,7 @@ public class DrtVehicleCreatorForBanScenario {
 		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-17-pr-stations.tsv");
 		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:31468");
 
-		float shareOfVehiclesAssignedToStations = 0.33f;
+		float shareOfVehiclesAssignedToStations = 0.5f;
 		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
 
 
@@ -101,23 +101,20 @@ public class DrtVehicleCreatorForBanScenario {
 		int seats = 8;
 
 		DrtVehicleCreatorForBanScenario vehicleCreator = new DrtVehicleCreatorForBanScenario(networkFile, drtServiceAreaShapeFile, ct);
-
-		List<DvrpVehicleSpecification> vehicles = new ArrayList<>();
-
 		Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(prStationsFileURL);
 
 		for (int numberOfVehicles: numbersOfVehicles) {
+			List<DvrpVehicleSpecification> vehicles = new ArrayList<>();
 			int vehPerStation = Math.round((numberOfVehicles * shareOfVehiclesAssignedToStations) / prStations.size());
 //			vehicleCreator.createVehiclesByWeightedDraw(numberOfVehicles, seats, vehiclesFilePrefix);
 			vehicleCreator.createVehiclesByRandomPointInShape(Math.round(numberOfVehicles * (1-shareOfVehiclesAssignedToStations)), seats, vehicles);
 			for (PRStation prStation : prStations) {
 				vehicleCreator.createVehiclesAtPRStation(prStation, vehPerStation, seats, vehicles);
 			}
+			//dump output
+			String fileNameBase = vehiclesFilePrefix + vehicles.size() + "vehicles-" + seats + "seats";
+			vehicleCreator.dumpOutput(vehicles, fileNameBase);
 		}
-
-		//dump output
-		String fileNameBase = vehiclesFilePrefix + vehicles.size() + "vehicles-" + seats + "seats";
-		vehicleCreator.dumpOutput(vehicles, fileNameBase);
 
 }
 

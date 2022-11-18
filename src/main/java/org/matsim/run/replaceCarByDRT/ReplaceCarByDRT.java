@@ -62,7 +62,14 @@ class ReplaceCarByDRT {
 	static final String PR_ACTIVITY_TYPE = "P+R";
 
 
-	//TODO think about using plan types
+	/**
+	 *
+	 * @param scenario
+	 * @param modesToBeReplaced
+	 * @param replacingMode
+	 * @param url2CarFreeSingleGeomShapeFile
+	 * @param mainModeIdentifier
+	 */
 	static void replaceInnerTripsOfModesInAreaByMode(Scenario scenario,
 													 Set<String> modesToBeReplaced,
 													 String replacingMode,
@@ -95,9 +102,20 @@ class ReplaceCarByDRT {
 		log.info("finished modifying input plans....");
 	}
 
+	/**
+	 * makes a copy of each plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
+	 * so if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 2 plans, one of type 'drt' and one of type 'pt'. That means, the original plan is thrown away.
+	 * @param scenario
+	 * @param modesToBeReplaced
+	 * @param replacingModes
+	 * @param url2CarFreeSingleGeomShapeFile
+	 * @param url2PRStations
+	 * @param mainModeIdentifier
+	 * @param prStationChoice
+	 */
 	static void replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(Scenario scenario,
 																				   Set<String> modesToBeReplaced,
-																				   String replacingMode,
+																				   Set<String> replacingModes,
 																				   URL url2CarFreeSingleGeomShapeFile,
 																				   URL url2PRStations,
 																				   MainModeIdentifier mainModeIdentifier,
@@ -109,8 +127,8 @@ class ReplaceCarByDRT {
 		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
-
-		Set<Coord> prStations = readPRStationFile(scenario, url2PRStations);
+		Preconditions.checkArgument(replacingModes.size() > 0);
+		Set<PRStation> prStations = readPRStationFile(url2PRStations);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
@@ -131,11 +149,21 @@ class ReplaceCarByDRT {
 			Boolean livesInProhibitionZone = ShpGeometryUtils.isCoordInPreparedGeometries(homeAct.getCoord(), carFreeGeoms) ? true : false;
 			PopulationUtils.putPersonAttribute(person, "livesInProhibitionZone", livesInProhibitionZone);
 
+
+			//original plan will be thrown away if agent crosses border with forbidden mode
+			Iterator<String> replacingModeIterator = replacingModes.iterator();
+			String replacingMode = replacingModeIterator.next();
+			Set<Plan> plansToAdd = new HashSet<>();
+
 			for (Plan plan : person.getPlans()) {
+
 
 				//will in fact put an attribute into the origin activity
 				List<TripStructureUtils.Trip> tripsToReplace = collectAndAttributeTripsToReplace(scenario, plan, mainModeIdentifier, modesToBeReplaced, carFreeGeoms);
-				if (tripsToReplace.isEmpty()) continue; //nothing to do; skip the plan
+				if (tripsToReplace.isEmpty()){
+					plan.setType("not-affected");
+					continue; //nothing to do; skip the plan
+				}
 
 				//for consistency checking
 				long nrOfBorderCrossingCarTrips = tripsToReplace.stream()
@@ -146,8 +174,11 @@ class ReplaceCarByDRT {
 						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
 						.count();
 				if(nrOfOutsideTrips == tripsToReplace.size()){
+					plan.setType("not-affected");
 					continue; //this agent is not affected by the prohibition zone.
 				}
+
+				plan.setType(replacingMode);
 
 				Coord firstPRStation = null;
 				//we use this as 'iteration variable'
@@ -182,7 +213,7 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							prStation =  straightLineKnnFinder.findNearest(act, prStations.stream())
+							prStation =  straightLineKnnFinder.findNearest(act, prStations.stream().map(station ->  station.coord))
 									.stream()
 									.findFirst()
 									.orElseThrow();
@@ -212,7 +243,7 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							prStation = straightLineKnnFinder.findNearest(act, prStations.stream())
+							prStation = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord))
 									.stream()
 									.findFirst()
 									.orElseThrow();
@@ -234,39 +265,51 @@ class ReplaceCarByDRT {
 					TripRouter.insertTrip(plan.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
 					replacedTrips.increment();
 				}
+
+				//for all other replacing modes, we want to apply the same logic. so we can basically copy the plan and just override the leg modes.
+				while (replacingModeIterator.hasNext()){
+					String otherReplacingMode = replacingModeIterator.next();
+					Plan planCopy = fac.createPlan();
+					planCopy.setPerson(person);
+					PopulationUtils.copyFromTo(plan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
+					planCopy.setType(otherReplacingMode);
+
+					//override leg modes
+					TripStructureUtils.getLegs(planCopy).stream()
+							.filter(leg -> leg.getMode().equals(replacingMode))
+							.forEach(leg -> leg.setMode(otherReplacingMode));
+					plansToAdd.add(planCopy);
+				}
+
 			}
+			//after we've iterated over existing plans, add all the plan copies
+			plansToAdd.forEach(plan -> person.addPlan(plan));
 		}
-		log.info("nr of trips replaced = " + replacedTrips);
+		log.info("overall nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");
 	}
 
 	/**
 	 *
-	 *
-	 * @param scenario
-	 * @param url2PRStations a .tsv input file with the following column structure (and a header row): name\tx\ty\tlinkId
+	 * @param url2PRStations a .tsv input file with the following columns (and a header row): 'name', 'x', 'y' and 'linkId'. The order should not matter.
 	 * @return
 	 */
-	static Set<Coord> readPRStationFile(Scenario scenario, URL url2PRStations) {
+	static Set<PRStation> readPRStationFile(URL url2PRStations) {
 		log.info("read input file for P+R stations");
-		Set<Coord> prStations = new HashSet<>();
+		Set<PRStation> prStations = new HashSet<>();
 		//assume tsv with a header and linkId in the last column
 		try {
 			CSVParser parser = CSVParser.parse(IOUtils.getBufferedReader(url2PRStations), CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader());
+			Map<String, Integer> headerMap = parser.getHeaderMap();
 			parser.getRecords().forEach(record -> {
-//				Id<Link> linkId = Id.createLinkId(record.get(record.size() - 1));
-//				log.info("adding the following link id as P+R station: " + linkId);
-//				prStations.add(linkId);
-				Coord coord = new Coord(Double.parseDouble(record.get(1)), Double.parseDouble(record.get(2)));
-				log.info("adding the following Coord as P+R station: " + coord);
-				prStations.add(coord);
+				String name = record.get(headerMap.get("name"));
+				Id<Link> linkId = Id.createLinkId(record.get(headerMap.get("linkId")));
+				Coord coord = new Coord(Double.parseDouble(record.get(headerMap.get("x"))), Double.parseDouble(record.get(headerMap.get("y"))));
+				prStations.add(new PRStation(name, linkId, coord));
 			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-//		Set<Link> prStationLinks = scenario.getNetwork().getLinks().values().stream()
-//				.filter(link -> prStations.contains(link.getId()))
-//				.collect(Collectors.toSet());
 		return prStations;
 	}
 
@@ -397,6 +440,20 @@ class ReplaceCarByDRT {
 
 	enum PRStationChoice{
 		closestToOutSideActivity, closestToInsideActivity
+	}
+
+}
+
+class PRStation {
+
+	String name;
+	Id<Link> linkId;
+	Coord coord;
+
+	PRStation(String name, Id<Link> linkId, Coord coord){
+		this.name = name;
+		this.linkId = linkId;
+		this.coord = coord;
 	}
 
 }

@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.contrib.drt.fare.DrtFareParams;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
@@ -58,6 +59,7 @@ import java.util.*;
 public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static final Logger log = Logger.getLogger(RunBerlinNoInnerCarTripsScenario.class);
+	private static Set<String> REPLACING_MODES;
 
 	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 	private static URL URL_2_PR_STATIONS;
@@ -75,9 +77,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-17-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
+			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
-					"--config:controler.lastIteration", "0" ,
-					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-actFromCoord-testNewBanArea"};
+					"--config:controler.lastIteration", "2" ,
+					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-actFromCoord-testPTPlans"};
 
 
 //			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-minus-500m-buffer.shp");
@@ -96,8 +99,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
-			configArgs = new String[args.length-4];
-			for(int i = 4; i < args.length; i++){
+			REPLACING_MODES = Set.of(args[4].split(","));
+			configArgs = new String[args.length-5];
+			for(int i = 5; i < args.length; i++){
 				configArgs[i-4] = args[i];
 			}
 		}
@@ -105,7 +109,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Config config = prepareConfig(configArgs);
 		Scenario scenario = prepareScenario(config);
 
-//		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
+		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
 
 		Controler controler = prepareControler(scenario);
 		controler.run();
@@ -256,15 +260,15 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //				);
 
 		//replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
+		Set<String> replacingModes = Set.of(drtCfg.getMode(), TransportMode.pt);
 		ReplaceCarByDRT.replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
-				drtCfg.getMode(),
+				replacingModes,
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE
 		);
-
 
 		return scenario;
 	}

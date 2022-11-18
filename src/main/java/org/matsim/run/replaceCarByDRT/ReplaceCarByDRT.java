@@ -110,14 +110,14 @@ class ReplaceCarByDRT {
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 
-		Set<Link> prStationLinks = readPRStationFileAndGetLinks(scenario, url2PRStations);
+		Set<Coord> prStations = readPRStationFile(scenario, url2PRStations);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
 		MutableInt replacedTrips = new MutableInt();
 
 
-		StraightLineKnnFinder<Activity,Link> straightLineKnnFinder = new StraightLineKnnFinder<>(1, Activity::getCoord, l -> l.getToNode().getCoord());
+		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(1, Activity::getCoord, c -> c);
 
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
@@ -149,9 +149,9 @@ class ReplaceCarByDRT {
 					continue; //this agent is not affected by the prohibition zone.
 				}
 
-				Id<Link> firstPRStation = null;
+				Coord firstPRStation = null;
 				//we use this as 'iteration variable'
-				Id<Link> lastCarPRStation = null;
+				Coord lastCarPRStation = null;
 
 				for (TripStructureUtils.Trip trip : tripsToReplace) {
 					TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
@@ -163,7 +163,7 @@ class ReplaceCarByDRT {
 					}
 
 					List<PlanElement> newTrip;
-					Id<Link> prStation = null;
+					Coord prStation = null;
 
 					if(tripType.equals(TripType.innerTrip)) {
 						newTrip = List.of(fac.createLeg(replacingMode));
@@ -182,17 +182,16 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							prStation =  straightLineKnnFinder.findNearest(act, prStationLinks.stream())
+							prStation =  straightLineKnnFinder.findNearest(act, prStations.stream())
 									.stream()
 									.findFirst()
-									.orElseThrow()
-									.getId();
+									.orElseThrow();
 						}
 
 						lastCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, scenario.getNetwork().getLinks().get(prStation).getToNode().getCoord());
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(replacingMode),
 								parkAndRideAct,
@@ -213,16 +212,15 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							prStation = straightLineKnnFinder.findNearest(act, prStationLinks.stream())
+							prStation = straightLineKnnFinder.findNearest(act, prStations.stream())
 									.stream()
 									.findFirst()
-									.orElseThrow()
-									.getId();
+									.orElseThrow();
 							if(mainMode.equals(TransportMode.car)) lastCarPRStation = prStation;
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, scenario.getNetwork().getLinks().get(prStation).getToNode().getCoord());
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = List.of(fac.createLeg(mainMode),
 									parkAndRideAct,
@@ -242,25 +240,34 @@ class ReplaceCarByDRT {
 		log.info("finished modifying input plans....");
 	}
 
-	//TODO later we use coords (of the link to node), so rather retrieve coords here than links
-	private static Set<Link> readPRStationFileAndGetLinks(Scenario scenario, URL url2PRStations) {
+	/**
+	 *
+	 *
+	 * @param scenario
+	 * @param url2PRStations a .tsv input file with the following column structure (and a header row): name\tx\ty\tlinkId
+	 * @return
+	 */
+	static Set<Coord> readPRStationFile(Scenario scenario, URL url2PRStations) {
 		log.info("read input file for P+R stations");
-		Set<Id<Link>> prStationLinkIds = new HashSet<>();
+		Set<Coord> prStations = new HashSet<>();
 		//assume tsv with a header and linkId in the last column
 		try {
 			CSVParser parser = CSVParser.parse(IOUtils.getBufferedReader(url2PRStations), CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader());
 			parser.getRecords().forEach(record -> {
-				Id<Link> linkId = Id.createLinkId(record.get(record.size() - 1));
-				log.info("adding the following link id as P+R station: " + linkId);
-				prStationLinkIds.add(linkId);
+//				Id<Link> linkId = Id.createLinkId(record.get(record.size() - 1));
+//				log.info("adding the following link id as P+R station: " + linkId);
+//				prStations.add(linkId);
+				Coord coord = new Coord(Double.parseDouble(record.get(1)), Double.parseDouble(record.get(2)));
+				log.info("adding the following Coord as P+R station: " + coord);
+				prStations.add(coord);
 			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		Set<Link> prStationLinks = scenario.getNetwork().getLinks().values().stream()
-				.filter(link -> prStationLinkIds.contains(link.getId()))
-				.collect(Collectors.toSet());
-		return prStationLinks;
+//		Set<Link> prStationLinks = scenario.getNetwork().getLinks().values().stream()
+//				.filter(link -> prStations.contains(link.getId()))
+//				.collect(Collectors.toSet());
+		return prStations;
 	}
 
 	/**

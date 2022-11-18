@@ -102,7 +102,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			REPLACING_MODES = Set.of(args[4].split(","));
 			configArgs = new String[args.length-5];
 			for(int i = 5; i < args.length; i++){
-				configArgs[i-4] = args[i];
+				configArgs[i-5] = args[i];
 			}
 		}
 

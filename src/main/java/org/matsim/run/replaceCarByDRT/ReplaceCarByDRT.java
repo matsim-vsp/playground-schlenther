@@ -224,9 +224,20 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						newTrip = List.of(fac.createLeg(replacingMode),
-								parkAndRideAct,
-								fac.createLeg(mainMode));
+
+						newTrip = new ArrayList<>();
+						Leg l1 = fac.createLeg(mainMode);
+						TripStructureUtils.setRoutingMode(l1, mainMode);
+						Leg l2 = fac.createLeg(replacingMode);
+						TripStructureUtils.setRoutingMode(l2, replacingMode);
+
+						newTrip.add(l2);
+						newTrip.add(parkAndRideAct);
+						newTrip.add(l1);
+
+//						newTrip = List.of(fac.createLeg(replacingMode),
+//								parkAndRideAct,
+//								fac.createLeg(mainMode));
 
 					} else if (tripType.equals(TripType.endingTrip)) {
 						if(mainMode.equals(TransportMode.car)){
@@ -253,9 +264,17 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						newTrip = List.of(fac.createLeg(mainMode),
-									parkAndRideAct,
-									fac.createLeg(replacingMode));
+						newTrip = new ArrayList<>();
+						Leg l1 = fac.createLeg(mainMode);
+						TripStructureUtils.setRoutingMode(l1, mainMode);
+						newTrip.add(l1);
+						newTrip.add(parkAndRideAct);
+						Leg l2 = fac.createLeg(replacingMode);
+						TripStructureUtils.setRoutingMode(l2, replacingMode);
+						newTrip.add(l2);
+//						newTrip = List.of(fac.createLeg(mainMode);,
+//									parkAndRideAct,
+//									fac.createLeg(replacingMode));
 					} else {
 						throw new IllegalArgumentException("unknown trip type: " + tripType);
 					}

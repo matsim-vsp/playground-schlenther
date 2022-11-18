@@ -260,10 +260,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //				);
 
 		//replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
-		Set<String> replacingModes = Set.of(drtCfg.getMode(), TransportMode.pt);
 		ReplaceCarByDRT.replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
-				replacingModes,
+				REPLACING_MODES,
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,

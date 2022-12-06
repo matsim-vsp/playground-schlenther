@@ -89,7 +89,7 @@ public class DrtVehicleCreatorForBanScenario {
 		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-17-pr-stations.tsv");
 		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:31468");
 
-		float shareOfVehiclesAssignedToStations = 0.5f;
+		float shareOfVehiclesAssignedToStations = 0.33f;
 		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
 
 
@@ -235,7 +235,7 @@ public class DrtVehicleCreatorForBanScenario {
 					.startLinkId(link.getId())
 					.capacity(seats)
 					.serviceBeginTime(Math.round(1))
-					.serviceEndTime(Math.round(30 * 3600))
+					.serviceEndTime(Math.round(35 * 3600))
 					.build());
 
 		}

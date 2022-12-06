@@ -226,18 +226,15 @@ class ReplaceCarByDRT {
 						parkAndRideAct.setMaximumDuration(5 * 60);
 
 						newTrip = new ArrayList<>();
-						Leg l1 = fac.createLeg(mainMode);
-						TripStructureUtils.setRoutingMode(l1, mainMode);
-						Leg l2 = fac.createLeg(replacingMode);
-						TripStructureUtils.setRoutingMode(l2, replacingMode);
+						Leg l1 = fac.createLeg(replacingMode);
+						TripStructureUtils.setRoutingMode(l1, replacingMode);
+						l1.getAttributes().putAttribute("replacing", mainMode);
+						Leg l2 = fac.createLeg(mainMode);
+						TripStructureUtils.setRoutingMode(l2, mainMode);
 
-						newTrip.add(l2);
+						newTrip.add(l1); //new mode
 						newTrip.add(parkAndRideAct);
-						newTrip.add(l1);
-
-//						newTrip = List.of(fac.createLeg(replacingMode),
-//								parkAndRideAct,
-//								fac.createLeg(mainMode));
+						newTrip.add(l2); //old main mode
 
 					} else if (tripType.equals(TripType.endingTrip)) {
 						if(mainMode.equals(TransportMode.car)){
@@ -265,16 +262,17 @@ class ReplaceCarByDRT {
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						newTrip = new ArrayList<>();
+
 						Leg l1 = fac.createLeg(mainMode);
 						TripStructureUtils.setRoutingMode(l1, mainMode);
-						newTrip.add(l1);
-						newTrip.add(parkAndRideAct);
 						Leg l2 = fac.createLeg(replacingMode);
 						TripStructureUtils.setRoutingMode(l2, replacingMode);
-						newTrip.add(l2);
-//						newTrip = List.of(fac.createLeg(mainMode);,
-//									parkAndRideAct,
-//									fac.createLeg(replacingMode));
+						l2.getAttributes().putAttribute("replacing", mainMode);
+
+						newTrip.add(l1); //old main mode
+						newTrip.add(parkAndRideAct);
+						newTrip.add(l2); //new mode
+
 					} else {
 						throw new IllegalArgumentException("unknown trip type: " + tripType);
 					}
@@ -295,7 +293,7 @@ class ReplaceCarByDRT {
 
 					//override leg modes
 					TripStructureUtils.getLegs(planCopy).stream()
-							.filter(leg -> leg.getMode().equals(replacingMode))
+							.filter(leg -> leg.getAttributes().getAttribute("replacing") != null) //we have marked replacing legs. not the best solution but works. otherwise we would have to apply the entire logic of this method to all plan copies separately.
 							.forEach(leg -> leg.setMode(otherReplacingMode));
 					plansToAdd.add(planCopy);
 				}

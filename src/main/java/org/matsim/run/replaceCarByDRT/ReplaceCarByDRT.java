@@ -199,7 +199,7 @@ class ReplaceCarByDRT {
 					if(tripType.equals(TripType.innerTrip)) {
 						Leg l1 = fac.createLeg(replacingMode);
 						TripStructureUtils.setRoutingMode(l1, replacingMode);
-						l1.getAttributes().putAttribute("replacing", mainMode);
+						l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
 						newTrip = List.of(l1);
 					} else if(tripType.equals(TripType.originatingTrip)) {
 						if(mainMode.equals(TransportMode.car)){
@@ -231,7 +231,7 @@ class ReplaceCarByDRT {
 						newTrip = new ArrayList<>();
 						Leg l1 = fac.createLeg(replacingMode);
 						TripStructureUtils.setRoutingMode(l1, replacingMode);
-						l1.getAttributes().putAttribute("replacing", mainMode);
+						l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
 						Leg l2 = fac.createLeg(mainMode);
 						TripStructureUtils.setRoutingMode(l2, mainMode);
 
@@ -270,7 +270,7 @@ class ReplaceCarByDRT {
 						TripStructureUtils.setRoutingMode(l1, mainMode);
 						Leg l2 = fac.createLeg(replacingMode);
 						TripStructureUtils.setRoutingMode(l2, replacingMode);
-						l2.getAttributes().putAttribute("replacing", mainMode);
+						l2.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
 
 						newTrip.add(l1); //old main mode
 						newTrip.add(parkAndRideAct);

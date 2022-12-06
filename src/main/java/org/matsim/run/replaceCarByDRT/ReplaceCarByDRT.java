@@ -197,7 +197,10 @@ class ReplaceCarByDRT {
 					Coord prStation = null;
 
 					if(tripType.equals(TripType.innerTrip)) {
-						newTrip = List.of(fac.createLeg(replacingMode));
+						Leg l1 = fac.createLeg(replacingMode);
+						TripStructureUtils.setRoutingMode(l1, replacingMode);
+						l1.getAttributes().putAttribute("replacing", mainMode);
+						newTrip = List.of(l1);
 					} else if(tripType.equals(TripType.originatingTrip)) {
 						if(mainMode.equals(TransportMode.car)){
 							nrOfBorderCrossingCarTrips --;

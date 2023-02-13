@@ -86,17 +86,17 @@ public class DrtVehicleCreatorForBanScenario {
 
 		//in our case it the ban area and in the simulation the service area will actually differ (be bigger)
 		String drtServiceAreaShapeFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-17-pr-stations.tsv");
+		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2023-01-17-pr-stations.tsv");
 		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:31468");
 
-		float shareOfVehiclesAssignedToStations = 0.33f;
-		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
+		float shareOfVehiclesAssignedToStations = 1.0f;
+		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/pr-new/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
 
 
 		Set<Integer> numbersOfVehicles = new HashSet<>();
-		numbersOfVehicles.add(500);
-		numbersOfVehicles.add(750);
-		numbersOfVehicles.add(1000);
+		//numbersOfVehicles.add(500);
+		//numbersOfVehicles.add(750);
+		//numbersOfVehicles.add(1000);
 		numbersOfVehicles.add(1500);
 		int seats = 8;
 

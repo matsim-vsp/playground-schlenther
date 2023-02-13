@@ -80,7 +80,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
-					"--config:controler.lastIteration", "2" ,
+					"--config:controler.lastIteration", "1" ,
 					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest-actFromCoord-testPTPlans"};
 
 
@@ -110,10 +110,12 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Config config = prepareConfig(configArgs);
 		Scenario scenario = prepareScenario(config);
 
+
 //		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
 
 		Controler controler = prepareControler(scenario);
 		controler.run();
+
 		RunBerlinScenario.runAnalysis(controler);
 	}
 

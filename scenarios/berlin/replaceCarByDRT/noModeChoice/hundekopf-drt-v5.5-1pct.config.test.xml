@@ -8,7 +8,7 @@
 		<param name="lastIteration" value="1" />
 		<param name="overwriteFiles" value="overwriteExistingFiles" />
 		<param name="runId" value="hundekopfTest" />
-		<param name="outputDirectory" value="./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest" />
+		<param name="outputDirectory" value="./scenarios/output/berlin-v5.5-1pct/replaceCarByDRT-hundekopfTest" />
 		<param name="writeEventsInterval" value="1" />
 		<param name="writePlansInterval" value="1" />
 	</module>

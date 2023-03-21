@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  * @author  gleich
  *
  */
-public class DrtVehicleCreatorForBanScenario {
+class DrtVehicleCreatorForBanScenario {
 	private static final Logger log = Logger.getLogger(DrtVehicleCreator.class);
 
 	private final CoordinateTransformation ct;

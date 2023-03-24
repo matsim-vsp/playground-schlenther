@@ -24,24 +24,6 @@ public class RunPRActivityEventHandler {
 
         // read CSV file
         String csvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/2023-01-17-pr-stations-2.csv";
-        HashMap<String, String> prStationsLinkID = new HashMap<>();
-        HashMap<String, String> prStationsX = new HashMap<>();
-        HashMap<String, String> prStationsY = new HashMap<>();
-
-//        try{
-//            BufferedReader lineRead = new BufferedReader (new FileReader(csvFilePath));
-//            CSVParser records = CSVParser.parse(lineRead, CSVFormat.EXCEL.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());
-//            for (CSVRecord record : records){
-//                prStationsLinkID.put(record.get(0),record.get(3));
-//                prStationsX.put(record.get(0),record.get(1));
-//                prStationsX.put(record.get(0),record.get(2));
-//            }
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
         Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(csvFilePath));
 
         //create an event object
@@ -49,8 +31,6 @@ public class RunPRActivityEventHandler {
 
         //create the handler and add it + sets LinkOfInterest to current PRLink
         PrActivityEventHandler handler1 = new PrActivityEventHandler(prStations);
-//        handler1.setPrStationsX(prStationsX);
-//        handler1.setPrStationsY(prStationsY);
         events.addHandler(handler1);
 
         //create the reader and read the file

@@ -7,25 +7,31 @@ import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.population.Person;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-class PrActivityEventHandler implements ActivityStartEventHandler {
+class PrActivityEventHandler implements ActivityStartEventHandler, ActivityEndEventHandler {
 
     private static final Logger log = Logger.getLogger(PrActivityEventHandler.class);
 
     //key = name, value = coord
-    private HashMap<PRStation, Integer> agentsPerPRStation = new HashMap<PRStation, Integer>();
+    private HashMap<PRStation, Integer> agentsPerPRStation = new HashMap<>();
 
     private Map<PRStation, int[]> prStartsPerHour = new HashMap<>();
+
+    private Map<PRStation, int[]> prActivitiesPerMinute = new HashMap<>();
+
+    private Map<Id<Person>,Double> startTime = new HashMap<>();
 
     public PrActivityEventHandler(Set<PRStation> prStations) {
         for (PRStation station : prStations){
             this.agentsPerPRStation.put(station, 0);
             this.prStartsPerHour.put(station, new int[36]);
+            this.prActivitiesPerMinute.put(station, new int[36*60]);
         }
     }
 
@@ -34,13 +40,38 @@ class PrActivityEventHandler implements ActivityStartEventHandler {
         if (event.getActType().equals("P+R")) {
 
             int hour = (int) Math.floor(event.getTime() / 3600); //TODO check if this works and whether we can improve (i.e. don't cast)
+            int minute = (int) Math.floor(event.getTime() / 60);
 
             PRStation prStation = getPRStationWithCoord(event.getCoord());
             if(prStation == null){
                 throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
             } else {
                 agentsPerPRStation.put(prStation, agentsPerPRStation.get(prStation) + 1);
+
+                for (int i = minute; i < 36*60; i++){
+                    prActivitiesPerMinute.get(prStation)[i] ++;
+                }
+
                 prStartsPerHour.get(prStation)[hour] ++;
+            }
+        }
+
+
+    }
+
+    @Override
+    public void handleEvent(ActivityEndEvent event) {
+        if(event.getActType().equals("P+R")){
+            int endHour = (int) Math.floor(event.getTime() / 3600);
+            int endMinute = (int) Math.floor(event.getTime() / 60);
+
+            PRStation prStation = getPRStationWithCoord(event.getCoord());
+            if(prStation == null){
+                throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
+            } else {
+                for (int i = endMinute+1; i < 36*60; i++){
+                prActivitiesPerMinute.get(prStation)[i] --;
+                }
             }
         }
     }
@@ -72,4 +103,9 @@ class PrActivityEventHandler implements ActivityStartEventHandler {
     public Map<PRStation, int[]> getPrStartsPerHour() {
         return prStartsPerHour;
     }
+
+    public Map<PRStation, int[]> getPrActivitiesPerMinute() {
+        return prActivitiesPerMinute;
+    }
+
 }

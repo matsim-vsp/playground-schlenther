@@ -466,7 +466,7 @@ class ReplaceCarByDRT {
 
 class PRStation {
 
-	String name;
+	private String name;
 	Id<Link> linkId;
 	Coord coord;
 
@@ -476,4 +476,7 @@ class PRStation {
 		this.coord = coord;
 	}
 
+	public String getName() {
+		return name;
+	}
 }

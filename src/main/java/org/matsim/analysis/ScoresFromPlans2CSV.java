@@ -3,14 +3,13 @@ package org.matsim.analysis;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.util.OpencsvUtils;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.Population;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.households.Income;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.IOException;
@@ -20,8 +19,9 @@ import java.util.List;
 
 public class ScoresFromPlans2CSV {
 
-   // private static final String INPUT_POPULATION = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-    private static final String INPUT_POPULATION = "scenarios/output/baseCase/berlin-v5.5.3-1pct.output_plans.xml.gz"; // Base Case Input
+    private static final String INPUT_POPULATION = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+    // private static final String INPUT_POPULATION = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+    // private static final String INPUT_POPULATION = "scenarios/output/baseCase/berlin-v5.5.3-1pct.output_plans.xml.gz"; // Base Case Input
     private static final String INPUT_INNER_CITY_SHP = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
     private static final String INPUT_BERLIN_SHP = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
 
@@ -37,49 +37,115 @@ public class ScoresFromPlans2CSV {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"agentId",
                     "selectedPlanScore",
-                    "livesInBerlin",
-                    "livesInInnerCity",
-                    "livesInBerlinButNotInnerCity",
-                    "livesInBrandenburg"});
+                    "livingLocation",
+                    "income",
+                    "mainMode",
+                    "travelledDistance",
+                    "activityAmount",
+                    "hasPRActivity"});
             for (Person person : population.getPersons().values()) {
 
+                // regional division
                 Activity home = getHomeActivity(person.getSelectedPlan());
+                String livingLocation = getRegion(home,innerCity,berlin);
 
-                boolean livesInInnerCity = false;
-                boolean livesInBerlin = false;
-                boolean livesInBerlinButNotInnerCity = false;
-                boolean livesInBrandenburg = false;
+                // income
+                Double income = (Double) PopulationUtils.getPersonAttribute(person,"income"); //TODO: Do not cast, how else can I do it?
 
-                if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-                    livesInInnerCity = true;
-                }
-                if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
-                    livesInBerlin = true;
-                }
-                if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
-                    if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-                        livesInBerlinButNotInnerCity = true;
-                    }
-                }
-                if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
-                    if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-                        livesInBrandenburg = true;
-                    }
-                }
+                // main mode
+                String mainMode = getMainMode(person.getSelectedPlan());
+
+                // travelled distance
+                Double travelledDistance = getTravelledDistance(person.getSelectedPlan());
+
+                // amount of activities (excluding stage activities)
+                Double activityAmount = getAmountOfActivities(person.getSelectedPlan());
+
+                // at least one P+R activity?
+                boolean prActivity = hasPRActivity(person.getSelectedPlan());
 
 
                 writer.writeNext(new String[]{person.getId().toString(),
                         String.valueOf(person.getSelectedPlan().getScore()),
-                        String.valueOf(livesInBerlin),
-                        String.valueOf(livesInInnerCity),
-                        String.valueOf(livesInBerlinButNotInnerCity),
-                        String.valueOf(livesInBrandenburg)}
+                        livingLocation,
+                        String.valueOf(income),
+                        mainMode,
+                        String.valueOf(travelledDistance),
+                        String.valueOf(activityAmount),
+                        String.valueOf(prActivity)}
                 );
             }
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String getRegion(Activity home, List<PreparedGeometry> innerCity, List<PreparedGeometry> berlin) {
+
+        String livingLocation = new String();
+
+        if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
+            livingLocation = "innerCity";
+        }
+
+        if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
+            if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
+                livingLocation = "BerlinButNotInnerCity";
+            }
+        }
+        if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
+            if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
+                livingLocation = "Brandenburg";
+            }
+        }
+
+        return livingLocation;
+    }
+
+    private static boolean hasPRActivity(Plan plan){
+        List<PlanElement> planElements = plan.getPlanElements();
+        for (int i=0;i<planElements.size();i++){
+            if (planElements.get(i) instanceof Activity){
+                String activity = ((Activity) planElements.get(i)).getType();
+                if (activity.equals("P+R")){
+                    return true;
+                }
+
+            }
+        }
+        return false;
+    }
+
+    private static Double getTravelledDistance(Plan plan) {
+        List<Leg> legs = PopulationUtils.getLegs(plan);
+        Double distance = 0.0;
+
+        for (Leg leg : legs) {
+            distance += leg.getRoute().getDistance();
+        }
+
+        return distance;
+    }
+
+    private static Double getAmountOfActivities(Plan plan) {
+        List<Activity> activities = PopulationUtils.getActivities(plan, TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
+        Double activityAmount = 0.0;
+
+        for (Activity activity : activities) {
+            activityAmount ++;
+        }
+
+        return activityAmount;
+    }
+
+    private static String getMainMode(Plan plan) {
+        List<Leg> legs = PopulationUtils.getLegs(plan);
+        if (legs.size() == 0){
+            return "";
+        }
+
+        return TripStructureUtils.identifyMainMode(PopulationUtils.getLegs(plan));
     }
 
     private static Activity getHomeActivity(Plan selectedPlan) {

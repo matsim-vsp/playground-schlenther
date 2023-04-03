@@ -1,15 +1,11 @@
 package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
-import com.opencsv.bean.util.OpencsvUtils;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.households.Income;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.IOException;
@@ -41,7 +37,7 @@ public class ScoresFromPlans2CSV {
                     "income",
                     "mainMode",
                     "travelledDistance",
-                    "activityAmount",
+                    "noOfActivities",
                     "hasPRActivity"});
             for (Person person : population.getPersons().values()) {
 
@@ -50,7 +46,7 @@ public class ScoresFromPlans2CSV {
                 String livingLocation = getRegion(home,innerCity,berlin);
 
                 // income
-                Double income = (Double) PopulationUtils.getPersonAttribute(person,"income"); //TODO: Do not cast, how else can I do it?
+                Double income = (Double) PopulationUtils.getPersonAttribute(person,"income"); //Do not cast, how else can I do it? -- TS: you have to cast here..
 
                 // main mode
                 String mainMode = getMainMode(person.getSelectedPlan());
@@ -58,8 +54,8 @@ public class ScoresFromPlans2CSV {
                 // travelled distance
                 Double travelledDistance = getTravelledDistance(person.getSelectedPlan());
 
-                // amount of activities (excluding stage activities)
-                Double activityAmount = getAmountOfActivities(person.getSelectedPlan());
+                // number of activities (excluding stage activities)
+                Double activityCount = getNumberOfActivities(person.getSelectedPlan());
 
                 // at least one P+R activity?
                 boolean prActivity = hasPRActivity(person.getSelectedPlan());
@@ -71,7 +67,7 @@ public class ScoresFromPlans2CSV {
                         String.valueOf(income),
                         mainMode,
                         String.valueOf(travelledDistance),
-                        String.valueOf(activityAmount),
+                        String.valueOf(activityCount),
                         String.valueOf(prActivity)}
                 );
             }
@@ -86,21 +82,19 @@ public class ScoresFromPlans2CSV {
         String livingLocation = new String();
 
         if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-            livingLocation = "innerCity";
+            return "innerCity";
         }
 
         if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
             if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-                livingLocation = "BerlinButNotInnerCity";
+                return "BerlinButNotInnerCity";
             }
-        }
-        if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), berlin)){
-            if(!ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
-                livingLocation = "Brandenburg";
+            else {
+                throw new IllegalStateException("inner city should be catched above");
             }
+        } else {
+            return "Brandenburg";
         }
-
-        return livingLocation;
     }
 
     private static boolean hasPRActivity(Plan plan){
@@ -111,7 +105,6 @@ public class ScoresFromPlans2CSV {
                 if (activity.equals("P+R")){
                     return true;
                 }
-
             }
         }
         return false;
@@ -128,15 +121,15 @@ public class ScoresFromPlans2CSV {
         return distance;
     }
 
-    private static Double getAmountOfActivities(Plan plan) {
+    private static Double getNumberOfActivities(Plan plan) {
         List<Activity> activities = PopulationUtils.getActivities(plan, TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
-        Double activityAmount = 0.0;
+        Double activityCount = 0.0;
 
         for (Activity activity : activities) {
-            activityAmount ++;
+            activityCount ++;
         }
 
-        return activityAmount;
+        return activityCount;
     }
 
     private static String getMainMode(Plan plan) {

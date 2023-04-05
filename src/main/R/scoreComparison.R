@@ -29,6 +29,8 @@ for (entry in livingLocations){
                                       quantile((scoreComparison[which(scoreComparison$livingLocation == entry),16]), probs = 0.05))
 }
 
+str(scoreComparison)
+
 ## By income
 
 incomeCategories <- unique(scoreComparison$income)

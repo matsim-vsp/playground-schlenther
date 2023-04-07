@@ -5,12 +5,15 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.scoring.EventsToLegs;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScoresFromPlans2CSV {
@@ -35,7 +38,7 @@ public class ScoresFromPlans2CSV {
                     "selectedPlanScore",
                     "livingLocation",
                     "income",
-                    "mainMode",
+                    "longestDistanceMode",
                     "travelledDistance",
                     "noOfActivities",
                     "hasPRActivity"});
@@ -46,10 +49,10 @@ public class ScoresFromPlans2CSV {
                 String livingLocation = getRegion(home,innerCity,berlin);
 
                 // income
-                Double income = (Double) PopulationUtils.getPersonAttribute(person,"income"); //Do not cast, how else can I do it? -- TS: you have to cast here..
+                Double income = (Double) PopulationUtils.getPersonAttribute(person,"income");
 
                 // main mode
-                String mainMode = getMainMode(person.getSelectedPlan());
+                String longestDistanceMode = getLongestDistanceMode(person.getSelectedPlan());
 
                 // travelled distance
                 Double travelledDistance = getTravelledDistance(person.getSelectedPlan());
@@ -65,7 +68,7 @@ public class ScoresFromPlans2CSV {
                         String.valueOf(person.getSelectedPlan().getScore()),
                         livingLocation,
                         String.valueOf(income),
-                        mainMode,
+                        longestDistanceMode,
                         String.valueOf(travelledDistance),
                         String.valueOf(activityCount),
                         String.valueOf(prActivity)}
@@ -132,13 +135,30 @@ public class ScoresFromPlans2CSV {
         return activityCount;
     }
 
-    private static String getMainMode(Plan plan) {
+    private static String getLongestDistanceMode(Plan plan) {
         List<Leg> legs = PopulationUtils.getLegs(plan);
         if (legs.size() == 0){
             return "";
         }
 
-        return TripStructureUtils.identifyMainMode(PopulationUtils.getLegs(plan));
+        List<String> modes = new ArrayList<>();
+        double distance = 0.0;
+        double currentLongestShareDistance = Double.MIN_VALUE;
+        String currentModeWithLongestShare = "";
+
+        for (Leg leg : legs) {
+            modes.add(leg.getMode());
+            final double legDist = leg.getRoute().getDistance();
+            distance += legDist;
+
+            if (legDist > currentLongestShareDistance) {
+                currentLongestShareDistance = legDist;
+                currentModeWithLongestShare = leg.getMode();
+            }
+
+        }
+
+        return currentModeWithLongestShare;
     }
 
     private static Activity getHomeActivity(Plan selectedPlan) {

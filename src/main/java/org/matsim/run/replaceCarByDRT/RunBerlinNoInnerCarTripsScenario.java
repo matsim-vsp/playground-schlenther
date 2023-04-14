@@ -79,7 +79,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
-					"--config:controler.lastIteration", "1" ,};
+					"--config:controler.lastIteration", "0" ,};
 
 
 //			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-minus-500m-buffer.shp");

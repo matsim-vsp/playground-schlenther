@@ -12,7 +12,6 @@ shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scena
 # Importing and filtering for closestToInsideActivity
 
 ## Trips
-
 tripsI <- readTripsTable("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/inside-allow-0.5-1506vehicles-8seats/")
 tripsI <- dplyr::filter(tripsI, main_mode %in% c("ride", "car"))
 tripsI$trav_time <- period_to_seconds(hms(tripsI$trav_time))
@@ -76,6 +75,12 @@ results_trips[7, ] <- list("closestToOutsideActivity", "Zielverkehr", mean(zielv
 results_trips[8, ] <- list("closestToOutsideActivity", "Binnenverkehr", mean(binnenverkehrO$trav_time), median(binnenverkehrO$trav_time), quantile(binnenverkehrO$trav_time, probs = 0.95), mean(binnenverkehrO$traveled_distance), (mean(binnenverkehrO$traveled_distance) / mean(binnenverkehrO$trav_time)) * 3.6)
 results_trips[9, ] <- list("closestToOutsideActivity", "Externer_Durchgangsverkehr", mean(externerPlusDurchgangO$trav_time), median(externerPlusDurchgangO$trav_time), quantile(externerPlusDurchgangO$trav_time, probs = 0.95), mean(externerPlusDurchgangO$traveled_distance), (mean(externerPlusDurchgangO$traveled_distance) / mean(externerPlusDurchgangO$trav_time)) * 3.6)
 results_trips[10, ] <- list("closestToOutsideActivity", "Gesamtverkehr", mean(tripsO$trav_time), median(tripsO$trav_time), quantile(tripsO$trav_time, probs = 0.95), mean(tripsO$traveled_distance), (mean(tripsO$traveled_distance) / mean(tripsO$trav_time)) * 3.6)
+
+# CSV Export
+
+write.table(results_drt, "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/trips/InsideVsOutside/results_drt.tsv", row.names = FALSE, sep = "\t")
+write.table(results_trips, "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/trips/InsideVsOutside/results_trips.tsv", row.names = FALSE, sep = "\t")
+
 
 # Tryout plots
 ggplot(quellverkehrI, aes(x = longest_distance_mode, y = wait_time)) +

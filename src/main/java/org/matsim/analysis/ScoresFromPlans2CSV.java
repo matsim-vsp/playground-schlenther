@@ -18,8 +18,8 @@ import java.util.List;
 
 public class ScoresFromPlans2CSV {
 
-    private static final String INPUT_POPULATION = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
-    // private static final String INPUT_POPULATION = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+    // private static final String INPUT_POPULATION = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+    private static final String INPUT_POPULATION = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
     // private static final String INPUT_POPULATION = "scenarios/output/baseCase/berlin-v5.5.3-1pct.output_plans.xml.gz"; // Base Case Input
     private static final String INPUT_INNER_CITY_SHP = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
     private static final String INPUT_BERLIN_SHP = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
@@ -142,20 +142,17 @@ public class ScoresFromPlans2CSV {
         }
 
         List<String> modes = new ArrayList<>();
-        double distance = 0.0;
         double currentLongestShareDistance = Double.MIN_VALUE;
         String currentModeWithLongestShare = "";
 
         for (Leg leg : legs) {
             modes.add(leg.getMode());
             final double legDist = leg.getRoute().getDistance();
-            distance += legDist;
 
             if (legDist > currentLongestShareDistance) {
                 currentLongestShareDistance = legDist;
                 currentModeWithLongestShare = leg.getMode();
             }
-
         }
 
         return currentModeWithLongestShare;

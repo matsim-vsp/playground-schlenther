@@ -23,16 +23,6 @@ public class RunPopulationDownsampling {
         String outputPopFilename = "scenarios/berlin/replaceCarByDRT/noModeChoice/berlin-v5.5-sample.plans.xml.gz";
         String inputPopFilename = "scenarios/berlin/replaceCarByDRT/noModeChoice/testConfig/berlin-v5.5-1pct.plans.xml.gz";
 
-       /* if ( args!=null ) {
-            if (args.length != 2) {
-                System.err.println("Usage: cmd inputPop.xml.gz outputPop.xml.gz");
-                System.exit(401);
-            } else {
-                inputPopFilename = args[0] ;
-                outputPopFilename = args[1] ;
-            }
-        }*/
-
         RunPopulationDownsampling app = new RunPopulationDownsampling(inputPopFilename, outputPopFilename);
         app.run();
     }

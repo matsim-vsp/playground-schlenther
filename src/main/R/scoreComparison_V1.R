@@ -99,7 +99,7 @@ for (entry in hasPRActivityCategories){
 travelledDistanceBins <- c("0 - 50.000", "50.000 - 100.000")
 results_travelledDistance <- data.frame(travelledDistance = character(), total_cS = numeric(), avg_cS = numeric(), pt_95_cS = numeric())
 
-# Export CSV - TO DO
+# Export CSV
 
 write.table(results_livingLocation,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/ohne_ausreißer/score_by_living_location.tsv",row.names = FALSE, sep = "\t")
 write.table(results_income,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/ohne_ausreißer/score_by_income.tsv",row.names = FALSE, sep = "\t")

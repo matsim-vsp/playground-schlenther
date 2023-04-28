@@ -13,14 +13,14 @@ library(sf)
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCase/"
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
 policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutsideActivity/inside-allow-0.5-1506vehicles-8seats/"
 
-basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCase/berlin-v5.5.3-1pct.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
+basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
 "basePersons <- readPersonsTable(baseCaseDirectory)"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutsideActivity/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
+policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
 "policyPersons <- readPersonsTable(policyCaseDirectory)"
 policyTrips <- readTripsTable(policyCaseDirectory)
 
@@ -36,7 +36,8 @@ if(! count(baseNonZero) == count(policyNonZero) ) {
   warning("base case has a different number of non-active/non-mobile persons than policy case !!")
 }
 
-personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base")) %>% 
+personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
+personsJoined <- personsJoined %>%
   add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
 
 ########################################
@@ -259,30 +260,30 @@ ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/ana
 
 
 ########################################
-# Results by longestDistanceMode [without "", "freight"]
+# Results by mainMode [without "", "freight"]
 
-ldmc_helper <- unique(personsJoined$longestDistanceMode_policy)
+mm_helper <- unique(personsJoined$mainMode_policy)
 remove <- c("","freight")
-longestDistanceModeCategories <- ldmc_helper [! ldmc_helper %in% remove]
-results_longestDistanceMode <- data.frame(longestDistanceMode = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+mainModeCategories <- mm_helper [! mm_helper %in% remove]
+results_mainMode <- data.frame(mainMode = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
 iterator = 0
 
 "Results table + Histograms"
-for (entry in longestDistanceModeCategories){
+for (entry in mainModeCategories){
   iterator <- iterator + 1
-  results_longestDistanceMode[iterator, ] <- list(entry, 
-                                            mean(personsJoined[which(personsJoined$longestDistanceMode_policy == entry),16]), 
-                                            quantile((personsJoined[which(personsJoined$longestDistanceMode_policy == entry),16]), probs = 0.05), 
-                                            sd(personsJoined[which(personsJoined$longestDistanceMode_policy == entry),16])
+  results_mainMode[iterator, ] <- list(entry, 
+                                            mean(personsJoined[which(personsJoined$mainMode_policy == entry),16]), 
+                                            quantile((personsJoined[which(personsJoined$mainMode_policy == entry),16]), probs = 0.05), 
+                                            sd(personsJoined[which(personsJoined$mainMode_policy == entry),16])
   )
   relevant_persons <- personsJoined %>%
-    filter(longestDistanceMode_policy == entry)
+    filter(mainMode_policy == entry)
   
   ggplot(relevant_persons, aes(x = score_diff)) +
     geom_histogram(binwidth = 5) +
     labs(
       title = "Distribution of score differences",
-      subtitle = paste("longestDistanceMode =",entry),
+      subtitle = paste("mainMode =",entry),
       caption = "score_delta = score(policy) - score(base)",
       x = "score_delta"
     ) +
@@ -292,16 +293,16 @@ for (entry in longestDistanceModeCategories){
       plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
       plot.caption = element_text(face = "italic")
     )
-  ggsave(paste("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_longestDistanceMode_",entry,".png",sep=""))
+  ggsave(paste("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_mainMode_",entry,".png",sep=""))
 }
 
 
 "Boxplot"
-ggplot(personsJoined, aes(x = longestDistanceMode_policy, y = score_diff)) +
+ggplot(personsJoined, aes(x = mainMode_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",
-    subtitle = "by longestDistanceMode (policy)",
+    subtitle = "by mainMode (policy)",
     caption = "score_delta = score(policy) - score(base)",
     y = "score_delta"
   ) +
@@ -312,7 +313,32 @@ ggplot(personsJoined, aes(x = longestDistanceMode_policy, y = score_diff)) +
     plot.caption = element_text(face = "italic"),
     axis.title.x = element_blank()
   )
-ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_longestDistanceMode.png")
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_mainMode.png")
+
+########################################
+# Results by didAgentUseDRT -> TODO: combined with trips tables
+
+########################################
+# Results by First PR Station -> TODO: what PR-Station should be used? Rather the last one than the first one?
+
+onlyPR <- personsJoined %>% filter(!personsJoined$FirstPRStation == "")
+
+"Boxplot"
+ggplot(onlyPR, aes(x = LastPRStation, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
 
 ########################################
 # Dump results tables

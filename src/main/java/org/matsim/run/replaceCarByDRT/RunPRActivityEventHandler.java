@@ -1,9 +1,16 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.io.IOUtils;
 
 import java.io.IOException;
@@ -15,11 +22,14 @@ public class RunPRActivityEventHandler {
 
     public static void main(String[] args) {
 
-       // String inputFile = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_events.xml.gz"; //TEST-INPUT
-       String inputFile = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_events.xml.gz";
+       // String inputFile = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_events.xml.gz"; // Sample
+       String inputFile = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_events.xml.gz";
+
+       String inputNetwork = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_network.xml.gz";
+       Network network = NetworkUtils.readNetwork(inputNetwork);
 
         // read CSV file
-        String tsvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-01-17-pr-stations.tsv";
+        String tsvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
         Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(tsvFilePath));
 
         //create an event object
@@ -36,24 +46,27 @@ public class RunPRActivityEventHandler {
         events.finishProcessing();
 
         //write to CSV file
-        String outputFileName1 = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/analysis/PRStations/prStartsPerHour.tsv";
-        String outputFileName2 = "scenarios/output/inside-allow-0.5-1506vehicles-8seats/analysis/PRStations/prActivitiesPerMinute.tsv";
-        String outputFileName3= "scenarios/output/inside-allow-0.5-1506vehicles-8seats/analysis/PRStations/agentsPerPRStation.tsv";
-        agentsPerPRStation2CSV(handler1.getAgentsPerPRStation(),outputFileName3);
+        String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_prStartsPerHour.tsv";
+        String outputFileName2 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_prActivitiesPerMinute.tsv";
+        String outputFileName3 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_agentsPerPRStation.tsv";
+        agentsPerPRStation2CSV(handler1.getAgentsPerPRStation(), network, outputFileName3);
         prStartsPerHour2CSV(handler1.getPrStartsPerHour(),outputFileName1);
         prActivitiesPerMinute2CSV(handler1.getPrActivitiesPerMinute(), outputFileName2);
     }
 
-    private static void agentsPerPRStation2CSV(Map<PRStation, Integer> prActivities, String outputFileName){
+    private static void agentsPerPRStation2CSV(Map<PRStation, Integer> prActivities, Network network, String outputFileName){
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
-            writer.writeNext(new String[]{"PRStation","Agents"});
+            writer.writeNext(new String[]{"PRStation","Agents","x","y","AgentsByEdgeCapacity"});
 
             for (Map.Entry<PRStation, Integer> entry : prActivities.entrySet()) {
                 PRStation station = entry.getKey();
                 Integer agentsPerPRStation = entry.getValue();
+                Link link = network.getLinks().get(station.linkId);
+                Double edgeCapacity = link.getCapacity();
+                Double agentsByEdgeCapacity = Double.valueOf(agentsPerPRStation) / (edgeCapacity * 36);
 
-                writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation)});
+                writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY()),String.valueOf(agentsByEdgeCapacity)});
             }
             writer.close();
 

@@ -14,10 +14,12 @@ shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scena
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
 policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/"
 
-basePersons <- readPersonsTable(baseCaseDirectory)
+basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
+"basePersons <- readPersonsTable(baseCaseDirectory)"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyPersons <- readPersonsTable(policyCaseDirectory)
+policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
+"policyPersons <- readPersonsTable(policyCaseDirectory)"
 policyTrips <- readTripsTable(policyCaseDirectory)
 
 personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base")) %>% 
@@ -193,22 +195,40 @@ ggplot(relevant_trips, aes(y = traveledDistance_diff)) +
 
 ########################################
 # Losing vs winning agents
+relevant_trips <- relevant_trips %>%
+  add_column(winnerLoser = "")
+
 winners <- personsJoined %>% filter(score_diff > 0)
 losers <- personsJoined %>% filter(score_diff < 0)
 zeroChanges <- personsJoined %>% filter(score_diff == 0)
 
 relevant_winnerTrips <- relevant_trips %>% filter(person_policy %in% winners$person)
+relevant_winnerTrips$winnerLoser <- "winner"
 relevant_loserTrips <- relevant_trips %>% filter(person_policy %in% losers$person)
-relevant_zeroChangeTrips <- relevant_trips %>% filter(person_policy %in% zeroChanges$person)
+relevant_loserTrips$winnerLoser <- "loser"
 
-mean(relevant_winnerTrips$travTime_diff)
-mean(relevant_loserTrips$travTime_diff)
+tryout <- rbind(relevant_winnerTrips, relevant_loserTrips)
 
-mean(relevant_winnerTrips$traveledDistance_diff)
-mean(relevant_loserTrips$traveledDistance_diff)
+"Boxplot - winners vs losers (travTime)"
+ggplot(tryout, aes(x = winnerLoser, y = travTime_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of trav_time differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta [s]",
+    x = "main_mode"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
 
-"Boxplot"
-ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = traveledDistance_diff)) +
+"Boxplot - winners vs losers (traveledDistance)"
+ggplot(tryout, aes(x = winnerLoser, y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of traveled_distance differences",
@@ -227,9 +247,114 @@ ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = traveledDistance_dif
 
 
 ########################################
-# By Q/Z-Verkehr?, DRT users (policy), Losing users?, compared to all other trips?
+# Losing agents -> what transport modes?
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt+car"] <- "car+pt"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt_w_drt_used+car"] <- "car+pt_w_drt_used"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "walk+car"] <- "car+walk"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt+ride"] <- "ride+pt"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt_w_drt_used+ride"] <- "ride+pt_w_drt_used"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "walk+ride"] <- "ride+walk"
+
+"Boxplot - Losers by transport mode (travTime)"
+ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = travTime_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of trav_time differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta [s]",
+    x = "main_mode"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+
+"Boxplot - Losers by transport mode (traveledDistance)"
+ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = traveledDistance_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of traveled_distance differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta [m]",
+    x = "main_mode"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+
+########################################
+# Winning agents -> what transport modes?
 
 
+########################################
+# Quell- vs Zielverkehr
+
+
+########################################
+# Test: relevant vs irrelevant trips (vllt auch Q/Z/B-Verkehr nochmal generelle / betroffene Trips-Vergleich?)
+
+
+########################################
+# Looking at: Binnenverkehr (nur betroffene Trips) 
+baseBinnen <- filterByRegion(autoBase, shp, "EPSG:31468", start.inshape = TRUE, end.inshape = TRUE) #filter rather from PolicyBinnen
+policyBinnen <- pTest %>% filter(trip_id %in% baseBinnen$trip_id)
+#TODO: need to filter out all remaining P+R trips (right at the borders)
+
+binnenTrips <- merge(policyBinnen, baseBinnen, by = "trip_id", suffixes = c("_policy","_base"))
+binnenTrips <- binnenTrips %>% 
+  add_column(travTime_diff = binnenTrips$trav_time_policy - binnenTrips$trav_time_base) %>%
+  add_column(waitTime_diff = binnenTrips$wait_time_policy - binnenTrips$wait_time_base) %>%
+  add_column(traveledDistance_diff = binnenTrips$traveled_distance_policy - binnenTrips$traveled_distance_base)
+
+"Boxplot - Binnenverkehr (travTime)"
+ggplot(binnenTrips, aes(y = travTime_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of trav_time differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta [s]",
+    x = "main_mode"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+
+mean(binnenTrips$travTime_diff)
+
+plotModalShiftSankey(baseBinnen,policyBinnen)
+
+########################################
+# Test: Externer/Durchgangsverkehr - vllt
+baseExtern <- filterByRegion(baseTrips, shp, "EPSG:31468", start.inshape = FALSE, end.inshape = FALSE) #filter rather from PolicyBinnen
+policyExtern <- pTest %>% filter(trip_id %in% baseExtern$trip_id)
+#TODO: need to filter out all remaining P+R trips (right at the borders)
+
+externTrips <- merge(policyExtern, baseExtern, by = "trip_id", suffixes = c("_policy","_base"))
+externTrips <- externTrips %>% 
+  add_column(travTime_diff = externTrips$trav_time_policy - externTrips$trav_time_base) %>%
+  add_column(waitTime_diff = externTrips$wait_time_policy - externTrips$wait_time_base) %>%
+  add_column(traveledDistance_diff = externTrips$traveled_distance_policy - externTrips$traveled_distance_base)
+
+########################################
+# Test: Quell/Zielverkehr car/ride, der nicht P+R ist?
+baseQuell <- filterByRegion(autoBase, shp, "EPSG:31468", start.inshape = TRUE, end.inshape = FALSE) #filter rather from PolicyBinnen
+policyQuell <- pTest %>% filter(trip_id %in% baseQuell$trip_id)
+
+quellTrips <- merge(policyQuell, baseQuell, by = "trip_id", suffixes = c("_policy","_base"))
 
 
 ########################################
@@ -276,6 +401,6 @@ drt_trips_neg <- drt_trips %>% filter(person %in% drtUsers_neg$person)
 plotModalShiftSankey(baseTrips, drt_trips_neg)
 
 
-# Where do agents go to whose trip got replaced? -> TODO: not using combined_main_mode?
+# Where do agents go to whose trip got replaced? -> TODO: not using combined_main_mode? -> main_mode in tripsTable überschreiben
 plotModalShiftSankey(relevant_trips_base, relevant_trips_policy)
 

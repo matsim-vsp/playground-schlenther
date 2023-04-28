@@ -1,28 +1,31 @@
-package org.matsim.analysis;
+package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.scoring.EventsToLegs;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.pt.routes.TransitPassengerRoute;
+import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
+import org.matsim.core.router.MainModeIdentifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ScoresFromPlans2CSV {
 
-    // private static final String INPUT_POPULATION = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
-    // private static final String INPUT_POPULATION = "scenarios/output/closestToOutsideActivity/inside-allow-0.5-1506vehicles-8seats/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-    private static final String INPUT_POPULATION = "scenarios/output/baseCase/berlin-v5.5.3-1pct.output_plans.xml.gz"; // Base Case Input
+    // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+    // private static final String INPUT_POPULATION = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+    private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
     private static final String INPUT_INNER_CITY_SHP = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
     private static final String INPUT_BERLIN_SHP = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+    private static final String INPUT_PR_STATIONS = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
 
     public static void main(String[] args) {
 
@@ -32,16 +35,20 @@ public class ScoresFromPlans2CSV {
         List<PreparedGeometry> innerCity = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_INNER_CITY_SHP));
         List<PreparedGeometry> berlin = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BERLIN_SHP));
 
+        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(INPUT_PR_STATIONS));
+
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"person",
                     "executed_score",
                     "home-activity-zone",
                     "income",
-                    "longestDistanceMode",
+                    "mainMode",
                     "travelledDistance",
                     "noOfActivities",
-                    "hasPRActivity"});
+                    "hasPRActivity",
+                    "FirstPRStation",
+                    "LastPRStation"});
             for (Person person : population.getPersons().values()) {
 
                 // regional division
@@ -51,8 +58,8 @@ public class ScoresFromPlans2CSV {
                 // income
                 Double income = (Double) PopulationUtils.getPersonAttribute(person,"income");
 
-                // main mode
-                String longestDistanceMode = getLongestDistanceMode(person.getSelectedPlan());
+                // mainMode
+                String mainMode = getMainMode(person.getSelectedPlan());
 
                 // travelled distance
                 Double travelledDistance = getTravelledDistance(person.getSelectedPlan());
@@ -60,18 +67,24 @@ public class ScoresFromPlans2CSV {
                 // number of activities (excluding stage activities)
                 Double activityCount = getNumberOfActivities(person.getSelectedPlan());
 
-                // at least one P+R activity?
+                // has at least one P+R activity?
                 boolean prActivity = hasPRActivity(person.getSelectedPlan());
+
+                // get the used PR Station(s)
+                String firstPRStation = getFirstPRStation(person.getSelectedPlan(),prStations);
+                String lastPRStation = getLastPRStation(person.getSelectedPlan(),prStations);
 
 
                 writer.writeNext(new String[]{person.getId().toString(),
                         String.valueOf(person.getSelectedPlan().getScore()),
                         livingLocation,
                         String.valueOf(income),
-                        longestDistanceMode,
+                        mainMode,
                         String.valueOf(travelledDistance),
                         String.valueOf(activityCount),
-                        String.valueOf(prActivity)}
+                        String.valueOf(prActivity),
+                        firstPRStation,
+                        lastPRStation}
                 );
             }
             writer.close();
@@ -98,6 +111,46 @@ public class ScoresFromPlans2CSV {
         } else {
             return "Brandenburg";
         }
+    }
+
+    private static String getFirstPRStation(Plan plan, Set<PRStation> prStations){
+        List<PlanElement> planElements = plan.getPlanElements();
+        for (PlanElement planElement : planElements){
+            if (planElement instanceof Activity){
+                String activity = ((Activity) planElement).getType();
+                if (activity.equals("P+R")){
+                    Coord coord = ((Activity) planElement).getCoord();
+
+                    for (PRStation prStation : prStations){
+                        if(coord.equals(prStation.getCoord())){
+                            return prStation.getName();
+                        }
+                    }
+
+                }
+            }
+        }
+        return "";
+    }
+
+    private static String getLastPRStation(Plan plan, Set<PRStation> prStations){
+        List<PlanElement> planElements = plan.getPlanElements();
+        String lastPRStation = "";
+        for (PlanElement planElement : planElements){
+            if (planElement instanceof Activity){
+                String activity = ((Activity) planElement).getType();
+                if (activity.equals("P+R")){
+                    Coord coord = ((Activity) planElement).getCoord();
+                    for (PRStation prStation : prStations){
+                        if(coord.equals(prStation.getCoord())){
+                            lastPRStation = prStation.getName();
+                        }
+                    }
+
+                }
+            }
+        }
+        return lastPRStation;
     }
 
     private static boolean hasPRActivity(Plan plan){
@@ -135,6 +188,27 @@ public class ScoresFromPlans2CSV {
         return activityCount;
     }
 
+    private static String getMainMode(Plan plan) {
+        OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
+        List<? extends PlanElement> planElements = plan.getPlanElements();
+
+        if (TripStructureUtils.getTrips(plan).isEmpty()) {
+            return "";
+        }
+
+        String mainMode = mainModeIdentifier.identifyMainMode(planElements);
+        return mainMode;
+    }
+
+    private static Activity getHomeActivity(Plan selectedPlan) {
+        List<Activity> acts = TripStructureUtils.getActivities(selectedPlan, TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
+
+        return acts.stream()
+                .filter(act -> act.getType().contains("home"))
+                .findFirst().orElse(acts.get(0));
+    }
+
+    // can be used instead of mainMode
     private static String getLongestDistanceMode(Plan plan) {
         List<Leg> legs = PopulationUtils.getLegs(plan);
         if (legs.size() == 0){
@@ -157,12 +231,6 @@ public class ScoresFromPlans2CSV {
 
         return currentModeWithLongestShare;
     }
-
-    private static Activity getHomeActivity(Plan selectedPlan) {
-        List<Activity> acts = TripStructureUtils.getActivities(selectedPlan, TripStructureUtils.StageActivityHandling.ExcludeStageActivities);
-
-        return acts.stream()
-                .filter(act -> act.getType().contains("home"))
-                .findFirst().orElse(acts.get(0));
-    }
 }
+
+

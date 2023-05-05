@@ -5,100 +5,55 @@ library(sf)
 library(tidyverse)
 library(lubridate)
 library(ggalluvial)
+library(hms)
 
 ########################################
 # Preparation
 
+#TODO
+colClasses = c("chr","num","chr")
+
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/"
-
-basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
-"basePersons <- readPersonsTable(baseCaseDirectory)"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
-"policyPersons <- readPersonsTable(policyCaseDirectory)"
-policyTrips <- readTripsTable(policyCaseDirectory)
-
-personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base")) %>% 
-  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv"
 
 
-########################################
-# Tests
-# Is the amount of Grenztrips in baseCase the same like the amount of P+R trips in policyCase?
-
-autoBase <- baseTrips %>% filter(main_mode %in% c("car","ride"))
-baseGrenzTripsCnt <- count(filterByRegion(autoBase, shp, "EPSG:31468", start.inshape = TRUE, end.inshape = FALSE)) + 
-  count(filterByRegion(autoBase, shp, "EPSG:31468", start.inshape = FALSE, end.inshape = TRUE))
-
-"This should be the same result -> NOT PASSED"
-count(policyTrips)
-count(baseTrips) + baseGrenzTripsCnt
-
-"This should be the same result -> TEST PASSED"
-policyTrips %>% filter(start_activity_type == "P+R") %>% count(.)
-policyTrips %>% filter(end_activity_type == "P+R") %>% count(.)
+policyTrips <- read.table(file = policyCaseDirectory, sep ='\t', header = TRUE)
+policyTrips <- policyTrips %>% 
+  mutate(trip_number = as.double(trip_number),
+         dep_time = parse_hms(dep_time),
+         trav_time = parse_hms(trav_time),
+         wait_time = parse_hms(wait_time),
+         traveled_distance = as.double(traveled_distance),
+         euclidean_distance = as.double(euclidean_distance),
+         start_x = as.double(start_x), 
+         start_y = as.double(start_y), end_x = as.double(end_x), 
+         end_y = as.double(end_y))
 
 
-########################################
-# Prepare (general) policyTrips
+policyTripsDRT
+policyTripsPT 
 
-pTest <- policyTrips
+plotModalShiftSankey(pr_trips_base,pr_trips_policy)
 
-for(i in 1:nrow(pTest)) {
-  if(pTest[i,"end_activity_type"] == "P+R"){
-    pTest[i+1, "trip_number"] <- pTest[i,"trip_number"]
-    j <- i+2
-    while(j < 1000000){
-      if(!pTest[j, "trip_number"] == 1){
-        pTest[j, "trip_number"] <- pTest[j,"trip_number"] - 1
-        j <- j+1
-      } else {
-        j <- 1000000
-      }
-    }
-  }
-  pTest[i,"trip_id"] <- paste(as.character(pTest[i,"person"]), as.character(pTest[i,"trip_number"]), sep = "_")
-  print(i)
-}
 
-########################################
-# Prepare relevant policyTrips (only PR-Trips)
+"PR trips = all those trips that got replaced by P+R"
+pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
+pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
 
-rtpTest <- pTest %>% filter(end_activity_type == "P+R" | start_activity_type == "P+R") %>%
-  add_column(combined_main_mode = "")
+pr_trips <- merge(pr_trips_policy, pr_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
+pr_trips <- pr_trips %>% 
+  add_column(travTime_diff = pr_trips$trav_time_policy - pr_trips$trav_time_base) %>%
+  add_column(waitTime_diff = pr_trips$wait_time_policy - pr_trips$wait_time_base) %>%
+  add_column(traveledDistance_diff = pr_trips$traveled_distance_policy - pr_trips$traveled_distance_base)
 
-for(i in 1:nrow(rtpTest)) {
-  if(rtpTest[i,"end_activity_type"] == "P+R"){
-    rtpTest[i, "trav_time"] <- rtpTest[i, "trav_time"] + rtpTest[i+1, "trav_time"] + period_to_seconds(minutes(5))
-    rtpTest[i, "wait_time"] <- rtpTest[i, "wait_time"] + rtpTest[i+1, "wait_time"]
-    rtpTest[i, "traveled_distance"] <- rtpTest[i, "traveled_distance"] + rtpTest[i+1, "traveled_distance"]
-    rtpTest[i, "combined_main_mode"] <- paste(rtpTest[i,"main_mode"], rtpTest[i+1,"main_mode"],sep = "+")
-    # avg_speed ergänzen?
-    print(i)
-  }
-}
+"Impacted trips = all those trips that got impacted by the policy"
+#TODO
 
-relevant_trips_policy <- rtpTest %>% filter(end_activity_type == "P+R")
 
-########################################
-# Prepare relevant baseTrips
-"Get those trips in base case that turn into PR trips in policy case - TODO"
-
-relevant_trips_base <- baseTrips %>% filter(trip_id %in% relevant_trips_policy$trip_id)
-
-########################################
-# Travel times & distances
-# Comparison of travelTime & travelledDistance (maybe speed?) between PR-Trips(policy) and Grenztrips(base)
-
-relevant_trips <- merge(relevant_trips_policy, relevant_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
-relevant_trips <- relevant_trips %>% 
-  add_column(travTime_diff = relevant_trips$trav_time_policy - relevant_trips$trav_time_base) %>%
-  add_column(waitTime_diff = relevant_trips$wait_time_policy - relevant_trips$wait_time_base) %>%
-  add_column(traveledDistance_diff = relevant_trips$traveled_distance_policy - relevant_trips$traveled_distance_base)
 
 # Backup: for comparing speed difference
 " add_column(speed_policy = relevant_trips$traveled_distance_policy * 3.6 / period_to_seconds(hms(relevant_trips$trav_time_policy))) %>%
@@ -106,8 +61,62 @@ relevant_trips <- relevant_trips %>%
 relevant_trips <- relevant_trips %>%
   add_column(speed_diff = relevant_trips$speed_policy - relevant_trips$speed_base)"
 
+
 ########################################
-# General results - travelTime
+# Preparation of policyTrips
+
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+policyTripsPrep <- readTripsTable(policyCaseDirectory)
+
+for(i in 1:nrow(policyTripsPrep)) {
+  if(policyTripsPrep[i,"end_activity_type"] == "P+R"){
+    policyTripsPrep[i+1, "trip_number"] <- 0
+    policyTripsPrep[i,"trav_time"] <- policyTripsPrep[i,"trav_time"] + policyTripsPrep[i+1,"trav_time"]  + period_to_seconds(minutes(5))
+    policyTripsPrep[i, "wait_time"] <- policyTripsPrep[i, "wait_time"] + policyTripsPrep[i+1, "wait_time"]
+    policyTripsPrep[i, "traveled_distance"] <- policyTripsPrep[i, "traveled_distance"] + policyTripsPrep[i+1, "traveled_distance"]
+    policyTripsPrep[i, "euclidean_distance"] <- policyTripsPrep[i, "euclidean_distance"] + policyTripsPrep[i+1, "euclidean_distance"]
+    policyTripsPrep[i, "main_mode"] <- paste(policyTripsPrep[i,"main_mode"], policyTripsPrep[i+1,"main_mode"],sep = "+")
+    policyTripsPrep[i, "longest_distance_mode"] <- paste(policyTripsPrep[i,"longest_distance_mode"], policyTripsPrep[i+1,"longest_distance_mode"],sep = "+")
+    policyTripsPrep[i, "modes"] <- paste(policyTripsPrep[i,"modes"], policyTripsPrep[i+1,"modes"],sep = "+")
+    
+    #TODO possibly: Get Information about the PR-Station in the trip
+    
+    policyTripsPrep[i, "end_activity_type"] <- policyTripsPrep[i+1, "end_activity_type"]
+    policyTripsPrep[i, "end_facility_id"] <- policyTripsPrep[i+1, "end_facility_id"]
+    policyTripsPrep[i, "end_link"] <- policyTripsPrep[i+1, "end_link"]
+    policyTripsPrep[i, "end_x"] <- policyTripsPrep[i+1, "end_x"]
+    policyTripsPrep[i, "end_y"] <- policyTripsPrep[i+1, "end_y"]
+    policyTripsPrep[i, "last_pt_egress_stop"] <- policyTripsPrep[i+1, "last_pt_egress_stop"]
+    
+    j <- i+2
+    
+    while(j < 1000000){
+      if(policyTripsPrep[j, "trip_number"] != 1){
+        policyTripsPrep[j, "trip_number"] <- policyTripsPrep[j,"trip_number"] - 1
+        j <- j+1
+      } else {
+        j <- 1000000
+      }
+    }
+  }
+  policyTripsPrep[i,"trip_id"] <- paste(as.character(policyTripsPrep[i,"person"]), as.character(policyTripsPrep[i,"trip_number"]), sep = "_")
+  print(i)
+}
+
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+car"] <- "car+pt"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt_w_drt_used+car"] <- "car+pt_w_drt_used"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "walk+car"] <- "car+walk"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+car"] <- "car+drt"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+ride"] <- "ride+pt"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt_w_drt_used+ride"] <- "ride+pt_w_drt_used"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "walk+ride"] <- "ride+walk"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+ride"] <- "ride+drt"
+
+policyTripsPrep <- policyTripsPrep %>% filter(!trip_number == 0)
+
+
+########################################
+# General results - travelTime of PR_Trips
 
 "General metrics"
 mean(relevant_trips$travTime_diff)
@@ -136,8 +145,8 @@ ggplot(relevant_trips, aes(y = travTime_diff)) +
   labs(
     title = "Distribution of trav_time differences",
     subtitle = "General results (policy vs base)",
-    caption = "score_delta = score(policy) - score(base)",
-    y = "score_delta [s]"
+    caption = "travTime_delta = travTime(policy) - travTime(base)",
+    y = "travTime_delta [s]"
   ) +
   theme_classic() +
   theme(
@@ -148,9 +157,11 @@ ggplot(relevant_trips, aes(y = travTime_diff)) +
     axis.title.x = element_blank(),
     axis.text.x = element_blank()
   )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_travTime.png")
+
 
 ########################################
-# General results - traveledDistance
+# General results - traveledDistance of PR_Trips
 
 "General metrics"
 mean(relevant_trips$traveledDistance_diff)
@@ -179,8 +190,8 @@ ggplot(relevant_trips, aes(y = traveledDistance_diff)) +
   labs(
     title = "Distribution of traveled_distance differences",
     subtitle = "General results (policy vs base)",
-    caption = "score_delta = score(policy) - score(base)",
-    y = "score_delta [m]"
+    caption = "traveledDistance_delta = traveledDistance(policy) - traveledDistance(base)",
+    y = "traveledDistance_delta [m]"
   ) +
   theme_classic() +
   theme(
@@ -191,10 +202,19 @@ ggplot(relevant_trips, aes(y = traveledDistance_diff)) +
     axis.title.x = element_blank(),
     axis.text.x = element_blank()
   )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_travelledDistance.png")
 
 
 ########################################
-# Losing vs winning agents
+# TODO: 
+# 1. Test impacted trips -> filter main_mode == car -> WARUM sind die noch drin?
+# 2. Look at all impacted trips
+# 3. Modal Shift Vergleich
+
+
+
+########################################
+# Losing vs winning agents (still interesting?)
 relevant_trips <- relevant_trips %>%
   add_column(winnerLoser = "")
 
@@ -251,12 +271,15 @@ ggplot(tryout, aes(x = winnerLoser, y = traveledDistance_diff)) +
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt+car"] <- "car+pt"
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt_w_drt_used+car"] <- "car+pt_w_drt_used"
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "walk+car"] <- "car+walk"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "drt+car"] <- "car+drt"
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt+ride"] <- "ride+pt"
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "pt_w_drt_used+ride"] <- "ride+pt_w_drt_used"
 relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "walk+ride"] <- "ride+walk"
+relevant_loserTrips$combined_main_mode[relevant_loserTrips$combined_main_mode == "drt+ride"] <- "ride+drt"
+
 
 "Boxplot - Losers by transport mode (travTime)"
-ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = travTime_diff)) +
+ggplot(relevant_loserTrips, aes(x = reorder(combined_main_mode,travTime_diff), y = travTime_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of trav_time differences",
@@ -274,7 +297,7 @@ ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = travTime_diff)) +
   )
 
 "Boxplot - Losers by transport mode (traveledDistance)"
-ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = traveledDistance_diff)) +
+ggplot(relevant_loserTrips, aes(x = reorder(combined_main_mode,traveledDistance_diff), y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of traveled_distance differences",
@@ -293,10 +316,6 @@ ggplot(relevant_loserTrips, aes(x = combined_main_mode, y = traveledDistance_dif
 
 ########################################
 # Winning agents -> what transport modes?
-
-
-########################################
-# Quell- vs Zielverkehr
 
 
 ########################################
@@ -404,3 +423,35 @@ plotModalShiftSankey(baseTrips, drt_trips_neg)
 # Where do agents go to whose trip got replaced? -> TODO: not using combined_main_mode? -> main_mode in tripsTable überschreiben
 plotModalShiftSankey(relevant_trips_base, relevant_trips_policy)
 
+
+##### TRYOUT: Comparison pt, drt, pt&drt
+plotModalSplitBarChart(policyTrips)
+
+policyTrips_E <- filterByRegion(policyTrips, shp, "EPSG:31468", start.inshape = FALSE, end.inshape = FALSE)
+policyTripsPT_E <- filterByRegion(policyTrips, shp, "EPSG:31468", start.inshape = FALSE, end.inshape = FALSE)
+
+policyTrips_relevant <- policyTrips %>% filter(!trip_id %in% policyTrips_E$trip_id)
+policyTripsPT_relevant <- policyTripsPT %>% filter(!trip_id %in% policyTripsPT_E$trip_id)
+
+
+
+sfTest <- policyTrips_relevant %>% 
+  filter(main_mode == "car") %>%
+  matsim::transformToSf(.,"EPSG:31468",geometry.type = st_point())
+
+filtered_sf <- transformToSf(filtered, crs = crs, geometry.type = st_point())
+st_geometry(filtered_sf) <- "start_wkt"
+
+ggplot() +
+  geom_sf(data = sfTest, aes(color = "Blue")) +
+  geom_sf(data = shp, aes(color = "Red"))
+
+
+
+plotModalShiftSankey(policyTripsPT_relevant, policyTrips_relevant)
+
+policyTripsPT <- readTripsTable("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/")
+policyTripsDRT <- readTripsTable("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/drt/closestToOutside-0.5-1506vehicles-8seats/")
+
+plotModalSplitBarChart(policyTripsPT)
+plotModalSplitBarChart(policyTripsDRT)

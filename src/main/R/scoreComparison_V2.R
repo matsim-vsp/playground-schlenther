@@ -20,7 +20,7 @@ basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/
 "basePersons <- readPersonsTable(baseCaseDirectory)"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
+policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
 "policyPersons <- readPersonsTable(policyCaseDirectory)"
 policyTrips <- readTripsTable(policyCaseDirectory)
 
@@ -87,7 +87,7 @@ ggplot(personsJoined, aes(y = score_diff)) +
     axis.title.x = element_blank(),
     axis.text.x = element_blank()
   )
-ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_general.png")
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_general.png")
 
 ########################################
 # Results by hasPRActivity
@@ -141,7 +141,7 @@ ggplot(personsJoined, aes(x = hasPRActivity_policy, y = score_diff)) +
     plot.caption = element_text(face = "italic"),
     axis.title.x = element_blank()
   )
-ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_hasPRActivity.png")
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_hasPRActivity.png")
 
 ########################################
 # Results by homeActivityZone
@@ -319,12 +319,12 @@ ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/ana
 # Results by didAgentUseDRT -> TODO: combined with trips tables
 
 ########################################
-# Results by First PR Station -> TODO: what PR-Station should be used? Rather the last one than the first one?
+# Results by Last PR Station -> TODO: what PR-Station should be used? Rather the last one than the first one?
 
-onlyPR <- personsJoined %>% filter(!personsJoined$FirstPRStation == "")
+onlyPR <- personsJoined %>% filter(!personsJoined$LastPRStation_policy == "")
 
 "Boxplot"
-ggplot(onlyPR, aes(x = LastPRStation, y = score_diff)) +
+ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff), y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",

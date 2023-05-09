@@ -18,11 +18,15 @@ policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbe
 
 basePersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
 "basePersons <- readPersonsTable(baseCaseDirectory)"
-baseTrips <- readTripsTable(baseCaseDirectory)
 
 policyPersons <- read.table(file = 'C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans_selectedPlanScores.tsv', sep = '\t', header = TRUE)
 "policyPersons <- readPersonsTable(policyCaseDirectory)"
-policyTrips <- readTripsTable(policyCaseDirectory)
+
+personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
+personsJoined <- personsJoined %>%
+  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
+
+personsJoined <- personsJoined %>% filter(score_diff > -400)
 
 ########################################
 # Tests
@@ -35,10 +39,6 @@ policyNonZero <- policyPersons %>%
 if(! count(baseNonZero) == count(policyNonZero) ) {
   warning("base case has a different number of non-active/non-mobile persons than policy case !!")
 }
-
-personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
-personsJoined <- personsJoined %>%
-  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
 
 ########################################
 # General results
@@ -130,7 +130,7 @@ ggplot(personsJoined, aes(x = hasPRActivity_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",
-    subtitle = "by hasPRActivity (policy)",
+    subtitle = "by hasPRActivity (policy vs base)",
     caption = "score_delta = score(policy) - score(base)",
     y = "score_delta"
   ) +
@@ -221,7 +221,7 @@ ggplot(personsJoined, aes(x = noOfActivities_policy, group = noOfActivities_poli
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",
-    subtitle = "by noOfActivities (policy)",
+    subtitle = "by noOfActivities (policy vs base)",
     caption = "score_delta = score(policy) - score(base)",
     y = "score_delta"
   ) +
@@ -302,7 +302,7 @@ ggplot(personsJoined, aes(x = mainMode_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",
-    subtitle = "by mainMode (policy)",
+    subtitle = "by mainMode (policy vs base)",
     caption = "score_delta = score(policy) - score(base)",
     y = "score_delta"
   ) +
@@ -324,11 +324,11 @@ ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/ana
 onlyPR <- personsJoined %>% filter(!personsJoined$LastPRStation_policy == "")
 
 "Boxplot"
-ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff), y = score_diff)) +
+ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff, median), y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Distribution of score differences",
-    subtitle = "General results (policy vs base)",
+    subtitle = "by LastPRStation (policy vs base)",
     caption = "score_delta = score(policy) - score(base)",
     y = "score_delta"
   ) +
@@ -337,7 +337,8 @@ ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff), y = score_diff
     plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
     plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
     plot.caption = element_text(face = "italic"),
-    axis.title.x = element_blank()
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
   )
 
 ########################################

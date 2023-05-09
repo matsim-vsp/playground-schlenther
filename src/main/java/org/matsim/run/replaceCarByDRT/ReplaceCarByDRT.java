@@ -223,6 +223,8 @@ class ReplaceCarByDRT {
 						}
 
 						lastCarPRStation = null;
+					 	
+					 	//TODO: give 3 different plans with 3 nearest PR-Stations as choice
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
@@ -479,4 +481,8 @@ class PRStation {
 	public String getName() {
 		return name;
 	}
+
+	public Coord getCoord() {return coord; }
+
+
 }

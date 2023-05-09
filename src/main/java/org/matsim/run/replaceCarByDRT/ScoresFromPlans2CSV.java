@@ -21,8 +21,8 @@ import java.util.Set;
 public class ScoresFromPlans2CSV {
 
     // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
-    // private static final String INPUT_POPULATION = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-    private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
+    private static final String INPUT_POPULATION = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+    // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
     private static final String INPUT_INNER_CITY_SHP = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
     private static final String INPUT_BERLIN_SHP = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
     private static final String INPUT_PR_STATIONS = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";

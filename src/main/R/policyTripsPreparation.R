@@ -9,8 +9,13 @@ library(ggalluvial)
 ########################################
 # Preparation of policyTrips
 
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
-policyTripsPrep <- readTripsTable(policyCaseDirectory)
+policyPrepDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/"
+policyTripsPrep <- readTripsTable(policyPrepDirectory)
+
+policyTripsPrep$prStation <- ""
+
+prStations <- read.table(file = "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
+
 
 for(i in 1:nrow(policyTripsPrep)) {
   if(policyTripsPrep[i,"end_activity_type"] == "P+R"){
@@ -24,6 +29,12 @@ for(i in 1:nrow(policyTripsPrep)) {
     policyTripsPrep[i, "modes"] <- paste(policyTripsPrep[i,"modes"], policyTripsPrep[i+1,"modes"],sep = "+")
     
     #TODO possibly: Get Information about the PR-Station in the trip
+    for(k in 1:nrow(prStations)) {
+      if((policyTripsPrep[i,"end_x"] == prStations[k,"x"]) & (policyTripsPrep[i,"end_y"] == prStations[k,"y"])){
+        policyTripsPrep[i,"prStation"] <- prStations[k,"name"]
+        print(prStations[k,"name"])
+      }
+    }
     
     policyTripsPrep[i, "end_activity_type"] <- policyTripsPrep[i+1, "end_activity_type"]
     policyTripsPrep[i, "end_facility_id"] <- policyTripsPrep[i+1, "end_facility_id"]
@@ -58,4 +69,4 @@ policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+ride"] <- "ride+drt"
 
 policyTripsPrep <- policyTripsPrep %>% filter(!trip_number == 0)
 
-write.table(policyTripsPrep,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv",row.names = FALSE, sep = '\t')
+write.table(policyTripsPrep,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv",row.names = FALSE, sep = '\t')

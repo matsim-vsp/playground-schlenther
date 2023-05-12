@@ -119,7 +119,8 @@ class ReplaceCarByDRT {
 																				   URL url2CarFreeSingleGeomShapeFile,
 																				   URL url2PRStations,
 																				   MainModeIdentifier mainModeIdentifier,
-																				   PRStationChoice prStationChoice){
+																				   PRStationChoice prStationChoice,
+																				   boolean enforceMassConservation){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -210,7 +211,7 @@ class ReplaceCarByDRT {
 										"trip = " + trip);
 							}
 							//car has to be picked up where it was left the last time
-							if (lastCarPRStation != null){
+							if (lastCarPRStation != null && enforceMassConservation){
 								prStation = lastCarPRStation;
 							}
 						}
@@ -249,7 +250,9 @@ class ReplaceCarByDRT {
 											"trip = " + trip);
 								}
 								//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-								prStation = firstPRStation;
+								if(enforceMassConservation){
+									prStation = firstPRStation;
+								}
 							}
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip

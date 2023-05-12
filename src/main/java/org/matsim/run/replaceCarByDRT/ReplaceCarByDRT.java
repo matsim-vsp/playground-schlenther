@@ -165,6 +165,9 @@ class ReplaceCarByDRT {
 					continue; //nothing to do; skip the plan
 				}
 
+				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
+				plansToAdd.add(createPTOnlyPlan(plan, fac));
+
 				//for consistency checking
 				long nrOfBorderCrossingCarTrips = tripsToReplace.stream()
 						.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
@@ -307,6 +310,25 @@ class ReplaceCarByDRT {
 		}
 		log.info("overall nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");
+	}
+
+	private static Plan createPTOnlyPlan(Plan originalPlan, PopulationFactory fac) {
+		Plan planCopy = fac.createPlan();
+		planCopy.setPerson(originalPlan.getPerson());
+		PopulationUtils.copyFromTo(originalPlan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
+		planCopy.setType("ptOnly");
+
+		for (TripStructureUtils.Trip trip : TripStructureUtils.getTrips(planCopy)) {
+			TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
+			if(tripType != null && !tripType.equals(TripType.outsideTrip)){
+				//overwrite trip mode
+				Leg leg = fac.createLeg(TransportMode.pt);
+				TripStructureUtils.setRoutingMode(leg, TransportMode.pt);
+				TripRouter.insertTrip(planCopy, trip.getOriginActivity(), List.of(leg), trip.getDestinationActivity());
+			}
+		}
+
+		return planCopy;
 	}
 
 	/**

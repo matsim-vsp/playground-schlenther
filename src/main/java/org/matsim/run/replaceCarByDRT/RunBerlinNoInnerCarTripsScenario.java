@@ -66,6 +66,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
+	private static boolean ENFORCE_MASS_CONSERVATION = false;
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -99,9 +100,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 			REPLACING_MODES = Set.of(args[4].split(","));
-			configArgs = new String[args.length-5];
-			for(int i = 5; i < args.length; i++){
-				configArgs[i-5] = args[i];
+			ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
+			configArgs = new String[args.length-6];
+			for(int i = 6; i < args.length; i++){
+				configArgs[i-6] = args[i];
 			}
 		}
 
@@ -265,7 +267,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
-				PR_STATION_CHOICE
+				PR_STATION_CHOICE,
+				ENFORCE_MASS_CONSERVATION
 		);
 
 		return scenario;

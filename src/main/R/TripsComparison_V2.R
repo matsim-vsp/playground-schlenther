@@ -88,7 +88,10 @@ impBinnen_trips <- impBinnen_trips %>%
   add_column(traveledDistance_diff = impBinnen_trips$traveled_distance_policy - impBinnen_trips$traveled_distance_base) %>%
   add_column(euclideanDistance_diff = impBinnen_trips$euclidean_distance_policy - impBinnen_trips$euclidean_distance_base)
 
-prep_binnen_policy <- impBinnen_trips_policy %>% filter(!grepl("+", main_mode, fixed = TRUE))
+prep_binnen_policy <- impBinnen_trips_policy %>% 
+  filter(!grepl("+", main_mode, fixed = TRUE)) %>%
+  filter(!main_mode == "bicycle")
+         
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
@@ -133,6 +136,8 @@ boxplot_helper <- rbind(pr_trips,impBinnen_trips,impacted_trips)
 mean(impacted_trips$travTime_diff)
 sd(impacted_trips$travTime_diff)
 quantile(impacted_trips$travTime_diff, probs = 0.95)
+
+mean(pr_trips$travTime_diff)
 
 "Boxplot"
 ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
@@ -190,6 +195,8 @@ ggplot(other_trips, aes(y = travTime_diff)) +
 mean(impacted_trips$traveledDistance_diff)
 sd(impacted_trips$traveledDistance_diff)
 quantile(impacted_trips$traveledDistance_diff, probs = 0.95)
+
+mean(pr_trips$traveledDistance_diff)
 
 "Boxplot"
 ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
@@ -256,8 +263,44 @@ ggplot(pr_trips, aes(x = tripType, y = euclideanDistance_diff)) +
 # by PR Station (travTime, travelledDistance)
 # TODO
 
+"Boxplot"
+ggplot(pr_trips, aes(x = reorder(prStation, travTime_diff, median), y = travTime_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of travTime differences",
+    subtitle = "Impacted Grenztrips (policy vs base)",
+    caption = "travTime_delta = travTime(policy) - travTime(base)",
+    y = "travTime_delta [s]"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  )
 
 
+"Boxplot"
+ggplot(pr_trips, aes(x = reorder(prStation, traveledDistance_diff, median), y = traveledDistance_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of traveledDistance differences",
+    subtitle = "Impacted Grenztrips (policy vs base)",
+    caption = "traveledDistance_delta = traveledDistance(policy) - traveledDistance(base)",
+    y = "traveledDistance_delta [m]"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  )
 
 ########################################
 # Losing vs winning agents (not that interesting -> there are mostly losers concerning scores & trips with this policy)
@@ -454,4 +497,7 @@ impacted_tripsDRT <- impacted_tripsDRT %>%
 
 plotModalShiftSankey(pr_trips_policy, pr_tripsDRT_policy)
 
+mean(impacted_tripsPT$travTime_diff)
+mean(impacted_tripsDRT$travTime_diff)
 
+mean(pr_tripsPT$travTime_diff)

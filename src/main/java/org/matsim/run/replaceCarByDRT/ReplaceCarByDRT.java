@@ -53,11 +53,6 @@ class ReplaceCarByDRT {
 
 	private static Logger log = Logger.getLogger(ReplaceCarByDRT.class);
 
-	static Id<Link> PR_SUEDKREUZ = Id.createLinkId(123744);
-	static Id<Link> PR_GESUNDBRUNNEN = Id.createLinkId(18796);
-	static Id<Link> PR_OSTKREUZ = Id.createLinkId(125468);
-	static Id<Link> PR_ZOB = Id.createLinkId(59825); //aka Westkreuz
-
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
 
@@ -120,7 +115,8 @@ class ReplaceCarByDRT {
 																				   URL url2PRStations,
 																				   MainModeIdentifier mainModeIdentifier,
 																				   PRStationChoice prStationChoice,
-																				   boolean enforceMassConservation){
+																				   boolean enforceMassConservation,
+																				   boolean extraPTPlan){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -164,6 +160,11 @@ class ReplaceCarByDRT {
 				if (tripsToReplace.isEmpty()){
 					plan.setType("not-affected");
 					continue; //nothing to do; skip the plan
+				}
+
+				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
+				if(extraPTPlan){
+					plansToAdd.add(createPTOnlyPlan(plan, fac));
 				}
 
 				//for consistency checking
@@ -224,8 +225,6 @@ class ReplaceCarByDRT {
 						}
 
 						lastCarPRStation = null;
-					 	
-					 	//TODO: give 3 different plans with 3 nearest PR-Stations as choice
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
@@ -309,9 +308,31 @@ class ReplaceCarByDRT {
 			}
 			//after we've iterated over existing plans, add all the plan copies
 			plansToAdd.forEach(plan -> person.addPlan(plan));
+			if(plansToAdd.size() > 1){
+				System.out.println("Juhu");
+			}
 		}
 		log.info("overall nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");
+	}
+
+	private static Plan createPTOnlyPlan(Plan originalPlan, PopulationFactory fac) {
+		Plan planCopy = fac.createPlan();
+		planCopy.setPerson(originalPlan.getPerson());
+		PopulationUtils.copyFromTo(originalPlan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
+		planCopy.setType("ptOnly");
+
+		for (TripStructureUtils.Trip trip : TripStructureUtils.getTrips(planCopy)) {
+			TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
+			if(tripType != null && !tripType.equals(TripType.outsideTrip)){
+				//overwrite trip mode
+				Leg leg = fac.createLeg(TransportMode.pt);
+				TripStructureUtils.setRoutingMode(leg, TransportMode.pt);
+				TripRouter.insertTrip(planCopy, trip.getOriginActivity(), List.of(leg), trip.getDestinationActivity());
+			}
+		}
+
+		return planCopy;
 	}
 
 	/**

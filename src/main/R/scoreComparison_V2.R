@@ -92,6 +92,8 @@ ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/out
 ########################################
 # Results by hasPRActivity
 
+mean(personsJoined$score_diff[personsJoined$hasPRActivity_policy == "true"])
+
 hasPRActivityCategories <- unique(personsJoined$hasPRActivity_policy)
 results_hasPRActivity <- data.frame(hasPRActivity = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
 iterator = 0
@@ -350,4 +352,310 @@ write.table(results_noOfActivities,"C:/Users/loren/Documents/TU_Berlin/Semester_
 write.table(results_hasPRActivity,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/score_by_hasPRActivity.tsv",row.names = FALSE, sep = "\t")
 write.table(results_general,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/score_general.tsv" ,row.names = FALSE, sep = "\t")
 
+########################################
+# PART 2: Same analyses with only affected agents
 
+impactedPersons <- personsJoined %>% filter(person %in% impacted_trips$person_policy)
+
+########################################
+# General results
+
+"General metrics"
+mean(impactedPersons$score_diff)
+sd(impactedPersons$score_diff)
+quantile(impactedPersons$score_diff, probs = 0.05)
+
+"Results table"
+results_general <- data.frame(avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+results_general[1,] <- list(mean(impactedPersons$score_diff), quantile(impactedPersons$score_diff, probs = 0.05),sd(impactedPersons$score_diff))
+
+"Histogram"
+ggplot(impactedPersons, aes(x = score_diff)) +
+  geom_histogram(binwidth = 5) +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "General results (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    x = "score_delta"
+  )+
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic")
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_general.png")
+
+"Boxplot"
+ggplot(impactedPersons, aes(y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "General results (policy vs base) - impacted agents",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_general.png")
+
+########################################
+# Results by hasPRActivity
+
+mean(impactedPersons$score_diff[impactedPersons$hasPRActivity_policy == "false"])
+
+hasPRActivityCategories <- unique(impactedPersons$hasPRActivity_policy)
+results_hasPRActivity <- data.frame(hasPRActivity = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+iterator = 0
+
+"Results table + Histograms"
+for (entry in hasPRActivityCategories){
+  iterator <- iterator + 1
+  results_hasPRActivity[iterator, ] <- list(entry, 
+                                            mean(impactedPersons[which(impactedPersons$hasPRActivity_policy == entry),16]), 
+                                            quantile((impactedPersons[which(impactedPersons$hasPRActivity_policy == entry),16]), probs = 0.05), 
+                                            sd(impactedPersons[which(impactedPersons$hasPRActivity_policy == entry),16])
+  )
+  relevant_persons <- impactedPersons %>%
+    filter(hasPRActivity_policy == entry)
+  
+  ggplot(relevant_persons, aes(x = score_diff)) +
+    geom_histogram(binwidth = 5) +
+    labs(
+      title = "Distribution of score differences",
+      subtitle = paste("hasPRActivity =",entry),
+      caption = "score_delta = score(policy) - score(base)",
+      x = "score_delta"
+    ) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+      plot.caption = element_text(face = "italic")
+    )
+  ggsave(paste("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_hasPRActivity_",entry,".png",sep=""))
+}
+
+
+"Boxplot"
+ggplot(impactedPersons, aes(x = hasPRActivity_policy, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by hasPRActivity (policy vs base) - only impacted persons",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/analysis/boxplot_hasPRActivity.png")
+
+########################################
+# Results by homeActivityZone
+
+homeActivityZoneCategories <- unique(impactedPersons$home.activity.zone_policy)
+results_homeActivityZone <- data.frame( homeActivityZone = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+iterator = 0
+
+"Results table + Histograms"
+for (entry in homeActivityZoneCategories){
+  iterator <- iterator + 1
+  results_homeActivityZone[iterator, ] <- list(entry, 
+                                               mean(impactedPersons[which(impactedPersons$home.activity.zone_policy == entry),16]), 
+                                               quantile((impactedPersons[which(impactedPersons$home.activity.zone_policy == entry),16]), probs = 0.05), 
+                                               sd(impactedPersons[which(impactedPersons$home.activity.zone_policy == entry),16])
+  )
+  
+  relevant_persons <- impactedPersons %>%
+    filter(home.activity.zone_policy == entry)
+  
+  ggplot(relevant_persons, aes(x = score_diff)) +
+    geom_histogram(binwidth = 5) +
+    labs(
+      title = "Distribution of score differences",
+      subtitle = paste("homeActivityZone =",entry),
+      caption = "score_delta = score(policy) - score(base)",
+      x = "score_delta"
+    ) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+      plot.caption = element_text(face = "italic")
+    )
+  ggsave(paste("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_homeActivityZone_",entry,".png",sep=""))
+}
+
+
+"Boxplot"
+ggplot(impactedPersons, aes(x = home.activity.zone_policy, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by homeActivityZone (policy)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_homeActivityZone.png")
+
+########################################
+# Results by noOfActivities
+
+noOfActivitiesCategories <- unique(impactedPersons$noOfActivities_policy)
+results_noOfActivities <- data.frame(noOfActivities = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+iterator = 0
+
+"Results table"
+for (entry in noOfActivitiesCategories){
+  iterator <- iterator + 1
+  results_noOfActivities[iterator, ] <- list(entry, 
+                                             mean(impactedPersons[which(impactedPersons$noOfActivities_policy == entry),16]), 
+                                             quantile((impactedPersons[which(impactedPersons$noOfActivities_policy == entry),16]), probs = 0.05), 
+                                             sd(impactedPersons[which(impactedPersons$noOfActivities_policy == entry),16])
+  )
+}
+
+
+"Boxplot"
+ggplot(impactedPersons, aes(x = noOfActivities_policy, group = noOfActivities_policy, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by noOfActivities (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic")
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_noOfActivities.png")
+
+########################################
+# Results by travelledDistance
+
+"Boxplot"
+options(scipen = 999)
+impactedPersons_bins <- impactedPersons %>%
+  mutate(bin = cut_width(travelledDistance_policy, width = 25000, boundary = 0, dig.lab = 50))
+
+ggplot(impactedPersons_bins, aes(x = bin, group = bin, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by travelledDistance (policy)",
+    caption = "score_delta = score(policy) - score(base)",
+    x = "travelledDistance_policy",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic")
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_travelledDistance.png")
+
+
+########################################
+# Results by mainMode [without "", "freight"]
+
+mm_helper <- unique(impactedPersons$mainMode_policy)
+remove <- c("","freight")
+mainModeCategories <- mm_helper [! mm_helper %in% remove]
+results_mainMode <- data.frame(mainMode = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+iterator = 0
+
+"Results table + Histograms"
+for (entry in mainModeCategories){
+  iterator <- iterator + 1
+  results_mainMode[iterator, ] <- list(entry, 
+                                       mean(impactedPersons[which(impactedPersons$mainMode_policy == entry),16]), 
+                                       quantile((impactedPersons[which(impactedPersons$mainMode_policy == entry),16]), probs = 0.05), 
+                                       sd(impactedPersons[which(impactedPersons$mainMode_policy == entry),16])
+  )
+  relevant_persons <- impactedPersons %>%
+    filter(mainMode_policy == entry)
+  
+  ggplot(relevant_persons, aes(x = score_diff)) +
+    geom_histogram(binwidth = 5) +
+    labs(
+      title = "Distribution of score differences",
+      subtitle = paste("mainMode =",entry),
+      caption = "score_delta = score(policy) - score(base)",
+      x = "score_delta"
+    ) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+      plot.caption = element_text(face = "italic")
+    )
+  ggsave(paste("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/histogram_mainMode_",entry,".png",sep=""))
+}
+
+
+"Boxplot"
+ggplot(impactedPersons, aes(x = mainMode_policy, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by mainMode (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank()
+  )
+ggsave("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/analysis/scores/OutsideVsBase/boxplot_mainMode.png")
+
+########################################
+# Results by didAgentUseDRT -> TODO: combined with trips tables
+
+########################################
+# Results by Last PR Station -> TODO: what PR-Station should be used? Rather the last one than the first one?
+
+onlyPR <- impactedPersons %>% filter(!impactedPersons$LastPRStation_policy == "")
+
+"Boxplot"
+ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff, median), y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Distribution of score differences",
+    subtitle = "by LastPRStation (policy vs base)",
+    caption = "score_delta = score(policy) - score(base)",
+    y = "score_delta"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.title.x = element_blank(),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  )

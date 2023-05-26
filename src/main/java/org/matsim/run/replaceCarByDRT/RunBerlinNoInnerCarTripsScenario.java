@@ -67,6 +67,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
 	private static boolean ENFORCE_MASS_CONSERVATION = false;
+	private static boolean EXTRA_PT_PLAN = false;
+	private static boolean DRT_STOP_BASED = false; //TODO: change all 3 booleans to enum
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -76,10 +78,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp");
 //			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
-			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2022-11-17-pr-stations.tsv");
+			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
+			ENFORCE_MASS_CONSERVATION = false;
+			EXTRA_PT_PLAN = false;
+			DRT_STOP_BASED = false;
+			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-sample.config.test.xml",
 					"--config:controler.lastIteration", "0" ,};
 
 
@@ -101,9 +106,11 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 			REPLACING_MODES = Set.of(args[4].split(","));
 			ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
-			configArgs = new String[args.length-6];
-			for(int i = 6; i < args.length; i++){
-				configArgs[i-6] = args[i];
+			EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
+			DRT_STOP_BASED = Boolean.valueOf(args[7]);
+			configArgs = new String[args.length-8];
+			for(int i = 8; i < args.length; i++){
+				configArgs[i-8] = args[i];
 			}
 		}
 
@@ -130,7 +137,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		DvrpConfigGroup dvrpConfigGroup = DvrpConfigGroup.get(config);
 
 		//sets the drt mode to be dvrp network mode
-		configureDVRPAndDRT(dvrpConfigGroup, drtCfg);
+		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, DRT_STOP_BASED);
 
 		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
 		if (berlinCfg.getTagDrtLinksBufferAroundServiceAreaShp() <= 0.){
@@ -190,7 +197,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		}
 	}
 
-	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup) {
+	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, boolean drtStopBased) {
 		if(! dvrpConfigGroup.getNetworkModes().contains(drtConfigGroup.getMode()) ){
 			log.warn("the drt mode " + drtConfigGroup.getMode() + " is not registered as network mode for dvrp - which is necessary in a bannedCarInDRTServiceArea scenario");
 			log.warn("adding mode " + drtConfigGroup.getMode() + " as network mode for dvrp... ");
@@ -203,13 +210,26 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
 				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
 
-		if(! drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)){
-			log.warn("you are not using service area based operational scheme for drt! Howver, this scenario currently reads the drt service area shp file specified in " + drtConfigGroup +
-					" for specifying the area where to ban car and ride from. Make sure that your stop network fit that area, otherwise you will most probably get unintented results!!");
+		// Setting different operational schemes depending on input
+		if(drtStopBased){
+			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
+
+			//TODO: ist das hier so richtig?
+			drtConfigGroup.setTransitStopFile("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+			log.warn("you are now using a stop based operational scheme for drt! This is in development.");
+
+			Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),
+					"this scenario currently only works with a specified stopFile for drt!");
+
+		} else {
+			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.serviceAreaBased);
+			log.warn("you are not using service area based operational scheme for drt! However, this scenario currently reads the drt service area shp file specified in " + drtConfigGroup +
+						" for specifying the area where to ban car and ride from. Make sure that your stop network fit that area, otherwise you will most probably get unintented results!!");
+
+			Preconditions.checkNotNull(drtConfigGroup.getDrtServiceAreaShapeFile(),
+					"this scenario currently only works with a specified serviceArea for drt! Even if you assume a different operational scheme, the shp file is needed for banning cars and ride from" +
+							"the corresponding zone! Please provide a shape file and make sure that your stop network fits that area!");
 		}
-		Preconditions.checkNotNull(drtConfigGroup.getDrtServiceAreaShapeFile(),
-				"this scenario currently only works with a specified serviceArea for drt! Even if you assume a different operational scheme, the shp file is needed for banning cars and ride from" +
-						"the corresponding zone! Please provide a shape file and make sure that your stop network fits that area!");
 
 		if(! drtConfigGroup.isUseModeFilteredSubnetwork()){
 			log.warn("setting drtConfigGroup.isUseModeFilteredSubnetwork() to true! Was false before......");
@@ -268,7 +288,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				ENFORCE_MASS_CONSERVATION
+				ENFORCE_MASS_CONSERVATION,
+				EXTRA_PT_PLAN
 		);
 
 		return scenario;

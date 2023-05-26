@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.contrib.drt.fare.DrtFareParams;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
@@ -215,7 +214,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
 
 			//TODO: ist das hier so richtig?
-			drtConfigGroup.setTransitStopFile("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+			drtConfigGroup.setTransitStopFile("drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 			log.warn("you are now using a stop based operational scheme for drt! This is in development.");
 
 			Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),

@@ -106,15 +106,26 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 						preparedGeometries))
 				.collect(Collectors.toSet());
 		try {
-			//write a stop for each filtered link (with to node in area)
+			//write a stop for each filtered link (with to node in area) - TODO: check if linkId contains "pt"
 			for (Link link : linksInArea) {
-				writeStop(csvWriter, link);
+				if(!link.getId().toString().contains("pt")){
+					writeStop(csvWriter, link);
+				}
 			}
-			//write a stop for each P+R link
+			//write a stop for each P+R link - TODO: check if linkId already exists
 			Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(url2PRStations);
+
 			for (PRStation prStation : prStations) {
-				writeStop(csvWriter, network.getLinks().get(prStation.linkId));
+
+				boolean linkIdExists = linksInArea.stream()
+						.map(Link::getId)
+						.anyMatch(id -> id.equals(prStation.linkId));
+
+				if (!linkIdExists) {
+					writeStop(csvWriter, network.getLinks().get(prStation.linkId));
+				}
 			}
+
 		} catch (IOException e){
 			e.printStackTrace();
 		}
@@ -123,6 +134,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 	}
 
 	private void writeStop(FileWriter csvWriter, Link link) throws IOException {
+
 		List<Tuple<String, String>> attributes = new ArrayList<Tuple<String, String>>(5);
 		attributes.add(createTuple("id", link.getId().toString()));
 		attributes.add(createTuple("x", link.getToNode().getCoord().getX()));
@@ -139,4 +151,5 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 		csvWriter.append(Double.toString(link.getToNode().getCoord().getY()));
 		csvWriter.append("\n");
 	}
+
 }

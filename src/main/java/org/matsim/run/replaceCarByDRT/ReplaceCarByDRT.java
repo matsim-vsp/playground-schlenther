@@ -53,11 +53,6 @@ class ReplaceCarByDRT {
 
 	private static Logger log = Logger.getLogger(ReplaceCarByDRT.class);
 
-	static Id<Link> PR_SUEDKREUZ = Id.createLinkId(123744);
-	static Id<Link> PR_GESUNDBRUNNEN = Id.createLinkId(18796);
-	static Id<Link> PR_OSTKREUZ = Id.createLinkId(125468);
-	static Id<Link> PR_ZOB = Id.createLinkId(59825); //aka Westkreuz
-
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
 

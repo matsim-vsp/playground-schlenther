@@ -56,7 +56,7 @@ nonImpactedPersons <- personsJoined %>% filter(!person %in% impactedPersons$pers
 # TODO: didAgentUseDRT
 
 ########################################
-# Script
+# Boxplots & Results
 
 for (case in cases){
   if(case == "allPersons"){

@@ -9,8 +9,10 @@ library(ggalluvial)
 ########################################
 # Preparation of policyTrips
 
-policyPrepDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
-policyTripsPrep <- readTripsTable(policyPrepDirectory)
+input_path <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+policyTripsPrep <- readTripsTable(input_path)
+output_filename <- "output_trips_prepared.tsv"
+output_path <- file.path(input_path, output_filename)
 
 policyTripsPrep$prStation <- ""
 
@@ -69,4 +71,4 @@ policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+ride"] <- "ride+drt"
 
 policyTripsPrep <- policyTripsPrep %>% filter(!trip_number == 0)
 
-write.table(policyTripsPrep,"C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv",row.names = FALSE, sep = '\t')
+write.table(policyTripsPrep,output_path,row.names = FALSE, sep = '\t')

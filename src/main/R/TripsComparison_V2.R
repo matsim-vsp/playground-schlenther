@@ -12,16 +12,14 @@ library(hms)
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-test <- readTripsTable("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/")
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true"
+policy_filename <- "output_trips_prepared.tsv"
+policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv"
-policyCaseDRTDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/drt/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv"
-policyCasePTDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/closestToOutside-0.5-1506vehicles-8seats/output_trips_prepared.tsv"
-
-policyTrips <- read.table(file = policyCaseDirectory, sep ='\t', header = TRUE)
+policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
 policyTrips <- policyTrips %>% 
   mutate(trip_number = as.double(trip_number),
          dep_time = parse_hms(dep_time),
@@ -33,47 +31,27 @@ policyTrips <- policyTrips %>%
          start_y = as.double(start_y), end_x = as.double(end_x), 
          end_y = as.double(end_y))
 
+########################################
+# Prepare folders
 
-policyTripsDRT <- read.table(file = policyCaseDRTDirectory, sep ='\t', header = TRUE)
-policyTripsDRT <- policyTripsDRT %>% 
-  mutate(trip_number = as.double(trip_number),
-         dep_time = parse_hms(dep_time),
-         trav_time = parse_hms(trav_time),
-         wait_time = parse_hms(wait_time),
-         traveled_distance = as.double(traveled_distance),
-         euclidean_distance = as.double(euclidean_distance),
-         start_x = as.double(start_x), 
-         start_y = as.double(start_y), end_x = as.double(end_x), 
-         end_y = as.double(end_y))
+dir.create(paste0(policyCaseDirectory,"/analysis"))
+dir.create(paste0(policyCaseDirectory,"/analysis/score"))
 
-policyTripsPT <- read.table(file = policyCasePTDirectory, sep ='\t', header = TRUE)
-policyTripsPT <- policyTripsPT %>% 
-  mutate(trip_number = as.double(trip_number),
-         dep_time = parse_hms(dep_time),
-         trav_time = parse_hms(trav_time),
-         wait_time = parse_hms(wait_time),
-         traveled_distance = as.double(traveled_distance),
-         euclidean_distance = as.double(euclidean_distance),
-         start_x = as.double(start_x), 
-         start_y = as.double(start_y), end_x = as.double(end_x), 
-         end_y = as.double(end_y))
+policyCaseOutputDir_all <- paste0(policyCaseDirectory,"/analysis/score/all_agents")
+policyCaseOutputDir_impacted <- paste0(policyCaseDirectory,"/analysis/score/impacted_agents")
+policyCaseOutputDir_nonImpacted <- paste0(policyCaseDirectory,"/analysis/score/non_impacted_agents")
+
+dir.create(policyCaseOutputDir_all)
+dir.create(policyCaseOutputDir_impacted)
+dir.create(policyCaseOutputDir_nonImpacted)
+
+########################################
+# Prepare tables
+
+"Impacted Grenztrips"
 
 
-"PR trips = all those trips that got replaced by P+R"
-pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
-pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
 
-pr_trips <- merge(pr_trips_policy, pr_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
-pr_trips <- pr_trips %>% 
-  add_column(travTime_diff = pr_trips$trav_time_policy - pr_trips$trav_time_base) %>%
-  add_column(waitTime_diff = pr_trips$wait_time_policy - pr_trips$wait_time_base) %>%
-  add_column(traveledDistance_diff = pr_trips$traveled_distance_policy - pr_trips$traveled_distance_base) %>%
-  add_column(euclideanDistance_diff = pr_trips$euclidean_distance_policy - pr_trips$euclidean_distance_base)
-
-prep_base <- pr_trips_base %>% filter(pr_trips_base$main_mode == "car" | pr_trips_base$main_mode == "ride")
-prep_policy <- pr_trips_policy %>% filter(trip_id %in% prep_base$trip_id)
-
-plotModalShiftSankey(prep_base,prep_policy)
 
 
 "Impacted Binnentrips"
@@ -96,8 +74,22 @@ prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_pol
 
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
 
+"PR trips = all those trips that got replaced by P+R"
+pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
+pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
 
-"Impacted trips = all those trips that got impacted by the policy (PR Trips + Impacted Binnentrips)"
+pr_trips <- merge(pr_trips_policy, pr_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
+pr_trips <- pr_trips %>% 
+  add_column(travTime_diff = pr_trips$trav_time_policy - pr_trips$trav_time_base) %>%
+  add_column(waitTime_diff = pr_trips$wait_time_policy - pr_trips$wait_time_base) %>%
+  add_column(traveledDistance_diff = pr_trips$traveled_distance_policy - pr_trips$traveled_distance_base) %>%
+  add_column(euclideanDistance_diff = pr_trips$euclidean_distance_policy - pr_trips$euclidean_distance_base)
+
+prep_base <- pr_trips_base %>% filter(pr_trips_base$main_mode == "car" | pr_trips_base$main_mode == "ride")
+prep_policy <- pr_trips_policy %>% filter(trip_id %in% prep_base$trip_id)
+
+
+"Impacted trips = all those trips that got impacted by the policy (Impacted Grenztrips + Impacted Binnentrips)"
 impacted_trips_base <- rbind(pr_trips_base,impBinnen_trips_base)
 impacted_trips_policy <- rbind(pr_trips_policy,impBinnen_trips_policy)
 
@@ -111,17 +103,15 @@ impacted_trips <- impacted_trips %>%
 prep_base <- impacted_trips_base %>% filter(impacted_trips_base$main_mode == "car" | impacted_trips_base$main_mode == "ride")
 prep_policy <- impacted_trips_policy %>% filter(trip_id %in% prep_base$trip_id)
 
+
+
+########################################
+# Modal Shift Sankeys
+
 plotModalShiftSankey(prep_base,prep_policy)
 
 plotModalShiftSankey(impacted_trips_base,impacted_trips_policy)
 
-"External trips??"
-
-# Backup: for comparing speed difference
-" add_column(speed_policy = relevant_trips$traveled_distance_policy * 3.6 / period_to_seconds(hms(relevant_trips$trav_time_policy))) %>%
-  add_column(speed_base = relevant_trips$traveled_distance_base * 3.6 / period_to_seconds(hms(relevant_trips$trav_time_base)))
-relevant_trips <- relevant_trips %>%
-  add_column(speed_diff = relevant_trips$speed_policy - relevant_trips$speed_base)"
 
 ########################################
 # General results - travelTime of impacted_trips, impacted_binnen_trips, pr_trips

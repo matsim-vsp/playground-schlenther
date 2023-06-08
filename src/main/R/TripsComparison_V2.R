@@ -15,7 +15,7 @@ shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scena
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-true/massConservation-false"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true"
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -83,7 +83,12 @@ impacted_trips <- impacted_trips %>%
 # Modal Shift Sankeys
 
 #Grenztrips
-plotModalShiftSankey(impGrenz_trips_base,impGrenz_trips_policy)
+prep_grenz_policy <- impGrenz_trips_policy %>% 
+  filter(!main_mode == "ride") %>%
+  filter(!main_mode == "car") %>%
+  filter(!main_mode == "drt")
+prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
+plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 
 #Binnentrips
@@ -94,7 +99,9 @@ plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
 
 #All impacted trips
-plotModalShiftSankey(impacted_trips_base,impacted_trips_policy)
+prep_policy <- rbind(prep_grenz_policy, prep_binnen_policy)
+prep_base <- rbind(prep_grenz_base, prep_binnen_base)
+plotModalShiftSankey(prep_base,prep_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
 
 ########################################

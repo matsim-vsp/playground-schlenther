@@ -37,10 +37,14 @@ public class RunPostprocessing {
     }
 
     void run() {
-        ScoresFromPlans2CSV.main(new String[]{population, inner_city_shp, berlin_shp, pr_stations});
 
+        // Prepare selectedPlanScores.tsv
+        org.matsim.run.replaceCarByDRT.ScoresFromPlans2CSV.main(new String[]{population, inner_city_shp, berlin_shp, pr_stations});
+
+        // Run all RScripts
         try {
-            // TODO: Test if scoreComparison can immediately access output_trips_prepared.tsv
+            // TODO: Add Traffic Volume Analysis once done
+
             // Build the command for each R script
             String[] commands = {
                     "C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/policyTripsPreparation.R", runDirectory,
@@ -74,7 +78,7 @@ public class RunPostprocessing {
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
                 String errorLine;
                 while ((errorLine = errorReader.readLine()) != null) {
-                    System.err.println("Error: " + errorLine);
+                    System.err.println(errorLine);
                 }
 
                 // Wait for the process to complete

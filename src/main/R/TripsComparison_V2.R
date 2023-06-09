@@ -1,4 +1,3 @@
-require(matsim)
 library(matsim)
 library(dplyr)
 library(sf)
@@ -15,7 +14,8 @@ shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scena
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -199,7 +199,7 @@ for (case in tripCases){
   }
   
   policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips/",case)
-  dir.create(policyCaseOutputDir, showWarnings = FALSE)
+  dir.create(policyTripsOutputDir, showWarnings = FALSE)
   
   ########################################
   # Results by mainMode

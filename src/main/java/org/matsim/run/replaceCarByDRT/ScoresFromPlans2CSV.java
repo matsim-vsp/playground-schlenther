@@ -2,6 +2,7 @@ package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.matsim.analysis.RunOfflineNoiseAnalysis;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.PopulationUtils;
@@ -20,17 +21,36 @@ import java.util.Set;
 
 public class ScoresFromPlans2CSV {
 
-    // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
-    private static final String INPUT_POPULATION = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-    // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
-    private static final String INPUT_INNER_CITY_SHP = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-    private static final String INPUT_BERLIN_SHP = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-    private static final String INPUT_PR_STATIONS = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+    private final String INPUT_RUNDIRECTORY;
+    private final String INPUT_POPULATION;
+    private final String INPUT_INNER_CITY_SHP;
+    private final String INPUT_BERLIN_SHP;
+    private final String INPUT_PR_STATIONS;
+
+    public ScoresFromPlans2CSV(String runDirectory, String population, String inner_city_shp, String berlin_shp, String pr_stations) {
+        this.INPUT_RUNDIRECTORY = runDirectory;
+        this.INPUT_POPULATION = population;
+        this.INPUT_INNER_CITY_SHP = inner_city_shp;
+        this.INPUT_BERLIN_SHP = berlin_shp;
+        this.INPUT_PR_STATIONS = pr_stations;
+    }
 
     public static void main(String[] args) {
+        String runDirectory = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/";
+        // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+        String population = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+        // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
+        String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+        String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+        String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
 
+        ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
+        scoresFromPlans.run();
+    }
+
+    void run() {
         Population population = PopulationUtils.readPopulation(INPUT_POPULATION);
-        String outputFileName = INPUT_POPULATION.substring(0, INPUT_POPULATION.lastIndexOf(".xml")) + "_selectedPlanScores.tsv";
+        String outputFileName = INPUT_RUNDIRECTORY + "output_plans_selectedPlanScores.tsv";
 
         List<PreparedGeometry> innerCity = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_INNER_CITY_SHP));
         List<PreparedGeometry> berlin = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BERLIN_SHP));

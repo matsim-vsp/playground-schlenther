@@ -1,4 +1,3 @@
-require(matsim)
 library(matsim)
 library(tidyverse)
 library(dplyr)
@@ -6,6 +5,7 @@ library(ggalluvial)
 library(lubridate)
 library(plotly)
 library(sf)
+library(hms)
 
 ########################################
 # Preparation
@@ -14,9 +14,10 @@ library(sf)
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+#policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
 base_filename <- "berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv"
-policy_filename <- "extraPtPlan-drtStopBased-1506vehicles-8seats.output_plans_selectedPlanScores.tsv"
+policy_filename <- "output_plans_selectedPlanScores.tsv"
 base_inputfile <- file.path(baseCaseDirectory, base_filename)
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -35,16 +36,63 @@ personsJoined <- personsJoined %>% filter(score_diff > -400)
 dir.create(paste0(policyCaseDirectory,"/analysis"))
 dir.create(paste0(policyCaseDirectory,"/analysis/score"))
 
-policyCaseOutputDir_all <- paste0(policyCaseDirectory,"/analysis/score/all_agents")
-policyCaseOutputDir_impacted <- paste0(policyCaseDirectory,"/analysis/score/impacted_agents")
-policyCaseOutputDir_nonImpacted <- paste0(policyCaseDirectory,"/analysis/score/non_impacted_agents")
+########################################
+# Prepare impacted trips (for the next cases)
+baseTrips <- readTripsTable(baseCaseDirectory)
+policy_trips_filename <- "output_trips_prepared.tsv"
+policy_inputfile <- file.path(policyCaseDirectory, policy_trips_filename)
 
-dir.create(policyCaseOutputDir_all)
-dir.create(policyCaseOutputDir_impacted)
-dir.create(policyCaseOutputDir_nonImpacted)
+policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
+policyTrips <- policyTrips %>% 
+  mutate(trip_number = as.double(trip_number),
+         dep_time = parse_hms(dep_time),
+         trav_time = parse_hms(trav_time),
+         wait_time = parse_hms(wait_time),
+         traveled_distance = as.double(traveled_distance),
+         euclidean_distance = as.double(euclidean_distance),
+         start_x = as.double(start_x), 
+         start_y = as.double(start_y), end_x = as.double(end_x), 
+         end_y = as.double(end_y))
+
+"Impacted Grenztrips"
+autoBase <- baseTrips %>% filter(main_mode == "car" | main_mode == "ride")
+impQuell_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, FALSE)
+impZiel_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, FALSE, TRUE)
+impGrenz_trips_base <- rbind(impQuell_trips_base, impZiel_trips_base)
+impGrenz_trips_policy <- policyTrips %>% filter(trip_id %in% impGrenz_trips_base$trip_id)
+
+impGrenz_trips <- merge(impGrenz_trips_policy, impGrenz_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
+impGrenz_trips <- impGrenz_trips %>% 
+  add_column(travTime_diff = impGrenz_trips$trav_time_policy - impGrenz_trips$trav_time_base) %>%
+  add_column(waitTime_diff = impGrenz_trips$wait_time_policy - impGrenz_trips$wait_time_base) %>%
+  add_column(traveledDistance_diff = impGrenz_trips$traveled_distance_policy - impGrenz_trips$traveled_distance_base) %>%
+  add_column(euclideanDistance_diff = impGrenz_trips$euclidean_distance_policy - impGrenz_trips$euclidean_distance_base)
+
+"Impacted Binnentrips"
+impBinnen_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, TRUE)
+impBinnen_trips_policy <- policyTrips %>% filter(trip_id %in% impBinnen_trips_base$trip_id)
+
+impBinnen_trips <- merge(impBinnen_trips_policy, impBinnen_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
+impBinnen_trips <- impBinnen_trips %>% 
+  add_column(travTime_diff = impBinnen_trips$trav_time_policy - impBinnen_trips$trav_time_base) %>%
+  add_column(waitTime_diff = impBinnen_trips$wait_time_policy - impBinnen_trips$wait_time_base) %>%
+  add_column(traveledDistance_diff = impBinnen_trips$traveled_distance_policy - impBinnen_trips$traveled_distance_base) %>%
+  add_column(euclideanDistance_diff = impBinnen_trips$euclidean_distance_policy - impBinnen_trips$euclidean_distance_base)
+
+"Impacted trips (Impacted Grenztrips + Impacted Binnentrips)"
+impacted_trips_base <- rbind(impGrenz_trips_base,impBinnen_trips_base)
+impacted_trips_policy <- rbind(impGrenz_trips_policy,impBinnen_trips_policy)
+
+impacted_trips <- merge(impacted_trips_policy, impacted_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
+impacted_trips <- impacted_trips %>% 
+  add_column(travTime_diff = impacted_trips$trav_time_policy - impacted_trips$trav_time_base) %>%
+  add_column(waitTime_diff = impacted_trips$wait_time_policy - impacted_trips$wait_time_base) %>%
+  add_column(traveledDistance_diff = impacted_trips$traveled_distance_policy - impacted_trips$traveled_distance_base)  %>%
+  add_column(euclideanDistance_diff = impacted_trips$euclidean_distance_policy - impacted_trips$euclidean_distance_base)
+
 
 ########################################
-# Prepare impacted vs non-impacted agents - TODO: need trips-file (just copy)
+# Prepare impacted vs non-impacted agents
 
 cases <- list("allPersons","impactedPersons","nonImpactedPersons")
 

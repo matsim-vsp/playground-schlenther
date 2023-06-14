@@ -1,5 +1,8 @@
 package org.matsim.analysis;
 
+import org.apache.log4j.Logger;
+import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +17,8 @@ public class RunPostprocessing {
     private final String berlin_shp;
     private final String pr_stations;
 
+    private static final Logger log = Logger.getLogger(RunPostprocessing.class);
+
     public RunPostprocessing(String runDirectory, String runId, String population, String inner_city_shp, String berlin_shp, String pr_stations) {
         this.runDirectory = runDirectory;
         this.runId = runId;
@@ -25,21 +30,38 @@ public class RunPostprocessing {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        String runDirectory = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/";
-        String runId = "closestToOutside-0.5-1506vehicles-8seats";
-        String population = runDirectory + runId + "/" + runId + ".output_plans.xml.gz";
-        String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-        String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-        String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+        if ( args.length==0 ){
+            //String runDirectory = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/";
+            //String runId = "final-10pct-7503vehicles-8seats";
+            //String runDirectory = "scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/";
+            //String runId = "berlin-v5.5-10pct";
 
-        RunPostprocessing postprocessor = new RunPostprocessing(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations);
-        postprocessor.run();
+            String runDirectory = "scenarios/output/sample/";
+            String runId = "sample-run";
+            String population = runDirectory + runId + ".output_plans.xml.gz";
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+
+            RunPostprocessing postprocessor = new RunPostprocessing(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations);
+            postprocessor.run();
+        } else {
+            String runDirectory = args[0];
+            String runId = args[1];
+            String population = runDirectory + runId + ".output_plans.xml.gz";
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+
+            RunPostprocessing postprocessor = new RunPostprocessing(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations);
+            postprocessor.run();
+        }
     }
 
-    void run() {
+    public void run() {
 
         // Prepare selectedPlanScores.tsv
-        org.matsim.run.replaceCarByDRT.ScoresFromPlans2CSV.main(new String[]{population, inner_city_shp, berlin_shp, pr_stations});
+        //org.matsim.run.replaceCarByDRT.ScoresFromPlans2CSV.main(new String[]{runDirectory, population, inner_city_shp, berlin_shp, pr_stations});
 
         // Run all RScripts
         try {

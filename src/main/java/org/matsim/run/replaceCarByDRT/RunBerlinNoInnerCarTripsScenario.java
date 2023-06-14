@@ -69,6 +69,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static boolean EXTRA_PT_PLAN = false;
 	private static boolean DRT_STOP_BASED = false; //TODO: change all 3 booleans to enum
 
+	private static String OUTPUT_DIRECTORY;
+	private static String RUN_ID;
+	private static int LAST_ITERATION;
+
 	public static void main(String[] args) throws MalformedURLException {
 
 		String[] configArgs;
@@ -80,11 +84,18 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			ENFORCE_MASS_CONSERVATION = false;
-			EXTRA_PT_PLAN = false;
-			DRT_STOP_BASED = false;
+			ENFORCE_MASS_CONSERVATION = true;
+			EXTRA_PT_PLAN = true;
+			DRT_STOP_BASED = true;
+
+			OUTPUT_DIRECTORY = "./scenarios/output/sample/";
+			LAST_ITERATION = 0;
+			RUN_ID = "sample-run";
+
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-sample.config.test.xml",
-					"--config:controler.lastIteration", "0" ,};
+					"--config:controler.lastIteration", String.valueOf(LAST_ITERATION),
+					"--config:controler.outputDirectory", OUTPUT_DIRECTORY,
+					"--config:controler.runId", RUN_ID};
 
 
 //			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-minus-500m-buffer.shp");
@@ -119,6 +130,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
 
 		Controler controler = prepareControler(scenario);
+
+		SimulationEndListener endListener = new SimulationEndListener(controler);
+		controler.addControlerListener(endListener);
+
 		controler.run();
 		RunBerlinScenario.runAnalysis(controler);
 	}
@@ -296,6 +311,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
+
+
+
 
 		return controler;
 	}

@@ -36,16 +36,30 @@ public class ScoresFromPlans2CSV {
     }
 
     public static void main(String[] args) {
-        String runDirectory = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/";
-        // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
-        String population = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-        // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
-        String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-        String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-        String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+        if ( args.length==0 ){
+            String runDirectory = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/";
+            // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+            String population = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
+            // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
 
-        ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
-        scoresFromPlans.run();
+            ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
+            scoresFromPlans.run();
+        } else {
+            String runDirectory = args[0];
+            String population = args[1];
+            String inner_city_shp = args[2];
+            String berlin_shp = args[3];
+            String pr_stations = args[4];
+
+            ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
+            scoresFromPlans.run();
+        }
+
+
+
     }
 
     void run() {

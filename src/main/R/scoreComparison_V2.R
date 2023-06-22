@@ -10,13 +10,14 @@ library(hms)
 ########################################
 # Preparation
 # Open questions: Sollen Ausreißer generell vor der Analyse herausgefiltert werden?
+# TODO: Finetune plots
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
-#policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
-base_filename <- "berlin-v5.5-1pct.output_plans_selectedPlanScores.tsv"
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
+base_filename <- "output_plans_selectedPlanScores.tsv"
 policy_filename <- "output_plans_selectedPlanScores.tsv"
 base_inputfile <- file.path(baseCaseDirectory, base_filename)
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
@@ -100,8 +101,11 @@ allPersons <- personsJoined
 impactedPersons <- personsJoined %>% filter(person %in% impacted_trips$person_policy)
 nonImpactedPersons <- personsJoined %>% filter(!person %in% impactedPersons$person)
 
+lupe3 <- nonImpactedPersons %>%
+  filter(hasPRActivity_policy == "true")
+
 ########################################
-# TODO: didAgentUseDRT
+# TODO: didAgentUseDRT - also change in forJava-Version!
 
 ########################################
 # Boxplots & Results

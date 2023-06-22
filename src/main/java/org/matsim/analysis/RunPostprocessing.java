@@ -31,13 +31,14 @@ public class RunPostprocessing {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if ( args.length==0 ){
-            //String runDirectory = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/";
-            //String runId = "final-10pct-7503vehicles-8seats";
+            String runDirectory = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/";
+            //Cluster: scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/
+            String runId = "final-10pct-7503vehicles-8seats";
             //String runDirectory = "scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/";
             //String runId = "berlin-v5.5-10pct";
 
-            String runDirectory = "scenarios/output/sample/";
-            String runId = "sample-run";
+            //String runDirectory = "scenarios/output/sample/";
+            //String runId = "sample-run";
             String population = runDirectory + runId + ".output_plans.xml.gz";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
@@ -61,18 +62,21 @@ public class RunPostprocessing {
     public void run() {
 
         // Prepare selectedPlanScores.tsv
-        //org.matsim.run.replaceCarByDRT.ScoresFromPlans2CSV.main(new String[]{runDirectory, population, inner_city_shp, berlin_shp, pr_stations});
+        // org.matsim.run.replaceCarByDRT.ScoresFromPlans2CSV.main(new String[]{runDirectory, population, inner_city_shp, berlin_shp, pr_stations});
 
         // Run all RScripts
         try {
-            // TODO: Add Traffic Volume Analysis once done
+            // TODO: Add Traffic Volume Analysis once done - probably not really needed
+            // TODO: Make R work on cluster
 
             // Build the command for each R script
             String[] commands = {
-                    "C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/policyTripsPreparation.R", runDirectory,
-                    "C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/scoreComparison_V2.R", runDirectory,
+                    //"C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/policyTripsPreparation.R", runDirectory,
+                    //"C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/scoreComparison_V2.R", runDirectory,
                     "C:/Program Files/R/R-4.2.2/bin/Rscript.exe", "src/main/R/tripsComparison_V2.R", runDirectory,
             };
+
+
 
             // Execute each R script sequentially
             for (int i = 0; i < commands.length; i += 3){

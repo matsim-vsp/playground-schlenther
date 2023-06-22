@@ -23,9 +23,9 @@ public class RunPRActivityEventHandler {
     public static void main(String[] args) {
 
        // String inputFile = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_events.xml.gz"; // Sample
-       String inputFile = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_events.xml.gz";
+       String inputFile = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/final-10pct-7503vehicles-8seats.output_events.xml.gz";
 
-       String inputNetwork = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_network.xml.gz";
+       String inputNetwork = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/final-10pct-7503vehicles-8seats.output_network.xml.gz";
        Network network = NetworkUtils.readNetwork(inputNetwork);
 
         // read CSV file

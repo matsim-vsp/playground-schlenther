@@ -11,10 +11,10 @@ library(hms)
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/baseCaseContinued"
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/"
 baseTrips <- readTripsTable(baseCaseDirectory)
 
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
 policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
@@ -80,43 +80,51 @@ impacted_trips <- impacted_trips %>%
 
 
 ########################################
-# Modal Shift Sankeys
+"Modal Shift Sankeys"
 
-#Grenztrips
+"Grenztrips"
 prep_grenz_policy <- impGrenz_trips_policy %>% 
   filter(!main_mode == "ride") %>%
   filter(!main_mode == "car") %>%
-  filter(!main_mode == "drt")
+  filter(!main_mode == "drt") %>%
+  filter(!main_mode == "bicycle")
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
 plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 
-#Binnentrips
+"Binnentrips"
 prep_binnen_policy <- impBinnen_trips_policy %>% 
-  filter(!grepl("+", main_mode, fixed = TRUE))
+  filter(!grepl("+", main_mode, fixed = TRUE)) %>%
+  filter(!main_mode == "bicycle") %>%
+  filter(!main_mode == "car") %>%
+  filter(!main_mode == "ride")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
 
-#All impacted trips
+"All impacted trips"
 prep_policy <- rbind(prep_grenz_policy, prep_binnen_policy)
 prep_base <- rbind(prep_grenz_base, prep_binnen_base)
 plotModalShiftSankey(prep_base,prep_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
 
+"Test 0"
 ########################################
 # General results - travelTime of impacted_trips, impacted_binnen_trips, pr_trips
 
+"Test 1"
 impGrenz_trips$tripType <- "Impacted_Grenz_Trips"
 impBinnen_trips$tripType <- "Impacted_Binnen_Trips"
 impacted_trips$tripType <- "All_Impacted_Trips"
 
+"Test 2"
 boxplot_helper <- rbind(impGrenz_trips,impBinnen_trips,impacted_trips)
 
 "Results table"
 tripTypes <- unique(boxplot_helper$tripType)
 iterator = 0
 
+"Test 3"
 results_travTime <- data.frame(tripType = character(), avg_travTime_diff = numeric(), pt95_travTime_diff = numeric(), sd_travTime_diff = numeric())
 
 for (tripType in tripTypes){
@@ -127,6 +135,8 @@ for (tripType in tripTypes){
                                             sd(boxplot_helper[which(boxplot_helper$tripType == tripType),48])
   )
 }
+
+boxplot_helper$travTime_diff <- as.numeric(boxplot_helper$travTime_diff)
 
 "Boxplot"
 ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
@@ -157,9 +167,9 @@ results_travelledDistance <- data.frame(tripType = character(), avg_travelledDis
 for (tripType in tripTypes){
   iterator <- iterator + 1
   results_travelledDistance[iterator, ] <- list(tripType, 
-                                       mean(boxplot_helper[which(boxplot_helper$tripType == tripType),50]), 
-                                       quantile((boxplot_helper[which(boxplot_helper$tripType == tripType),50]), probs = 0.95), 
-                                       sd(boxplot_helper[which(boxplot_helper$tripType == tripType),50])
+                                       mean(boxplot_helper[which(boxplot_helper$tripType == tripType),49]), 
+                                       quantile((boxplot_helper[which(boxplot_helper$tripType == tripType),49]), probs = 0.95), 
+                                       sd(boxplot_helper[which(boxplot_helper$tripType == tripType),49])
   )
 }
 
@@ -181,6 +191,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     axis.title.x = element_blank()
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
+
 
 ########################################
 # Boxplots & Results 
@@ -241,6 +252,9 @@ for (case in tripCases){
       axis.title.x = element_blank()
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_mainMode.png"))
+
+  ########################################
+  # TODO: by hasPRStation (travTime, travelledDistance)
   
   ########################################
   # by PR Station (travTime, travelledDistance)
@@ -324,4 +338,5 @@ policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 
 write.table(results_travTime,file.path(policyTripsOutputDir,"trips_travTime.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_travelledDistance,file.path(policyTripsOutputDir,"trips_travelledDistance.tsv"),row.names = FALSE, sep = "\t")
+write.table(results_hasPR_travTime,file.path(policyTripsOutputDir,"trips_hasPR_travTime.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_falselyClassified,file.path(policyTripsOutputDir,"trips_falselyClassified.tsv"),row.names = FALSE, sep = "\t")

@@ -110,18 +110,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 
 		} else {
-			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
-			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
-			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
-			REPLACING_MODES = Set.of(args[4].split(","));
-			ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
-			EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
-			DRT_STOP_BASED = Boolean.valueOf(args[7]);
-			configArgs = new String[args.length-8];
-			for(int i = 8; i < args.length; i++){
-				configArgs[i-8] = args[i];
-			}
+			configArgs = prepareConfigArguments(args);
 		}
 
 		Config config = prepareConfig(configArgs);
@@ -138,7 +127,26 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		RunBerlinScenario.runAnalysis(controler);
 	}
 
-	private static Config prepareConfig(String [] args, ConfigGroup... customModules) {
+	public static String[] prepareConfigArguments(String[] args){
+		String[] configArgs;
+
+		URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
+		ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
+		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
+		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
+		REPLACING_MODES = Set.of(args[4].split(","));
+		ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
+		EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
+		DRT_STOP_BASED = Boolean.valueOf(args[7]);
+		configArgs = new String[args.length-8];
+		for(int i = 8; i < args.length; i++){
+			configArgs[i-8] = args[i];
+		}
+
+		return configArgs;
+	}
+
+	public static Config prepareConfig(String[] args, ConfigGroup... customModules) {
 		Config config = RunDrtOpenBerlinScenario.prepareConfig(args, customModules);
 		disableModeChoiceAndDistributeStrategyWeights(config);
 
@@ -265,7 +273,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		}
 	}
 
-	private static Scenario prepareScenario(Config config) {
+	public static Scenario prepareScenario(Config config) {
 		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
 		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
 
@@ -309,7 +317,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		return scenario;
 	}
 
-	private static Controler prepareControler(Scenario scenario) {
+	public static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
 
 

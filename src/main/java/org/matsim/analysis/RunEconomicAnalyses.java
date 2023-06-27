@@ -1,33 +1,29 @@
 package org.matsim.analysis;
 
+import org.matsim.contrib.emissions.EmissionUtils;
+
+import java.io.File;
 import java.io.IOException;
 
 public class RunEconomicAnalyses {
 
-    private static String runDirectory;
-    private static String runId;
-    private static String hbefaWarmFile;
-    private static String hbefaColdFile;
-    private static String noiseOutputDirectory;
-    private static String airPollutionOutputDirectory;
-    private static String accidentsOutputDirectory;
-    private static String runType;
-
-    private static String shapeFile;
-    private static String roadTypesCarAllowed;
-    private static String stationsFile;
-    private static String prStationChoice;
-    private static String replacingModes;
-    private static String enforceMassConservation;
-    private static String extraPtPlan;
-    private static String drtStopBased;
-
-
     public static void main(String[] args) throws IOException {
 
+        String runDirectory;
+        String runId;
+        String runType;
+        String shapeFile;
+        String roadTypesCarAllowed;
+        String stationsFile;
+        String prStationChoice;
+        String replacingModes;
+        String enforceMassConservation;
+        String extraPtPlan;
+        String drtStopBased;
+
         if (args.length == 0) {
-            runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
-            runId = "massConservation-1506vehicles-8seats";
+            runDirectory = "scenarios/output/sample/";
+            runId = "sample-run";
             runType = "policy";
 
             shapeFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
@@ -35,9 +31,10 @@ public class RunEconomicAnalyses {
             stationsFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
             prStationChoice = "closestToOutSideActivity";
             replacingModes = "pt,drt";
-            enforceMassConservation = "false";
-            extraPtPlan = "true";
+            enforceMassConservation = "true";
+            extraPtPlan = "false";
             drtStopBased = "false";
+
         } else {
             runDirectory = args[0];
             runId = args[1];
@@ -53,15 +50,20 @@ public class RunEconomicAnalyses {
             drtStopBased = args[10];
         }
 
-        noiseOutputDirectory = runDirectory + "analysis/noise/";
-        airPollutionOutputDirectory = runDirectory + "analysis/airPollution/";
-        accidentsOutputDirectory = runDirectory + "analysis/accidents/";
-        hbefaWarmFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/f5b276f41a0531ed740a81f4615ec00f4ff7a28d.enc";
-        hbefaColdFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/b63f949211b7c93776cdce8a7600eff4e36460c8.enc";
+        String noiseOutputDirectory = runDirectory + "analysis/noise/";
+        String airPollutionOutputDirectory = runDirectory + "analysis/airPollution/";
+        String accidentsOutputDirectory = runDirectory + "analysis/accidents/";
+        String hbefaWarmFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/944637571c833ddcf1d0dfcccb59838509f397e6.enc";
+        String hbefaColdFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/54adsdas478ss457erhzj5415476dsrtzu.enc";
+
+        File airPollutionDirectory = new File(airPollutionOutputDirectory);
+        if(!airPollutionDirectory.exists()) {
+            airPollutionDirectory.mkdirs();
+        }
 
         RunOfflineNoiseAnalysisWithDrt.main(new String[]{runDirectory, runId, noiseOutputDirectory});
-        // RunOfflineAirPollutionAnalysisWithDrt.main(new String[]{runDirectory, runId, hbefaWarmFile, hbefaColdFile, airPollutionOutputDirectory});
-        RunAccidentsWithDrt.main(new String[]{runDirectory, runId, accidentsOutputDirectory, runType, shapeFile, roadTypesCarAllowed, stationsFile, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased});
+        RunOfflineAirPollutionAnalysisWithDrt.main(new String[]{runDirectory, runId, hbefaWarmFile, hbefaColdFile, airPollutionOutputDirectory});
+        RunAccidentsWithDrt.main(new String[]{runDirectory, runId, accidentsOutputDirectory, runType, shapeFile, roadTypesCarAllowed, stationsFile, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased}); // Guice Injection Error
     }
 
 }

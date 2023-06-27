@@ -13,38 +13,46 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 public class RunOfflineNoiseAnalysisWithDrt {
     private static final Logger log = Logger.getLogger(RunOfflineNoiseAnalysis.class);
-    private final String runDirectory;
-    private final String runId;
-    private final String analysisOutputDirectory;
+    private static String runDirectory;
+    private static String runId;
+    private static String analysisOutputDirectory;
     private final String tunnelLinkIdFile = null;
     private final String noiseBarriersFile = null;
 
     public RunOfflineNoiseAnalysisWithDrt(String runDirectory, String runId, String analysisOutputDirectory) {
-        this.runDirectory = runDirectory;
-        this.runId = runId;
+        RunOfflineNoiseAnalysisWithDrt.runDirectory = runDirectory;
+        RunOfflineNoiseAnalysisWithDrt.runId = runId;
         if (!analysisOutputDirectory.endsWith("/")) {
             analysisOutputDirectory = analysisOutputDirectory + "/";
         }
 
-        this.analysisOutputDirectory = analysisOutputDirectory;
+        RunOfflineNoiseAnalysisWithDrt.analysisOutputDirectory = analysisOutputDirectory;
     }
 
     public static void main(String[] args) {
-        String runDirectory = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/output-berlin-v5.4-1pct/";
-        String runId = "berlin-v5.4-1pct";
-        RunOfflineNoiseAnalysis analysis = new RunOfflineNoiseAnalysis("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/output-berlin-v5.4-1pct/", "berlin-v5.4-1pct", "./scenario/");
+        if (args.length == 0){
+            runDirectory = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-1pct/output-berlin-v5.4-1pct/";
+            runId = "berlin-v5.4-1pct";
+            analysisOutputDirectory = "test";
+        } else {
+            runDirectory = args[0];
+            runId = args[1];
+            analysisOutputDirectory = args[2];
+        }
+
+        RunOfflineNoiseAnalysisWithDrt analysis = new RunOfflineNoiseAnalysisWithDrt(runDirectory, runId, analysisOutputDirectory);
         analysis.run();
     }
 
     void run() {
         double receiverPointGap = 100.0D;
         double timeBinSize = 3600.0D;
-        Config config = ConfigUtils.createConfig(new ConfigGroup[]{new NoiseConfigGroup()});
+        Config config = ConfigUtils.createConfig(new NoiseConfigGroup());
         config.global().setCoordinateSystem("EPSG:31468");
-        config.network().setInputFile(this.runDirectory + this.runId + ".output_network.xml.gz");
-        config.plans().setInputFile(this.runDirectory + this.runId + ".output_plans.xml.gz");
-        config.controler().setOutputDirectory(this.runDirectory);
-        config.controler().setRunId(this.runId);
+        config.network().setInputFile(runDirectory + runId + ".output_network.xml.gz");
+        config.plans().setInputFile(runDirectory + runId + ".output_plans.xml.gz");
+        config.controler().setOutputDirectory(runDirectory);
+        config.controler().setRunId(runId);
         NoiseConfigGroup noiseParameters = (NoiseConfigGroup)config.getModules().get("noise");
         noiseParameters.setReceiverPointGap(receiverPointGap);
         double xMin = 4573258.0D;
@@ -74,9 +82,9 @@ public class RunOfflineNoiseAnalysisWithDrt {
         noiseParameters.setNoiseBarriersFilePath(this.noiseBarriersFile);
         noiseParameters.setNoiseBarriersSourceCRS("EPSG:31468");
         Scenario scenario = ScenarioUtils.loadScenario(config);
-        NoiseOfflineCalculation noiseCalculation = new NoiseOfflineCalculation(scenario, this.analysisOutputDirectory);
+        NoiseOfflineCalculation noiseCalculation = new NoiseOfflineCalculation(scenario, analysisOutputDirectory);
         noiseCalculation.run();
-        String outputFilePath = this.analysisOutputDirectory + "noise-analysis/";
+        String outputFilePath = analysisOutputDirectory + "noise-analysis/";
         ProcessNoiseImmissions process = new ProcessNoiseImmissions(outputFilePath + "immissions/", outputFilePath + "receiverPoints/receiverPoints.csv", noiseParameters.getReceiverPointGap());
         process.run();
         String[] labels = new String[]{"damages_receiverPoint"};

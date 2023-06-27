@@ -36,19 +36,37 @@ public class RunOfflineAirPollutionAnalysisWithDrt {
 
     public static void main(String[] args) {
 
-        final String runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
-        final String runId = "massConservation-1506vehicles-8seats";
-        final String outputDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/analysis/airPollution/";
+        String runDirectory = "";
+        String runId = "";
+        String outputDirectory = "";
+        String hbefaFileCold = "";
+        String hbefaFileWarm = "";
 
-        final String hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/b63f949211b7c93776cdce8a7600eff4e36460c8.enc";
-        final String hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/f5b276f41a0531ed740a81f4615ec00f4ff7a28d.enc";
+        if (args.length == 0) {
+            runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
+            runId = "massConservation-1506vehicles-8seats";
+            outputDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/analysis/airPollution/";
+
+            hbefaFileCold = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/54adsdas478ss457erhzj5415476dsrtzu.enc";
+            hbefaFileWarm = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/944637571c833ddcf1d0dfcccb59838509f397e6.enc";
+
+        } else if (args.length == 5) {
+            runDirectory = args[0];
+            runId = args[1];
+            hbefaFileWarm = args[2];
+            hbefaFileCold = args[3];
+            outputDirectory = args[4];
+        } else {
+            System.out.println("Insufficient arguments provided.");
+        }
+
 
         RunOfflineAirPollutionAnalysisWithDrt analysis = new RunOfflineAirPollutionAnalysisWithDrt(
                 runDirectory,
                 runId,
                 hbefaFileWarm,
                 hbefaFileCold,
-                runDirectory);
+                outputDirectory);
 
         analysis.run();
     }

@@ -71,6 +71,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static String OUTPUT_DIRECTORY;
 	private static String RUN_ID;
+	private static URL URL_2_DRT_STOPS;
 	private static int LAST_ITERATION;
 
 	public static void main(String[] args) throws MalformedURLException {
@@ -87,6 +88,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			ENFORCE_MASS_CONSERVATION = true;
 			EXTRA_PT_PLAN = true;
 			DRT_STOP_BASED = true;
+			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 
 			OUTPUT_DIRECTORY = "./scenarios/output/sample/";
 			LAST_ITERATION = 0;
@@ -138,9 +140,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
 		EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
 		DRT_STOP_BASED = Boolean.valueOf(args[7]);
-		configArgs = new String[args.length-8];
-		for(int i = 8; i < args.length; i++){
-			configArgs[i-8] = args[i];
+		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
+		configArgs = new String[args.length-9];
+		for(int i = 9; i < args.length; i++){
+			configArgs[i-9] = args[i];
 		}
 
 		return configArgs;
@@ -237,7 +240,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
 
 			//TODO: ist das hier so richtig?
-			drtConfigGroup.setTransitStopFile("drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+			//drtConfigGroup.setTransitStopFile("drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+			drtConfigGroup.setTransitStopFile(String.valueOf(URL_2_DRT_STOPS));
+
 			log.warn("you are now using a stop based operational scheme for drt! This is in development.");
 
 			Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),

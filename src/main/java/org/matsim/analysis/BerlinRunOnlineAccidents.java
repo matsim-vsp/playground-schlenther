@@ -16,7 +16,7 @@ import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
  */
 
 
-public class RunAccidentsWithDrt {
+public class BerlinRunOnlineAccidents {
 
     private static final Logger log = Logger.getLogger(RunBerlinAccidents.class);
     private final String runDirectory;
@@ -34,7 +34,7 @@ public class RunAccidentsWithDrt {
     private final String drtStopBased;
     private final String drtStops;
 
-    public RunAccidentsWithDrt(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops){
+    public BerlinRunOnlineAccidents(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops){
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.analysisOutputDirectory = analysisOutputDirectory;
@@ -104,7 +104,7 @@ public class RunAccidentsWithDrt {
             System.out.println("Insufficient arguments provided.");
         }
 
-        RunAccidentsWithDrt accAnalysis = new RunAccidentsWithDrt(runDirectory,
+        BerlinRunOnlineAccidents accAnalysis = new BerlinRunOnlineAccidents(runDirectory,
                 runId,
                 analysisOutputDirectory,
                 runType,

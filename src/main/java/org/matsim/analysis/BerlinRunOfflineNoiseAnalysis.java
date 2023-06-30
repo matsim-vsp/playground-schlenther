@@ -7,11 +7,10 @@ import org.matsim.contrib.noise.NoiseConfigGroup;
 import org.matsim.contrib.noise.NoiseOfflineCalculation;
 import org.matsim.contrib.noise.ProcessNoiseImmissions;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 
-public class RunOfflineNoiseAnalysisWithDrt {
+public class BerlinRunOfflineNoiseAnalysis {
     private static final Logger log = Logger.getLogger(RunOfflineNoiseAnalysis.class);
     private static String runDirectory;
     private static String runId;
@@ -19,14 +18,14 @@ public class RunOfflineNoiseAnalysisWithDrt {
     private final String tunnelLinkIdFile = null;
     private final String noiseBarriersFile = null;
 
-    public RunOfflineNoiseAnalysisWithDrt(String runDirectory, String runId, String analysisOutputDirectory) {
-        RunOfflineNoiseAnalysisWithDrt.runDirectory = runDirectory;
-        RunOfflineNoiseAnalysisWithDrt.runId = runId;
+    public BerlinRunOfflineNoiseAnalysis(String runDirectory, String runId, String analysisOutputDirectory) {
+        BerlinRunOfflineNoiseAnalysis.runDirectory = runDirectory;
+        BerlinRunOfflineNoiseAnalysis.runId = runId;
         if (!analysisOutputDirectory.endsWith("/")) {
             analysisOutputDirectory = analysisOutputDirectory + "/";
         }
 
-        RunOfflineNoiseAnalysisWithDrt.analysisOutputDirectory = analysisOutputDirectory;
+        BerlinRunOfflineNoiseAnalysis.analysisOutputDirectory = analysisOutputDirectory;
     }
 
     public static void main(String[] args) {
@@ -40,7 +39,7 @@ public class RunOfflineNoiseAnalysisWithDrt {
             analysisOutputDirectory = args[2];
         }
 
-        RunOfflineNoiseAnalysisWithDrt analysis = new RunOfflineNoiseAnalysisWithDrt(runDirectory, runId, analysisOutputDirectory);
+        BerlinRunOfflineNoiseAnalysis analysis = new BerlinRunOfflineNoiseAnalysis(runDirectory, runId, analysisOutputDirectory);
         analysis.run();
     }
 

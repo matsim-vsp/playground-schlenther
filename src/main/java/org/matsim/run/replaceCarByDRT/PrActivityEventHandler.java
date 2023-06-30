@@ -1,6 +1,7 @@
 package org.matsim.run.replaceCarByDRT;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
@@ -16,7 +17,7 @@ import java.util.Set;
 
 class PrActivityEventHandler implements ActivityStartEventHandler, ActivityEndEventHandler {
 
-    private static final Logger log = Logger.getLogger(PrActivityEventHandler.class);
+    private static final Logger log = LogManager.getLogger(PrActivityEventHandler.class);
 
     //key = name, value = coord
     private HashMap<PRStation, Integer> agentsPerPRStation = new HashMap<>();

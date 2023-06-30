@@ -1,6 +1,7 @@
 package org.matsim.run.replaceCarByDRT;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 public class TrafficVolumeEventHandler implements LinkEnterEventHandler {
 
-    private static final Logger log = Logger.getLogger(TrafficVolumeEventHandler.class);
+    private static final Logger log = LogManager.getLogger(TrafficVolumeEventHandler.class);
 
     private Map<Id<Link>, Integer> DTVPerLink_Total = new HashMap<>();
     private Map<Id<Link>, Double> MileagePerLink = new HashMap<>();

@@ -24,7 +24,8 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.analysis.RunBerlinAccidents;
 import org.matsim.analysis.RunOfflineNoiseAnalysis;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 
 class ReplaceCarByDRT {
 
-	private static Logger log = Logger.getLogger(ReplaceCarByDRT.class);
+	private static Logger log = LogManager.getLogger(ReplaceCarByDRT.class);
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";

@@ -22,7 +22,8 @@ package org.matsim.run.replaceCarByDRT;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.drt.fare.DrtFareParams;
@@ -57,7 +58,7 @@ import java.util.*;
 //@CommandLine.Command( header = ":: MyScenario ::", version = "1.0")
 public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
-	private static final Logger log = Logger.getLogger(RunBerlinNoInnerCarTripsScenario.class);
+	private static final Logger log = LogManager.getLogger(RunBerlinNoInnerCarTripsScenario.class);
 	private static Set<String> REPLACING_MODES;
 
 	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;

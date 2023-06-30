@@ -21,7 +21,8 @@ package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Pair;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
  *
  */
 class DrtVehicleCreatorForBanScenario {
-	private static final Logger log = Logger.getLogger(DrtVehicleCreator.class);
+	private static final Logger log = LogManager.getLogger(DrtVehicleCreator.class);
 
 	private final CoordinateTransformation ct;
 

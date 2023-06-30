@@ -52,8 +52,9 @@ public class RunTrafficVolumeEventHandler {
 
         //write to CSV file
         String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyTrafficVolume_vehicles.tsv";
+        String mileageOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyMileage_vehicles.tsv";
         DTVPerLink2CSV(handler1.getDTVPerLink_Total(),network, innerCity, berlin, outputFileName1);
-        //TODO: do the same for mileage, already in eventHandler
+        mileagePerLink2CSV(handler1.getDTVPerLink_Total(), network, innerCity, berlin, mileageOutputFileName);
     }
 
     private static void DTVPerLink2CSV(Map<Id<Link>, Integer> DTVPerLink, Network network, List<PreparedGeometry> innerCity_shp, List<PreparedGeometry> berlin_shp, String outputFileName){
@@ -64,9 +65,6 @@ public class RunTrafficVolumeEventHandler {
             for (Map.Entry<Id<Link>, Integer> entry : DTVPerLink.entrySet()) {
                 Id<Link> linkId = entry.getKey();
                 Integer link_DTV = entry.getValue();
-                Link link = network.getLinks().get(linkId);
-                double linkLength = link.getLength(); //TODO: Mileage
-
                 writer.writeNext(new String[]{String.valueOf(linkId), String.valueOf(link_DTV)});
 
             }
@@ -77,22 +75,25 @@ public class RunTrafficVolumeEventHandler {
         }
     }
 
-    private static String getLocationType(Link link,  List<PreparedGeometry> innerCity_shp, List<PreparedGeometry> berlin_shp) {
+    private static void mileagePerLink2CSV(Map<Id<Link>, Integer> DTVPerLink, Network network, List<PreparedGeometry> innerCity_shp, List<PreparedGeometry> berlin_shp, String outputFileName){
+        try {
+            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+            writer.writeNext(new String[]{"link","mileage"});
 
-        //TODO: is it enough to get the coordinate from the FromNode?
-        if(ShpGeometryUtils.isCoordInPreparedGeometries(link.getFromNode().getCoord(), innerCity_shp)){
-            return "innerCity";
-        } else if (ShpGeometryUtils.isCoordInPreparedGeometries(link.getFromNode().getCoord(), berlin_shp)){
-            if(!ShpGeometryUtils.isCoordInPreparedGeometries(link.getFromNode().getCoord(), innerCity_shp)){
-                return "BerlinButNotInnerCity";
+            for (Map.Entry<Id<Link>, Integer> entry : DTVPerLink.entrySet()) {
+                Id<Link> linkId = entry.getKey();
+                Integer link_DTV = entry.getValue();
+                Link link = network.getLinks().get(linkId);
+                double linkLength = link.getLength();
+                double link_mileage = link_DTV * linkLength;
+
+                writer.writeNext(new String[]{String.valueOf(linkId), String.valueOf(link_mileage)});
+
             }
-            else {
-                throw new IllegalStateException("inner city should be catched above");
-            }
-        } else {
-            return "Brandenburg";
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-
-
 }

@@ -16,8 +16,17 @@ policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 baseDTV <- read.table(file = base_inputfile, sep = '\t', header = TRUE)
 policyDTV <- read.table(file = policy_inputfile, sep = '\t', header = TRUE)
 
+sum(baseDTV$agents) / sum(policyDTV$agents)
+sum(policyDTV$agents) / sum(baseDTV$agents)
+
 differenceDTV <- baseDTV
 differenceDTV$agents <- policyDTV$agents - baseDTV$agents
+
+shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+
+#TODO: How big is the DTV change inside the city center?
+names(differenceNoise_summed)[1] <- "link"
+helper <- merge(differenceDTV, differenceNoise_summed, by = "link", suffixes = c("_DTV","_noise"))
 
 differenceDTV_reverse <- baseDTV
 differenceDTV_reverse$agents <- differenceDTV_reverse$agents - policyDTV$agents

@@ -22,10 +22,7 @@ import java.util.Map;
 public class RunAirPollutionEventHandler {
 
     public static void main(String[] args) {
-        String inputFile = "scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/analysis/airPollution/berlin-v5.5-10pct.emission.events.offline.xml.gz";
-        String inputNetwork = "scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/berlin-v5.5-10pct.output_network.xml.gz";
-
-        Network network = NetworkUtils.readNetwork(inputNetwork);
+        String inputFile = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/analysis/airPollution/final-10pct-7503vehicles-8seats.emission.events.offline.xml.gz";
 
         //create an event object
         EventsManager eventsManager = EventsUtils.createEventsManager();
@@ -42,10 +39,11 @@ public class RunAirPollutionEventHandler {
 
         //write to CSV file
         String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_airPollution_Costs.tsv";
-        EmissionsPerLink2CSV(emissionsHandler.getLink2pollutants(),network,outputFileName1);
+        EmissionsPerLink2CSV(emissionsHandler.getLink2pollutants(),outputFileName1);
+
     }
 
-    private static void EmissionsPerLink2CSV(Map<Id<Link>, Map<Pollutant, Double>> DTVPerLink, Network network, String outputFileName){
+    private static void EmissionsPerLink2CSV(Map<Id<Link>, Map<Pollutant, Double>> DTVPerLink, String outputFileName){
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"link","pollutant","emissions"});
@@ -67,6 +65,5 @@ public class RunAirPollutionEventHandler {
             e.printStackTrace();
         }
     }
-
 
 }

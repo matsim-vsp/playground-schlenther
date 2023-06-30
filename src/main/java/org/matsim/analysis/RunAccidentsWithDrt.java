@@ -32,8 +32,9 @@ public class RunAccidentsWithDrt {
     private final String enforceMassConservation;
     private final String extraPtPlan;
     private final String drtStopBased;
+    private final String drtStops;
 
-    public RunAccidentsWithDrt(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased){
+    public RunAccidentsWithDrt(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops){
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.analysisOutputDirectory = analysisOutputDirectory;
@@ -47,6 +48,7 @@ public class RunAccidentsWithDrt {
         this.enforceMassConservation = enforceMassConservation;
         this.extraPtPlan = extraPtPlan;
         this.drtStopBased = drtStopBased;
+        this.drtStops = drtStops;
 
     }
 
@@ -65,6 +67,7 @@ public class RunAccidentsWithDrt {
         String enforceMassConservation = "";
         String extraPtPlan = "";
         String drtStopBased = "";
+        String drtStops = "";
 
         if (args.length == 0) {
             runDirectory = "scenarios/output/runs-2023-05-26/baseCaseContinued/";
@@ -79,7 +82,8 @@ public class RunAccidentsWithDrt {
             enforceMassConservation = "true";
             extraPtPlan = "false";
             drtStopBased = "false";
-        } if (args.length == 12) {
+            drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
+        } if (args.length == 13) {
             runDirectory = args[0];
             runId = args[1];
             analysisOutputDirectory = args[2];
@@ -93,6 +97,7 @@ public class RunAccidentsWithDrt {
             enforceMassConservation = args[9];
             extraPtPlan = args[10];
             drtStopBased = args[11];
+            drtStops = args[12];
 
 
         } else {
@@ -110,7 +115,8 @@ public class RunAccidentsWithDrt {
                 replacingModes,
                 enforceMassConservation,
                 extraPtPlan,
-                drtStopBased);
+                drtStopBased,
+                drtStops);
 
         accAnalysis.run();
     }
@@ -136,6 +142,7 @@ public class RunAccidentsWithDrt {
                     enforceMassConservation,
                     extraPtPlan,
                     drtStopBased,
+                    drtStops,
                     outputConfigName
             };
 

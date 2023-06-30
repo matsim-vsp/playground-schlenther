@@ -20,6 +20,7 @@ public class RunEconomicAnalyses {
         String enforceMassConservation;
         String extraPtPlan;
         String drtStopBased;
+        String drtStops;
 
         if (args.length == 0) {
             runDirectory = "scenarios/output/sample/";
@@ -34,6 +35,7 @@ public class RunEconomicAnalyses {
             enforceMassConservation = "true";
             extraPtPlan = "false";
             drtStopBased = "false";
+            drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
 
         } else {
             runDirectory = args[0];
@@ -48,6 +50,7 @@ public class RunEconomicAnalyses {
             enforceMassConservation = args[8];
             extraPtPlan = args[9];
             drtStopBased = args[10];
+            drtStops = args[11];
         }
 
         String noiseOutputDirectory = runDirectory + "analysis/noise/";
@@ -61,9 +64,11 @@ public class RunEconomicAnalyses {
             airPollutionDirectory.mkdirs();
         }
 
-        RunOfflineNoiseAnalysisWithDrt.main(new String[]{runDirectory, runId, noiseOutputDirectory});
-        RunOfflineAirPollutionAnalysisWithDrt.main(new String[]{runDirectory, runId, hbefaWarmFile, hbefaColdFile, airPollutionOutputDirectory});
-        RunAccidentsWithDrt.main(new String[]{runDirectory, runId, accidentsOutputDirectory, runType, shapeFile, roadTypesCarAllowed, stationsFile, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased}); // Guice Injection Error
+        //RunOfflineNoiseAnalysisWithDrt.main(new String[]{runDirectory, runId, noiseOutputDirectory});
+        //RunOfflineAirPollutionAnalysisWithDrt.main(new String[]{runDirectory, runId, hbefaWarmFile, hbefaColdFile, airPollutionOutputDirectory});
+        RunAccidentsWithDrt.main(new String[]{runDirectory, runId, accidentsOutputDirectory, runType, shapeFile, roadTypesCarAllowed, stationsFile, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops});
     }
+
+
 
 }

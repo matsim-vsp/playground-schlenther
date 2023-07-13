@@ -1,7 +1,9 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
+import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.matsim.analysis.RunTripsPreparation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -26,14 +28,47 @@ import java.util.Set;
 
 public class RunTrafficVolumeEventHandler {
 
+    private final String runDirectory;
+    private final String runId;
+    private final String inner_city_shp;
+    private final String berlin_shp;
+
+    private static final Logger log = Logger.getLogger(RunTripsPreparation.class);
+
+    public RunTrafficVolumeEventHandler(String runDirectory, String runId, String inner_city_shp, String berlin_shp){
+        this.runDirectory = runDirectory;
+        this.runId = runId;
+        this.inner_city_shp = inner_city_shp;
+        this.berlin_shp = berlin_shp;
+    }
+
     public static void main(String[] args) {
-        String inputFile = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/massConservation-1506vehicles-8seats.output_events.xml.gz";
-        String inputNetwork = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/massConservation-1506vehicles-8seats.output_network.xml.gz";
+        if(args.length == 0) {
+            String runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
+            String runId = "massConservation-1506vehicles-8seats";
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+
+            RunTrafficVolumeEventHandler trafficVolumes = new RunTrafficVolumeEventHandler(runDirectory, runId, inner_city_shp, berlin_shp);
+            trafficVolumes.run();
+        } else {
+            String runDirectory = args[0];
+            String runId = args[1];
+            String inner_city_shp = args[2];
+            String berlin_shp = args[3];
+
+            RunTrafficVolumeEventHandler trafficVolumes = new RunTrafficVolumeEventHandler(runDirectory, runId, inner_city_shp, berlin_shp);
+            trafficVolumes.run();
+
+        }
+    }
+
+    public void run() {
+        String inputFile = runDirectory + runId + ".output_events.xml.gz";
+        String inputNetwork = runDirectory + runId + ".output_network.xml.gz";
 
         Network network = NetworkUtils.readNetwork(inputNetwork);
 
-        String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-        String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
         List<PreparedGeometry> innerCity = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(inner_city_shp));
         List<PreparedGeometry> berlin = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(berlin_shp));
 

@@ -84,7 +84,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
-			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
+			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt, TransportMode.bike);
 			ENFORCE_MASS_CONSERVATION = true;
 			EXTRA_PT_PLAN = true;
 			DRT_STOP_BASED = true;
@@ -122,8 +122,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		Controler controler = prepareControler(scenario);
 
-		SimulationEndListener endListener = new SimulationEndListener(controler);
-		controler.addControlerListener(endListener);
+		PostprocessingListener postprocessingListener = new PostprocessingListener(controler);
+		controler.addControlerListener(postprocessingListener);
 
 		controler.run();
 		RunBerlinScenario.runAnalysis(controler);

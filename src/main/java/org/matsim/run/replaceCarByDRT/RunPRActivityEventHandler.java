@@ -1,6 +1,8 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
+import org.apache.log4j.Logger;
+import org.matsim.analysis.RunTripsPreparation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -20,23 +22,56 @@ import java.util.*;
 
 public class RunPRActivityEventHandler {
 
+    private final String runDirectory;
+    private final String runId;
+    private final String pr_stations;
+
+
+    private static final Logger log = Logger.getLogger(RunTripsPreparation.class);
+
+
+    public RunPRActivityEventHandler(String runDirectory, String runId, String prStations) {
+        this.runDirectory = runDirectory;
+        this.runId = runId;
+        this.pr_stations = prStations;
+
+    }
+
+
     public static void main(String[] args) {
 
-       // String inputFile = "scenarios/output/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_events.xml.gz"; // Sample
-       String inputFile = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/final-10pct-7503vehicles-8seats.output_events.xml.gz";
+        if (args.length == 0) {
+            String runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
+            //Cluster: scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/
+            String runId = "massConservation-1506vehicles-8seats";
+            String tsvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
 
-       String inputNetwork = "scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true/final-10pct-7503vehicles-8seats.output_network.xml.gz";
-       Network network = NetworkUtils.readNetwork(inputNetwork);
+            RunPRActivityEventHandler prActivities = new RunPRActivityEventHandler(runDirectory, runId, tsvFilePath);
+            prActivities.run();
+        } else {
+            String runDirectory = args[0];
+            String runId = args[1];
+            String tsvFilePath = args[2];
+
+            RunPRActivityEventHandler prActivities = new RunPRActivityEventHandler(runDirectory, runId, tsvFilePath);
+            prActivities.run();
+        }
+    }
+
+    public void run(){
+        String inputFile = runDirectory + runId + ".output_events.xml.gz";
+        String inputNetwork = runDirectory + runId + ".output_network.xml.gz";
+
+        Network network = NetworkUtils.readNetwork(inputNetwork);
 
         // read CSV file
-        String tsvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
-        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(tsvFilePath));
+        Set<PRStation> prStationsSet = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(pr_stations));
 
         //create an event object
         EventsManager events = EventsUtils.createEventsManager();
 
         //create the handler and add it + sets LinkOfInterest to current PRLink
-        PrActivityEventHandler handler1 = new PrActivityEventHandler(prStations);
+        PrActivityEventHandler handler1 = new PrActivityEventHandler(prStationsSet);
         events.addHandler(handler1);
 
         //create the reader and read the file

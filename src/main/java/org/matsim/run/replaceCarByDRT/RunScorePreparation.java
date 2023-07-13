@@ -2,7 +2,6 @@ package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
-import org.matsim.analysis.RunOfflineNoiseAnalysis;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.PopulationUtils;
@@ -10,7 +9,6 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
-import org.matsim.core.router.MainModeIdentifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,42 +17,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class ScoresFromPlans2CSV {
+public class RunScorePreparation {
 
     private final String INPUT_RUNDIRECTORY;
     private final String INPUT_POPULATION;
     private final String INPUT_INNER_CITY_SHP;
     private final String INPUT_BERLIN_SHP;
     private final String INPUT_PR_STATIONS;
+    private final String INPUT_BOUNDARY_SHP;
 
-    public ScoresFromPlans2CSV(String runDirectory, String population, String inner_city_shp, String berlin_shp, String pr_stations) {
+    public RunScorePreparation(String runDirectory, String population, String inner_city_shp, String berlin_shp, String pr_stations, String boundary_shp) {
         this.INPUT_RUNDIRECTORY = runDirectory;
         this.INPUT_POPULATION = population;
         this.INPUT_INNER_CITY_SHP = inner_city_shp;
         this.INPUT_BERLIN_SHP = berlin_shp;
         this.INPUT_PR_STATIONS = pr_stations;
+        this.INPUT_BOUNDARY_SHP = boundary_shp;
     }
 
     public static void main(String[] args) {
         if ( args.length==0 ){
             String runDirectory = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/";
-            // private static final String INPUT_POPULATION = "scenarios/output/old-runs/berlin-v5.5-sample/inside-allow-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Sample input
+//            String runDirectory = "scenarios/output/baseCaseContinued/"; // Base Case 1pct
             String population = "scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/closestToOutside-0.5-1506vehicles-8seats.output_plans.xml.gz"; // Car-free Scenario input
-            // private static final String INPUT_POPULATION = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case Input
+//            String population = "scenarios/output/baseCaseContinued/berlin-v5.5-1pct.output_plans.xml.gz"; // Base Case 1pct
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
             String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+            String boundary_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-boundaries-500m.shp";
 
-            ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
-            scoresFromPlans.run();
+            RunScorePreparation scorePreparation = new RunScorePreparation(runDirectory, population, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
+            scorePreparation.run();
         } else {
             String runDirectory = args[0];
             String population = args[1];
             String inner_city_shp = args[2];
             String berlin_shp = args[3];
             String pr_stations = args[4];
+            String boundary_shp = args[5];
 
-            ScoresFromPlans2CSV scoresFromPlans = new ScoresFromPlans2CSV(runDirectory, population, inner_city_shp, berlin_shp, pr_stations);
+            RunScorePreparation scoresFromPlans = new RunScorePreparation(runDirectory, population, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
             scoresFromPlans.run();
         }
 
@@ -62,12 +64,13 @@ public class ScoresFromPlans2CSV {
 
     }
 
-    void run() {
+    public void run() {
         Population population = PopulationUtils.readPopulation(INPUT_POPULATION);
         String outputFileName = INPUT_RUNDIRECTORY + "output_plans_selectedPlanScores.tsv";
 
         List<PreparedGeometry> innerCity = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_INNER_CITY_SHP));
         List<PreparedGeometry> berlin = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BERLIN_SHP));
+        List<PreparedGeometry> boundaryZone = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BOUNDARY_SHP));
 
         Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(INPUT_PR_STATIONS));
 
@@ -82,18 +85,22 @@ public class ScoresFromPlans2CSV {
                     "noOfActivities",
                     "hasPRActivity",
                     "FirstPRStation",
-                    "LastPRStation"});
+                    "LastPRStation",
+                    "livesInsideBoundaryZone",
+                    "isCarUser"});
             for (Person person : population.getPersons().values()) {
 
                 // regional division
                 Activity home = getHomeActivity(person.getSelectedPlan());
                 String livingLocation = getRegion(home,innerCity,berlin);
+                boolean livesInsideBoundaryZone = getIfPersonLivesInsideBoundary(home, boundaryZone);
 
                 // income
                 Double income = (Double) PopulationUtils.getPersonAttribute(person,"income");
 
                 // mainMode
                 String mainMode = getMainMode(person.getSelectedPlan());
+                boolean isCarUser = getIfAgentIsCarUser(person.getSelectedPlan());
 
                 // travelled distance
                 Double travelledDistance = getTravelledDistance(person.getSelectedPlan());
@@ -118,7 +125,9 @@ public class ScoresFromPlans2CSV {
                         String.valueOf(activityCount),
                         String.valueOf(prActivity),
                         firstPRStation,
-                        lastPRStation}
+                        lastPRStation,
+                        String.valueOf(livesInsideBoundaryZone),
+                        String.valueOf(isCarUser)}
                 );
             }
             writer.close();
@@ -128,8 +137,6 @@ public class ScoresFromPlans2CSV {
     }
 
     private static String getRegion(Activity home, List<PreparedGeometry> innerCity, List<PreparedGeometry> berlin) {
-
-        String livingLocation = new String();
 
         if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCity)){
             return "innerCity";
@@ -146,6 +153,15 @@ public class ScoresFromPlans2CSV {
             return "Brandenburg";
         }
     }
+
+    private static boolean getIfPersonLivesInsideBoundary(Activity home, List<PreparedGeometry> innerCityBoundary) {
+        if(ShpGeometryUtils.isCoordInPreparedGeometries(home.getCoord(), innerCityBoundary)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
     private static String getFirstPRStation(Plan plan, Set<PRStation> prStations){
         List<PlanElement> planElements = plan.getPlanElements();
@@ -166,6 +182,7 @@ public class ScoresFromPlans2CSV {
         }
         return "";
     }
+
 
     private static String getLastPRStation(Plan plan, Set<PRStation> prStations){
         List<PlanElement> planElements = plan.getPlanElements();
@@ -240,6 +257,23 @@ public class ScoresFromPlans2CSV {
         return acts.stream()
                 .filter(act -> act.getType().contains("home"))
                 .findFirst().orElse(acts.get(0));
+    }
+
+    private static boolean getIfAgentIsCarUser(Plan plan) {
+        List<Leg> legs = PopulationUtils.getLegs(plan);
+        if (legs.size() == 0){
+            return false;
+        }
+
+        List<String> modes = new ArrayList<>();
+
+        for (Leg leg : legs) {
+            if(leg.getMode().contains("car")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // can be used instead of mainMode

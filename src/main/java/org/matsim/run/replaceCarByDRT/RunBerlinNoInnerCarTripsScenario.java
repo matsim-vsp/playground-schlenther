@@ -67,7 +67,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
 	private static boolean ENFORCE_MASS_CONSERVATION = false;
 	private static boolean EXTRA_PT_PLAN = false;
-	private static boolean DRT_STOP_BASED = false; //TODO: change all 3 booleans to enum
+	private static boolean DRT_STOP_BASED = false;
+	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE; // TODO: change all booleans to enum
 
 	private static String OUTPUT_DIRECTORY;
 	private static String RUN_ID;
@@ -89,12 +90,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			EXTRA_PT_PLAN = true;
 			DRT_STOP_BASED = true;
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToInsideActivity;
 
 			OUTPUT_DIRECTORY = "./scenarios/output/sample/";
 			LAST_ITERATION = 0;
 			RUN_ID = "sample-run";
 
-			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-sample.config.test.xml",
+			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
 					"--config:controler.lastIteration", String.valueOf(LAST_ITERATION),
 					"--config:controler.outputDirectory", OUTPUT_DIRECTORY,
 					"--config:controler.runId", RUN_ID};
@@ -141,9 +143,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
 		DRT_STOP_BASED = Boolean.valueOf(args[7]);
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
-		configArgs = new String[args.length-9];
-		for(int i = 9; i < args.length; i++){
-			configArgs[i-9] = args[i];
+		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[9]);
+		configArgs = new String[args.length-10];
+		for(int i = 10; i < args.length; i++){
+			configArgs[i-10] = args[i];
 		}
 
 		return configArgs;
@@ -316,7 +319,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
 				ENFORCE_MASS_CONSERVATION,
-				EXTRA_PT_PLAN
+				EXTRA_PT_PLAN,
+				EXTRA_PR_STATION_CHOICE
 		);
 
 		return scenario;

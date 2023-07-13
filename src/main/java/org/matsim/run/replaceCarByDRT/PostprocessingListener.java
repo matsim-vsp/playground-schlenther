@@ -54,6 +54,7 @@ public class PostprocessingListener implements ShutdownListener {
 //        String extraPtPlan = "false";
 //        String drtStopBased = "false";
 //        String drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
+//        String extraPRStationChoice = "closestToOutSideActivity";
 //
 //        String hbefaWarmFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/944637571c833ddcf1d0dfcccb59838509f397e6.enc";
 //        String hbefaColdFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/54adsdas478ss457erhzj5415476dsrtzu.enc";
@@ -61,7 +62,7 @@ public class PostprocessingListener implements ShutdownListener {
 //        RunComparisonAnalysis comparisonAnalysis = new RunComparisonAnalysis(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations, rScriptCommand);
 //        comparisonAnalysis.run();
 //
-//        RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, hbefaWarmFile, hbefaColdFile);
+//        RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, extraPRStationChoice, hbefaWarmFile, hbefaColdFile);
 //        try {
 //            economicAnalysis.run();
 //        } catch (IOException e) {

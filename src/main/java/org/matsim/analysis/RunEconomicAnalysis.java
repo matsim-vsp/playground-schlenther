@@ -19,8 +19,9 @@ public class RunEconomicAnalysis {
     private final String drtStops;
     private final String hbefaWarmFile;
     private final String hbefaColdFile;
+    private final String extraPRStationChoice;
 
-    public RunEconomicAnalysis(String runDirectory, String runId, String runType, String inner_city_shp, String roadTypesCarAllowed, String pr_stations, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops, String hbefaWarmFile, String hbefaColdFile){
+    public RunEconomicAnalysis(String runDirectory, String runId, String runType, String inner_city_shp, String roadTypesCarAllowed, String pr_stations, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops, String hbefaWarmFile, String hbefaColdFile, String extraPRStationChoice){
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.runType = runType;
@@ -35,6 +36,7 @@ public class RunEconomicAnalysis {
         this.drtStops = drtStops;
         this.hbefaWarmFile = hbefaWarmFile;
         this.hbefaColdFile = hbefaColdFile;
+        this.extraPRStationChoice = extraPRStationChoice;
     }
 
     public static void main(String[] args) throws IOException {
@@ -53,11 +55,12 @@ public class RunEconomicAnalysis {
             String extraPtPlan = "false";
             String drtStopBased = "false";
             String drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
+            String extraPRStationChoice = "closestToOutSideActivity";
 
             String hbefaWarmFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/944637571c833ddcf1d0dfcccb59838509f397e6.enc";
             String hbefaColdFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/54adsdas478ss457erhzj5415476dsrtzu.enc";
 
-            RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, hbefaWarmFile, hbefaColdFile);
+            RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, hbefaWarmFile, hbefaColdFile, extraPRStationChoice);
             economicAnalysis.run();
 
         } else {
@@ -74,11 +77,12 @@ public class RunEconomicAnalysis {
             String extraPtPlan = args[9];
             String drtStopBased = args[10];
             String drtStops = args[11];
+            String extraPRStationChoice = args[12];
 
-            String hbefaWarmFile = args[12];
-            String hbefaColdFile = args[13];
+            String hbefaWarmFile = args[13];
+            String hbefaColdFile = args[14];
 
-            RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, hbefaWarmFile, hbefaColdFile);
+            RunEconomicAnalysis economicAnalysis = new RunEconomicAnalysis(runDirectory, runId, runType, inner_city_shp, roadTypesCarAllowed, pr_stations, prStationChoice, replacingModes, enforceMassConservation, extraPtPlan, drtStopBased, drtStops, hbefaWarmFile, hbefaColdFile, extraPRStationChoice);
             economicAnalysis.run();
         }
 

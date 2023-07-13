@@ -1,22 +1,32 @@
-library(matsim)
-library(tidyverse)
-library(dplyr)
-library(ggalluvial)
+library(tidyr)
 library(lubridate)
 library(plotly)
-library(sf)
 library(hms)
+library(readr)
+library(sf)
+library(dplyr)
+library(matsim)
 
 ########################################
 # Preparation
-# Open questions: Sollen Ausreißer generell vor der Analyse herausgefiltert werden?
-# TODO: Finetune plots
+# Open questions: Sollen Ausreißer generell vor der Analyse herausgefiltert werden? -> JA!
+
+
+#HPC Cluster
+#args <- commandArgs(trailingOnly = TRUE)
+#policyCaseDirectory <- args[1]
+#shp <- "?"
+
+#10pct
+#baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+
+#1pct
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
-policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
 base_filename <- "output_plans_selectedPlanScores.tsv"
 policy_filename <- "output_plans_selectedPlanScores.tsv"
 base_inputfile <- file.path(baseCaseDirectory, base_filename)
@@ -30,6 +40,8 @@ personsJoined <- personsJoined %>%
   add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
 
 personsJoined <- personsJoined %>% filter(score_diff > -400)
+
+testos <- personsJoined %>% filter(livesInsideBoundaryZone_policy == "true")
 
 ########################################
 # Prepare folders
@@ -95,30 +107,27 @@ impacted_trips <- impacted_trips %>%
 ########################################
 # Prepare impacted vs non-impacted agents
 
-cases <- list("allPersons","impactedPersons","nonImpactedPersons")
+cases <- list("allePersonen","betroffenePersonen","nichtBetroffenePersonen")
 
-allPersons <- personsJoined
-impactedPersons <- personsJoined %>% filter(person %in% impacted_trips$person_policy)
-nonImpactedPersons <- personsJoined %>% filter(!person %in% impactedPersons$person)
+allePersonen <- personsJoined
+betroffenePersonen <- personsJoined %>% filter(person %in% impacted_trips$person_policy)
+nichtBetroffenePersonen <- personsJoined %>% filter(!person %in% betroffenePersonen$person)
 
-lupe3 <- nonImpactedPersons %>%
+lupe3 <- nichtBetroffenePersonen %>%
   filter(hasPRActivity_policy == "true")
-
-########################################
-# TODO: didAgentUseDRT - also change in forJava-Version!
 
 ########################################
 # Boxplots & Results
 
 for (case in cases){
-  if(case == "allPersons"){
-    casePersons <- allPersons
+  if(case == "allePersonen"){
+    casePersons <- allePersonen
   }
-  if(case == "impactedPersons"){
-    casePersons <- impactedPersons
+  if(case == "betroffenePersonen"){
+    casePersons <- betroffenePersonen
   }
-  if(case == "nonImpactedPersons"){
-    casePersons <- nonImpactedPersons
+  if(case == "nichtBetroffenePersonen"){
+    casePersons <- nichtBetroffenePersonen
   }
   
   policyCaseOutputDir <- paste0(policyCaseDirectory,"/analysis/score/",case)
@@ -138,10 +147,10 @@ for (case in cases){
   ggplot(casePersons, aes(y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "General results (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "Allgemeine Ergebnisse (Maßnahmenfall vs Basisfall)",
+      caption = "Score Delta = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Delta"
     ) +
     theme_classic() +
     theme(
@@ -167,9 +176,9 @@ for (case in cases){
   for (entry in hasPRActivityCategories){
     iterator <- iterator + 1
     results_hasPRActivity[iterator, ] <- list(entry, 
-                                              mean(casePersons[which(casePersons$hasPRActivity_policy == entry),20]), 
-                                              quantile((casePersons[which(casePersons$hasPRActivity_policy == entry),20]), probs = 0.05), 
-                                              sd(casePersons[which(casePersons$hasPRActivity_policy == entry),20])
+                                              mean(casePersons[which(casePersons$hasPRActivity_policy == entry),24]), 
+                                              quantile((casePersons[which(casePersons$hasPRActivity_policy == entry),24]), probs = 0.05), 
+                                              sd(casePersons[which(casePersons$hasPRActivity_policy == entry),24])
     )
     relevant_persons <- casePersons %>%
       filter(hasPRActivity_policy == entry)
@@ -196,10 +205,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = hasPRActivity_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by hasPRActivity (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach nutzt mind. 1 P+R-Station (Maßnahmenfall vs Basisfall)",
+      caption = "Score Delta = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Delta"
     ) +
     theme_classic() +
     theme(
@@ -210,6 +219,108 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_hasPRActivity.png"))
   
+  ########################################
+  # Results by livesInsideBoundaryZone
+  
+  mean(casePersons$score_diff[casePersons$livesInsideBoundaryZone_policy == "true"])
+  
+  livesInsideBoundaryZoneCategories <- unique(casePersons$livesInsideBoundaryZone_policy)
+  results_livesInsideBoundaryZone <- data.frame(livesInsideBoundaryZone = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+  iterator = 0
+  
+  "Results table + Histograms"
+  for (entry in livesInsideBoundaryZoneCategories){
+    iterator <- iterator + 1
+    results_livesInsideBoundaryZone[iterator, ] <- list(entry, 
+                                              mean(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), 
+                                              quantile((casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), probs = 0.05), 
+                                              sd(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24])
+    )
+    relevant_persons <- casePersons %>%
+      filter(livesInsideBoundaryZone_policy == entry)
+    
+    ggplot(relevant_persons, aes(x = score_diff)) +
+      geom_histogram(binwidth = 5) +
+      labs(
+        title = paste0("Distribution of score differences (",case,")"),
+        subtitle = paste("livesInsideBoundaryZone =",entry, "(policy vs base)"),
+        caption = "score_delta = score(policy) - score(base)",
+        x = "score_delta"
+      ) +
+      theme_classic() +
+      theme(
+        plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+        plot.caption = element_text(face = "italic")
+      )
+    ggsave(file.path(policyCaseOutputDir,paste0("histogram_livesInsideBoundaryZone_",entry,".png")))
+  }
+  
+  
+  "Boxplot"
+  ggplot(casePersons, aes(x = livesInsideBoundaryZone_policy, y = score_diff)) +
+    geom_boxplot(fill = "#0099f8") +
+    labs(
+      title = paste0("Distribution of score differences (",case,")"),
+      subtitle = "by livesInsideBoundaryZone (policy vs base)",
+      caption = "score_delta = score(policy) - score(base)",
+      y = "score_delta"
+    ) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+      plot.caption = element_text(face = "italic"),
+      axis.title.x = element_blank()
+    )
+  ggsave(file.path(policyCaseOutputDir,"boxplot_livesInsideBoundaryZone.png"))
+  
+  ########################################
+  # Results by isCarUser
+  
+  mean(casePersons$score_diff[casePersons$isCarUser_policy == "true"])
+  
+  isCarUserCategories <- unique(casePersons$isCarUser_policy)
+  results_isCarUser <- data.frame(isCarUser = character(), avg_score_diff = numeric(), pt95_score_diff = numeric(), sd_score_diff = numeric())
+  iterator = 0
+  
+  "Results table"
+  for (entry in isCarUserCategories){
+    iterator <- iterator + 1
+    results_isCarUser[iterator, ] <- list(entry, 
+                                                        mean(casePersons[which(casePersons$isCarUser_policy == entry),24]), 
+                                                        quantile((casePersons[which(casePersons$isCarUser_policy == entry),24]), probs = 0.05), 
+                                                        sd(casePersons[which(casePersons$isCarUser_policy == entry),24])
+    )
+    relevant_persons <- casePersons %>%
+      filter(isCarUser_policy == entry)
+  }
+  
+  "Results table2"
+  results_amountOfCarUsers <- data.frame(carUserPolicy = numeric(), carUserBase = numeric(), noCarUserPolicy = numeric(), noCarUserBase = numeric())
+  results_amountOfCarUsers[1, ] <- list(sum(casePersons$isCarUser_policy == "true"),
+                                        sum(casePersons$isCarUser_base == "true"),
+                                        sum(casePersons$isCarUser_policy == "false"),
+                                        sum(casePersons$isCarUser_base == "false"))
+  
+  
+  "Boxplot"
+  ggplot(casePersons, aes(x = isCarUser_policy, y = score_diff)) +
+    geom_boxplot(fill = "#0099f8") +
+    labs(
+      title = paste0("Distribution of score differences (",case,")"),
+      subtitle = "by isCarUser (policy vs base)",
+      caption = "score_delta = score(policy) - score(base)",
+      y = "score_delta"
+    ) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+      plot.caption = element_text(face = "italic"),
+      axis.title.x = element_blank()
+    )
+  ggsave(file.path(policyCaseOutputDir,"boxplot_isCarUser.png"))
   
   ########################################
   # Results by homeActivityZone
@@ -222,9 +333,9 @@ for (case in cases){
   for (entry in homeActivityZoneCategories){
     iterator <- iterator + 1
     results_homeActivityZone[iterator, ] <- list(entry, 
-                                                 mean(casePersons[which(casePersons$home.activity.zone_policy == entry),20]), 
-                                                 quantile((casePersons[which(casePersons$home.activity.zone_policy == entry),20]), probs = 0.05), 
-                                                 sd(casePersons[which(casePersons$home.activity.zone_policy == entry),20])
+                                                 mean(casePersons[which(casePersons$home.activity.zone_policy == entry),24]), 
+                                                 quantile((casePersons[which(casePersons$home.activity.zone_policy == entry),24]), probs = 0.05), 
+                                                 sd(casePersons[which(casePersons$home.activity.zone_policy == entry),24])
     )
     
     relevant_persons <- casePersons %>%
@@ -277,9 +388,9 @@ for (case in cases){
   for (entry in noOfActivitiesCategories){
     iterator <- iterator + 1
     results_noOfActivities[iterator, ] <- list(entry, 
-                                               mean(casePersons[which(casePersons$noOfActivities_policy == entry),20]), 
-                                               quantile((casePersons[which(casePersons$noOfActivities_policy == entry),20]), probs = 0.05), 
-                                               sd(casePersons[which(casePersons$noOfActivities_policy == entry),20])
+                                               mean(casePersons[which(casePersons$noOfActivities_policy == entry),24]), 
+                                               quantile((casePersons[which(casePersons$noOfActivities_policy == entry),24]), probs = 0.05), 
+                                               sd(casePersons[which(casePersons$noOfActivities_policy == entry),24])
     )
   }
   
@@ -340,9 +451,9 @@ for (case in cases){
   for (entry in mainModeCategories){
     iterator <- iterator + 1
     results_mainMode[iterator, ] <- list(entry, 
-                                         mean(casePersons[which(casePersons$mainMode_policy == entry),20]), 
-                                         quantile((casePersons[which(casePersons$mainMode_policy == entry),20]), probs = 0.05), 
-                                         sd(casePersons[which(casePersons$mainMode_policy == entry),20])
+                                         mean(casePersons[which(casePersons$mainMode_policy == entry),24]), 
+                                         quantile((casePersons[which(casePersons$mainMode_policy == entry),24]), probs = 0.05), 
+                                         sd(casePersons[which(casePersons$mainMode_policy == entry),24])
     )
     relevant_persons <- casePersons %>%
       filter(mainMode_policy == entry)
@@ -414,6 +525,9 @@ for (case in cases){
   write.table(results_mainMode,file.path(policyCaseOutputDir,"score_mainMode.tsv"),row.names = FALSE, sep = "\t")
   write.table(results_noOfActivities,file.path(policyCaseOutputDir,"score_noOfActivities.tsv"),row.names = FALSE, sep = "\t")
   write.table(results_hasPRActivity,file.path(policyCaseOutputDir,"score_hasPRActivity.tsv"),row.names = FALSE, sep = "\t")
+  write.table(results_livesInsideBoundaryZone,file.path(policyCaseOutputDir,"score_livesInsideBoundaryZone.tsv"),row.names = FALSE, sep = "\t")
+  write.table(results_isCarUser,file.path(policyCaseOutputDir,"score_isCarUser.tsv"),row.names = FALSE, sep = "\t")
+  write.table(results_amountOfCarUsers,file.path(policyCaseOutputDir,"score_amountOfCarUsers.tsv"),row.names = FALSE, sep = "\t")
   write.table(results_general,file.path(policyCaseOutputDir,"score_general.tsv") ,row.names = FALSE, sep = "\t")
 }
 

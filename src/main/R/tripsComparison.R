@@ -1,21 +1,31 @@
-library(matsim)
-library(dplyr)
-library(sf)
-library(tidyverse)
+library(tidyr)
 library(lubridate)
-library(ggalluvial)
 library(hms)
+library(readr)
+library(sf)
+library(dplyr)
+library(matsim)
+library(tidyverse)
+library(ggalluvial)
 
 ########################################
 # Preparation
 
+#HPC Cluster
+#args <- commandArgs(trailingOnly = TRUE)
+#policyCaseDirectory <- args[1]
+#shp <- "?"
+
+#10pct
+#baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+
+#1pct
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct/"
-baseTrips <- readTripsTable(baseCaseDirectory)
-
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
-policyCaseDirectory <- commandArgs(trailingOnly = TRUE)
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -252,9 +262,6 @@ for (case in tripCases){
       axis.title.x = element_blank()
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_mainMode.png"))
-
-  ########################################
-  # TODO: by hasPRStation (travTime, travelledDistance)
   
   ########################################
   # by PR Station (travTime, travelledDistance)
@@ -338,5 +345,4 @@ policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 
 write.table(results_travTime,file.path(policyTripsOutputDir,"trips_travTime.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_travelledDistance,file.path(policyTripsOutputDir,"trips_travelledDistance.tsv"),row.names = FALSE, sep = "\t")
-write.table(results_hasPR_travTime,file.path(policyTripsOutputDir,"trips_hasPR_travTime.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_falselyClassified,file.path(policyTripsOutputDir,"trips_falselyClassified.tsv"),row.names = FALSE, sep = "\t")

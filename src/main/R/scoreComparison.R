@@ -11,7 +11,6 @@ library(matsim)
 # Preparation
 # Open questions: Sollen Ausreißer generell vor der Analyse herausgefiltert werden? -> JA!
 
-
 #HPC Cluster
 #args <- commandArgs(trailingOnly = TRUE)
 #policyCaseDirectory <- args[1]
@@ -149,8 +148,8 @@ for (case in cases){
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "Allgemeine Ergebnisse (Maßnahmenfall vs Basisfall)",
-      caption = "Score Delta = Score(Maßnahmenfall) - Score(Basisfall)",
-      y = "Score Delta"
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -186,10 +185,10 @@ for (case in cases){
     ggplot(relevant_persons, aes(x = score_diff)) +
       geom_histogram(binwidth = 5) +
       labs(
-        title = paste0("Distribution of score differences (",case,")"),
-        subtitle = paste("hasPRActivity =",entry, "(policy vs base)"),
-        caption = "score_delta = score(policy) - score(base)",
-        x = "score_delta"
+        title = paste0("Verteilung der Score-Differenzen (",case,")"),
+        subtitle = paste("nutzt P+R-Station =",entry, "(Maßnahmenfall vs Basisfall)"),
+        caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+        x = "score_Δ"
       ) +
       theme_classic() +
       theme(
@@ -206,9 +205,9 @@ for (case in cases){
     geom_boxplot(fill = "#0099f8") +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach nutzt mind. 1 P+R-Station (Maßnahmenfall vs Basisfall)",
-      caption = "Score Delta = Score(Maßnahmenfall) - Score(Basisfall)",
-      y = "Score Delta"
+      subtitle = "nutzt mind. 1 P+R-Station (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -242,10 +241,10 @@ for (case in cases){
     ggplot(relevant_persons, aes(x = score_diff)) +
       geom_histogram(binwidth = 5) +
       labs(
-        title = paste0("Distribution of score differences (",case,")"),
+        title = paste0("Verteilung der Score-Differenzen (",case,")"),
         subtitle = paste("livesInsideBoundaryZone =",entry, "(policy vs base)"),
-        caption = "score_delta = score(policy) - score(base)",
-        x = "score_delta"
+        caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+        x = "score_Δ"
       ) +
       theme_classic() +
       theme(
@@ -261,10 +260,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = livesInsideBoundaryZone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by livesInsideBoundaryZone (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "lebt max. 500m außerhalb der Verbotszone (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -308,10 +307,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = isCarUser_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by isCarUser (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nutzt privaten Pkw (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -344,10 +343,10 @@ for (case in cases){
     ggplot(relevant_persons, aes(x = score_diff)) +
       geom_histogram(binwidth = 5) +
       labs(
-        title = paste0("Distribution of score differences (",case,")"),
+        title = paste0("Verteilung der Score-Differenzen (",case,")"),
         subtitle = paste("homeActivityZone =",entry, "(policy vs base)"),
-        caption = "score_delta = score(policy) - score(base)",
-        x = "score_delta"
+        caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+        x = "score_Δ"
       ) +
       theme_classic() +
       theme(
@@ -363,10 +362,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = home.activity.zone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by homeActivityZone (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach Wohnort (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -399,10 +398,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = noOfActivities_policy, group = noOfActivities_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by noOfActivities (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach Anzahl an Aktivitäten (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -423,11 +422,11 @@ for (case in cases){
   ggplot(casePersons_bins, aes(x = bin, group = bin, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by travelledDistance (policy)",
-      caption = "score_delta = score(policy) - score(base)",
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach Reiseweite (Maßnahmenfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
       x = "travelledDistance_policy",
-      y = "score_delta"
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -461,10 +460,10 @@ for (case in cases){
     ggplot(relevant_persons, aes(x = score_diff)) +
       geom_histogram(binwidth = 5) +
       labs(
-        title = paste0("Distribution of score differences (",case,")"),
+        title = paste0("Verteilung der Score-Differenzen (",case,")"),
         subtitle = paste("mainMode =",entry, "(policy vs base)"),
-        caption = "score_delta = score(policy) - score(base)",
-        x = "score_delta"
+        caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+        x = "score_Δ"
       ) +
       theme_classic() +
       theme(
@@ -480,10 +479,10 @@ for (case in cases){
   ggplot(casePersons, aes(x = mainMode_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by mainMode (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach Hauptverkehrsmittel (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(
@@ -503,10 +502,10 @@ for (case in cases){
   ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff, median), y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Distribution of score differences (",case,")"),
-      subtitle = "by LastPRStation (policy vs base)",
-      caption = "score_delta = score(policy) - score(base)",
-      y = "score_delta"
+      title = paste0("Verteilung der Score-Differenzen (",case,")"),
+      subtitle = "nach zuletzt genutzter P+R-Station (Maßnahmenfall vs Basisfall)",
+      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      y = "Score Δ"
     ) +
     theme_classic() +
     theme(

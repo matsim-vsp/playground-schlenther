@@ -152,10 +152,10 @@ boxplot_helper$travTime_diff <- as.numeric(boxplot_helper$travTime_diff)
 ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
-    title = "Distribution of travTime differences",
-    subtitle = "Impacted trips (policy vs base)",
-    caption = "travTime_delta = travTime(policy) - travTime(base)",
-    y = "travTime_delta [s]"
+    title = "Verteilung der Reisezeit-Differenzen",
+    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
+    y = "Reisezeit Δ [s]"
   ) +
   theme_classic() +
   theme(
@@ -187,10 +187,10 @@ for (tripType in tripTypes){
 ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
-    title = "Distribution of traveledDistance differences",
-    subtitle = "Impacted trips (policy vs base)",
-    caption = "traveledDistance_delta = traveledDistance(policy) - traveledDistance(base)",
-    y = "traveledDistance_delta [m]"
+    title = "Verteilung der Reiseweite-Differenzen",
+    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
+    y = "Reiseweite Δ [s]"
   ) +
   theme_classic() +
   theme(
@@ -206,16 +206,16 @@ ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 ########################################
 # Boxplots & Results 
 
-tripCases <- list("impacted_grenztrips","impacted_binnentrips","impacted_trips")
+tripCases <- list("Betroffener Quell-/Zielverkehr","Betroffener Binnenverkehr","Betroffener Verkehr")
 
 for (case in tripCases){
-  if(case == "impacted_grenztrips"){
+  if(case == "Betroffener Quell-/Zielverkehr"){
     caseTrips <- impGrenz_trips
   }
-  if(case == "impacted_binnentrips"){
+  if(case == "Betroffener Binnenverkehr"){
     caseTrips <- impBinnen_trips
   }
-  if(case == "impacted_trips"){
+  if(case == "Betroffener Verkehr"){
     caseTrips <- impacted_trips
   }
   
@@ -229,11 +229,11 @@ for (case in tripCases){
   ggplot(caseTrips, aes(x = reorder(main_mode_policy,travTime_diff,median), y = travTime_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = "Distribution of travTime differences",
-      subtitle = paste0("by mainMode (policy vs base - ", case ,")"),
-      caption = "travTime_delta = travTime(policy) - travTime(base)",
-      y = "travTime_delta [s]",
-      x = "main_mode"
+      title = "Verteilung der Reisezeit-Differenzen",
+      subtitle = paste0("nach Verkehrsmittel (Maßnahmenfall vs Basisfall - ", case ,")"),
+      caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
+      y = "Reisezeit Δ [s]",
+      x = "Verkehrsmittel"
     ) +
     theme_classic() +
     theme(
@@ -248,11 +248,11 @@ for (case in tripCases){
   ggplot(caseTrips, aes(x = reorder(main_mode_policy,traveledDistance_diff,median), y = traveledDistance_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = "Distribution of travelledDistance differences",
-      subtitle = paste0("by mainMode (policy vs base - ", case ,")"),
-      caption = "travelledDistance_delta = travelledDistance(policy) - travelledDistance(base)",
-      y = "traveledDistance_delta [m]",
-      x = "main_mode"
+      title = "Verteilung der Reiseweite-Differenzen",
+      subtitle = paste0("nach Verkehrsmittel (Maßnahmenfall vs Basisfall - ", case ,")"),
+      caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
+      y = "Reiseweite Δ [s]",
+      x = "Verkehrsmittel"
     ) +
     theme_classic() +
     theme(
@@ -270,10 +270,10 @@ for (case in tripCases){
   ggplot(caseTrips, aes(x = reorder(prStation, travTime_diff, median), y = travTime_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = "Distribution of travTime differences",
-      subtitle = paste0("by PRStation (policy vs base - ", case ,")"),
-      caption = "travTime_delta = travTime(policy) - travTime(base)",
-      y = "travTime_delta [s]"
+      title = "Verteilung der Reisezeit-Differenzen",
+      subtitle = paste0("nach P+R-Station (Maßnahmenfall vs Basisfall - ", case ,")"),
+      caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
+      y = "Reisezeit Δ [s]"
     ) +
     theme_classic() +
     theme(
@@ -291,10 +291,10 @@ for (case in tripCases){
   ggplot(caseTrips, aes(x = reorder(prStation, traveledDistance_diff, median), y = traveledDistance_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = "Distribution of traveledDistance differences",
-      subtitle = paste0("by PRStation (policy vs base - ", case ,")"),
-      caption = "traveledDistance_delta = traveledDistance(policy) - traveledDistance(base)",
-      y = "traveledDistance_delta [m]"
+      title = "Verteilung der Reiseweite-Differenzen",
+      subtitle = paste0("nach P+R-Station (Maßnahmenfall vs Basisfall - ", case ,")"),
+      caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
+      y = "Reiseweite Δ [s]"
     ) +
     theme_classic() +
     theme(

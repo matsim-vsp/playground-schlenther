@@ -104,12 +104,37 @@
 			<artifactId>application</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
-		<!--matsim-berlin. this version uses also MATSim 14.0-->
+
 		<dependency>
 			<groupId>com.github.matsim-scenarios</groupId>
 			<artifactId>matsim-berlin</artifactId>
-			<version>ef46f45282</version>
-<!--			<version>5.6.1</version>&lt;!&ndash; TODO: update! this version uses older matsim&ndash;&gt;-->
+			<version>ef46f45282</version> <!--matsim-berlin. this version uses also MATSim 14.0  it was built 2022-05-18 15:00:07 -->
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.matsim-vsp</groupId>
+			<artifactId>pt-extensions</artifactId>
+<!--			<version>c6253b0a53</version>--> <!-- this is a commit id, date is Oct 13 2022. the crspnd pom.xml points to matsim 15.0-PR2233-->
+			<version>v0.0.1</version> <!-- this release uses matsim-14.0-PR1766 -->
+
+			<exclusions>
+				<exclusion>
+					<groupId>org.matsim</groupId>
+					<artifactId>matsim</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.matsim.contrib</groupId>
+					<artifactId>drt</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.matsim.contrib</groupId>
+					<artifactId>dvrp</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.matsim.contrib</groupId>
+					<artifactId>vsp</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 	</dependencies>

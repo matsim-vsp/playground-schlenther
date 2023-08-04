@@ -110,31 +110,17 @@
 			<artifactId>matsim-berlin</artifactId>
 			<version>ef46f45282</version> <!--matsim-berlin. this version uses also MATSim 14.0  it was built 2022-05-18 15:00:07 -->
 		</dependency>
-
 		<dependency>
-			<groupId>com.github.matsim-vsp</groupId>
-			<artifactId>pt-extensions</artifactId>
-<!--			<version>c6253b0a53</version>--> <!-- this is a commit id, date is Oct 13 2022. the crspnd pom.xml points to matsim 15.0-PR2233-->
-			<version>v0.0.1</version> <!-- this release uses matsim-14.0-PR1766 -->
-
-			<exclusions>
-				<exclusion>
-					<groupId>org.matsim</groupId>
-					<artifactId>matsim</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.matsim.contrib</groupId>
-					<artifactId>drt</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.matsim.contrib</groupId>
-					<artifactId>dvrp</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.matsim.contrib</groupId>
-					<artifactId>vsp</artifactId>
-				</exclusion>
-			</exclusions>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>RELEASE</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>RELEASE</version>
+			<scope>test</scope>
 		</dependency>
 
 	</dependencies>
@@ -157,7 +143,7 @@
 <!--				https://stackoverflow.com/questions/27429097/geotools-cannot-find-hsql-epsg-db-throws-error-nosuchauthoritycodeexception/27431381#27431381)-->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.2</version>
+				<version>3.4.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -165,6 +151,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+<!--							<outputFile>${project.basedir}/${project.build.finalName}-${git.commit.id.describe-short}.jar</outputFile>-->
 							<outputFile>${project.basedir}/${project.build.finalName}.jar</outputFile>
 							<transformers>
 								<!-- The following sets the main class for the executable jar as you otherwise would with the assembly plugin -->
@@ -174,6 +161,7 @@
 										<Specification-Vendor>org.matsim</Specification-Vendor>
 										<Implementation-Vendor>org.matsim</Implementation-Vendor>
 										<Implementation-Version>${project.version}</Implementation-Version>
+										<SCM-Revision>${git.commit.id.describe-short}</SCM-Revision>
 									</manifestEntries>
 								</transformer>
 								<!-- The following merges the various GeoTools META-INF/services files         -->

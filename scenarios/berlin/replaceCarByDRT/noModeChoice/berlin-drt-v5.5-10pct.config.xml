@@ -227,14 +227,20 @@
 	</module>
 
 	<module name="intermodalTripFareCompensators">
-		<parameterset type="intermodalTripFareCompensator">
-			<!-- Compensation per Trip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerTrip" value="0.0"/>
+		<parameterset type="intermodalTripFareCompensator" >
 			<!-- Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay -->
-			<param name="compensationCondition" value="PtModeUsedInSameTrip"/>
-			<!-- drt modes for which the compensation applies (comma separated list). -->
-			<param name="nonPtModes" value="drt,drt_teleportation"/>
-			<!-- pt modes for which the compensation applies (comma separated list). -->
+			<param name="compensationCondition" value="PtModeUsedAnywhereInTheDay" />
+			<!-- Compensation money per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund paid to the customer = positive value) -->
+			<param name="compensationMoneyPerDay" value="0.0" />
+			<!-- Compensation money per Trip (compensation = refund paid to the customer = positive value) -->
+			<param name="compensationMoneyPerTrip" value="1.0" />
+			<!-- Compensation score per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund score paid to the customer = positive value) -->
+			<param name="compensationScorePerDay" value="0.0" />
+			<!-- Compensation score per Trip (compensation = refund score paid to the customer = positive value) -->
+			<param name="compensationScorePerTrip" value="0.0" />
+			<!-- non pt modes for which the compensation applies (comma separated list). -->
+			<param name="nonPtModes" value="drt" />
+			<!-- pt modes for which the compensation applies (comma separated list). Should also work for other modes than pt, but if pt is to be combined it has to be inserted here. -->
 			<param name="ptModes" value="pt" />
 		</parameterset>
 	</module>

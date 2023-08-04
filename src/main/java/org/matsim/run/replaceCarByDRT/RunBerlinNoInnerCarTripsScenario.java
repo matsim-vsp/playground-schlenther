@@ -37,6 +37,9 @@ import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
 import org.matsim.run.BerlinExperimentalConfigGroup;
 import org.matsim.run.RunBerlinScenario;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
@@ -140,6 +143,14 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 					"Will set " + BerlinExperimentalConfigGroup.GROUP_NAME + ".tagDrtLinksBufferAroundServiceAreaShp to " + buffer);
 			berlinCfg.setTagDrtLinksBufferAroundServiceAreaShp(buffer);
 		}
+
+		IntermodalTripFareCompensatorsConfigGroup intermodalTripFareCompensatorsConfigGroup =
+				ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
+		IntermodalTripFareCompensatorConfigGroup intermodalTripFareCompensatorConfigGroup = new IntermodalTripFareCompensatorConfigGroup();
+		intermodalTripFareCompensatorConfigGroup.setNonPtModesAsString(TransportMode.drt);
+		intermodalTripFareCompensatorConfigGroup.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
+		intermodalTripFareCompensatorConfigGroup.setCompensationMoneyPerTrip(2.1);
+		intermodalTripFareCompensatorsConfigGroup.getIntermodalTripFareCompensatorConfigGroups().add(intermodalTripFareCompensatorConfigGroup);
 
 		return config;
 	}
@@ -278,6 +289,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
 
+		controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
 		return controler;
 	}
 

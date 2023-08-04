@@ -149,7 +149,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		IntermodalTripFareCompensatorConfigGroup intermodalTripFareCompensatorConfigGroup = new IntermodalTripFareCompensatorConfigGroup();
 		intermodalTripFareCompensatorConfigGroup.setNonPtModesAsString(TransportMode.drt);
 		intermodalTripFareCompensatorConfigGroup.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
-		intermodalTripFareCompensatorConfigGroup.setCompensationMoneyPerTrip(2.1);
+		intermodalTripFareCompensatorConfigGroup.setCompensationMoneyPerDay(2.1);
 		intermodalTripFareCompensatorsConfigGroup.getIntermodalTripFareCompensatorConfigGroups().add(intermodalTripFareCompensatorConfigGroup);
 
 		return config;

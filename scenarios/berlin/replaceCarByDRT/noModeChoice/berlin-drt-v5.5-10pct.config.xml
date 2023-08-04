@@ -153,6 +153,7 @@
 				<param name="constant" value="-0.1" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-0.0" />
 				<param name="mode" value="drt" />
+				<param name="dailyMonetaryConstant" value="-2.1" /> <!-- assume drt is part of pt -->
 			</parameterset>
 		</parameterset>
 	</module>
@@ -204,11 +205,11 @@
 				<!-- Basefare per Trip (fare = positive value) -->
 				<param name="basefare" value="0.0"/>
 				<!-- Minimum fare per trip (paid instead of the sum of base, time and distance fare if that sum would be lower than the minimum fare, fee = positive value). -->
-				<param name="minFarePerTrip" value="2.0"/>
+				<param name="minFarePerTrip" value="0.0"/>
 				<!-- Daily subscription fee (fee = positive value) -->
 				<param name="dailySubscriptionFee" value="0.0"/>
 				<!-- drt fare per meter (fee = positive value) -->
-				<param name="distanceFare_m" value="0.00035"/>
+				<param name="distanceFare_m" value="0.0"/>
 				<!-- drt fare per hour (fee = positive value) -->
 				<param name="timeFare_h" value="0.0"/>
 			</parameterset>
@@ -231,9 +232,9 @@
 			<!-- Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay -->
 			<param name="compensationCondition" value="PtModeUsedAnywhereInTheDay" />
 			<!-- Compensation money per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerDay" value="0.0" />
+			<param name="compensationMoneyPerDay" value="2.1" /> <!-- assume drt is part of pt. so, if both were used, return dailyMonetaryConstant -->
 			<!-- Compensation money per Trip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerTrip" value="1.0" />
+			<param name="compensationMoneyPerTrip" value="0.0" />
 			<!-- Compensation score per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund score paid to the customer = positive value) -->
 			<param name="compensationScorePerDay" value="0.0" />
 			<!-- Compensation score per Trip (compensation = refund score paid to the customer = positive value) -->

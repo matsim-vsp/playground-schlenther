@@ -37,6 +37,7 @@ import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.run.BerlinExperimentalConfigGroup;
 import org.matsim.run.RunBerlinScenario;
@@ -110,6 +111,11 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		DvrpConfigGroup dvrpConfigGroup = DvrpConfigGroup.get(config);
 		IntermodalTripFareCompensatorsConfigGroup compensatorsConfig = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
+		PlanCalcScoreConfigGroup.ModeParams ptParams = config.planCalcScore().getModes().get(TransportMode.pt);
+		PlanCalcScoreConfigGroup.ModeParams drtParams = config.planCalcScore().getModes().get(drtCfg.getMode());
+
+		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
+				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
 
 		//sets the drt mode to be dvrp network mode. sets fare compensitions for agents using both pt and drt
 		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, compensatorsConfig);
@@ -198,12 +204,34 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			drtConfigGroup.setUseModeFilteredSubnetwork(true);
 		}
 
-		if(! drtConfigGroup.getDrtFareParams().isPresent()){
-			log.info("you are not using " + DrtFareParams.SET_NAME + "params.");
-			if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().size() > 0){
-				throw new IllegalArgumentException("you are not using drt fares but have configured a IntermodalTripFareCompensatorConfigGroup.\n" +
-						"this might lead to negative drt fares. We rather abort here... Please check your config. ");
-			}
+		if( drtConfigGroup.getDrtFareParams().isPresent()){
+			log.warn("you are using " + DrtFareParams.SET_NAME + "params. Will now override all fare values therein to 0, because we assume pt and drt fare integration. In Berlin, this is modeled via dailyMonetaryConstant.");
+			DrtFareParams fares = drtConfigGroup.getDrtFareParams().get();
+			fares.setBaseFare(0);
+			fares.setTimeFare_h(0);
+			fares.setDailySubscriptionFee(0);
+			fares.setDistanceFare_m(0);
+			fares.setMinFarePerTrip(0);
+		}
+
+		if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().size() > 0){
+			if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().stream()
+					.filter(cfg -> cfg.getNonPtModes().contains(drtConfigGroup.getMode()))
+					.filter(cfg -> cfg.getCompensationCondition().equals(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip) ||
+									cfg.getCompensationMoneyPerTrip() > 0 ||
+									cfg.getCompensationScorePerTrip() > 0 ||
+									cfg.getCompensationMoneyPerDay() != 2.1 ||
+									cfg.getCompensationScorePerDay() > 0)
+					.findAny().isPresent())
+			throw new RuntimeException("you are using " + IntermodalTripFareCompensatorConfigGroup.GROUP_NAME + " with configurations that contradict pt+drt fare integration!" +
+					" We rather abort here... Please check your config. ");
+		} else {
+
+			IntermodalTripFareCompensatorConfigGroup intermodalTripFareCompensatorConfigGroup = new IntermodalTripFareCompensatorConfigGroup();
+			intermodalTripFareCompensatorConfigGroup.setNonPtModesAsString(TransportMode.drt);
+			intermodalTripFareCompensatorConfigGroup.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
+			intermodalTripFareCompensatorConfigGroup.setCompensationMoneyPerDay(2.1);
+			compensatorsConfig.addParameterSet(intermodalTripFareCompensatorConfigGroup);
 		}
 
 	}

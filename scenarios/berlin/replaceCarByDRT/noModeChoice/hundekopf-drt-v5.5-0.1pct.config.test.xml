@@ -154,6 +154,7 @@
 				<param name="constant" value="-0.1" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-0.0" />
 				<param name="mode" value="drt" />
+				<param name="dailyMonetaryConstant" value="-2.1" />
 			</parameterset>
 		</parameterset>
 	</module>
@@ -204,11 +205,11 @@
 				<!-- Basefare per Trip (fare = positive value) -->
 				<param name="basefare" value="0.0"/>
 				<!-- Minimum fare per trip (paid instead of the sum of base, time and distance fare if that sum would be lower than the minimum fare, fee = positive value). -->
-				<param name="minFarePerTrip" value="2.0"/>
+				<param name="minFarePerTrip" value="0.0"/>
 				<!-- Daily subscription fee (fee = positive value) -->
 				<param name="dailySubscriptionFee" value="0.0"/>
 				<!-- drt fare per meter (fee = positive value) -->
-				<param name="distanceFare_m" value="0.00035"/>
+				<param name="distanceFare_m" value="0.0"/>
 				<!-- drt fare per hour (fee = positive value) -->
 				<param name="timeFare_h" value="0.0"/>
 			</parameterset>
@@ -226,24 +227,24 @@
 		<param name="travelTimeEstimationBeta" value="0.0"/>
 	</module>
 
-	<module name="intermodalTripFareCompensators">
-		<parameterset type="intermodalTripFareCompensator" >
-			<!-- Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay -->
-			<param name="compensationCondition" value="PtModeUsedAnywhereInTheDay" />
-			<!-- Compensation money per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerDay" value="0.0" />
-			<!-- Compensation money per Trip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerTrip" value="1.0" />
-			<!-- Compensation score per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund score paid to the customer = positive value) -->
-			<param name="compensationScorePerDay" value="0.0" />
-			<!-- Compensation score per Trip (compensation = refund score paid to the customer = positive value) -->
-			<param name="compensationScorePerTrip" value="0.0" />
-			<!-- non pt modes for which the compensation applies (comma separated list). -->
-			<param name="nonPtModes" value="drt" />
-			<!-- pt modes for which the compensation applies (comma separated list). Should also work for other modes than pt, but if pt is to be combined it has to be inserted here. -->
-			<param name="ptModes" value="pt" />
-		</parameterset>
-	</module>
+<!--	<module name="intermodalTripFareCompensators">-->
+<!--		<parameterset type="intermodalTripFareCompensator" >-->
+<!--			&lt;!&ndash; Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay &ndash;&gt;-->
+<!--			<param name="compensationCondition" value="PtModeUsedAnywhereInTheDay" />-->
+<!--			&lt;!&ndash; Compensation money per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationMoneyPerDay" value="2.1" /> &lt;!&ndash; assume drt is part of pt. so, if both were used, return dailyMonetaryConstant &ndash;&gt;-->
+<!--			&lt;!&ndash; Compensation money per Trip (compensation = refund paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationMoneyPerTrip" value="0.0" />-->
+<!--			&lt;!&ndash; Compensation score per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund score paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationScorePerDay" value="0.0" />-->
+<!--			&lt;!&ndash; Compensation score per Trip (compensation = refund score paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationScorePerTrip" value="0.0" />-->
+<!--			&lt;!&ndash; non pt modes for which the compensation applies (comma separated list). &ndash;&gt;-->
+<!--			<param name="nonPtModes" value="drt" />-->
+<!--			&lt;!&ndash; pt modes for which the compensation applies (comma separated list). Should also work for other modes than pt, but if pt is to be combined it has to be inserted here. &ndash;&gt;-->
+<!--			<param name="ptModes" value="pt" />-->
+<!--		</parameterset>-->
+<!--	</module>-->
 	
 	<module name="swissRailRaptor" >
 		<!-- KN comments: in principle, walk as alternative to drt will not work, since drt is always faster. Need to give the ASC to the router! However, with the reduced drt network we should be able to see differentiation.) -->

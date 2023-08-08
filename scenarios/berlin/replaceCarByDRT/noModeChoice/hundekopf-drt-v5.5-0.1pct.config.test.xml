@@ -9,7 +9,7 @@
 		<param name="lastIteration" value="1" />
 		<param name="overwriteFiles" value="overwriteExistingFiles" />
 		<param name="runId" value="hundekopfTest" />
-		<param name="outputDirectory" value="./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-hundekopfTest" />
+		<param name="outputDirectory" value="./scenarios/output/berlin-v5.5-0.01pct/replaceCarByDRT-hundekopfTest" />
 		<param name="writeEventsInterval" value="1" />
 		<param name="writePlansInterval" value="1" />
 	</module>
@@ -26,7 +26,8 @@
 		<param name="inputNetworkFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz" />
 	</module>
 	<module name="plans" >
-		<param name="inputPlansFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz" />
+<!--		<param name="inputPlansFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz" />-->
+		<param name="inputPlansFile" value="berlin-v5.5-0.01pct.plans.xml.gz" />
 		<param name="removingUnnecessaryPlanAttributes" value="false" />
 	</module>
 	<module name="vehicles" >
@@ -53,11 +54,11 @@
 	<module name="qsim" >
 		<param name="simStarttimeInterpretation" value="onlyUseStarttime" />
 		<param name="endTime" value="36:00:00" />
-		<param name="flowCapacityFactor" value="0.01" />
+		<param name="flowCapacityFactor" value="0.0001" />
 		<param name="mainMode" value="car,freight" />
 		<param name="numberOfThreads" value="8" />
 		<param name="startTime" value="00:00:00" />
-		<param name="storageCapacityFactor" value="0.01" />
+		<param name="storageCapacityFactor" value="0.0001" />
 		<param name="stuckTime" value="30.0" />
 		<param name="trafficDynamics" value="kinematicWaves" />
 		<param name="vehiclesSource" value="modeVehicleTypesFromVehiclesData" />
@@ -154,6 +155,7 @@
 				<param name="constant" value="-0.1" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-0.0" />
 				<param name="mode" value="drt" />
+				<param name="dailyMonetaryConstant" value="-2.1" />
 			</parameterset>
 		</parameterset>
 	</module>
@@ -197,18 +199,18 @@
 			<!-- Limit the operation of vehicles to links (of the 'dvrp_routing' network) with 'allowedModes' containing this 'mode'. For backward compatibility, the value is set to false by default - this means that the vehicles are allowed to operate on all links of the 'dvrp_routing' network. The 'dvrp_routing' is defined by DvrpConfigGroup.networkModes) -->
 			<param name="useModeFilteredSubnetwork" value="true"/>
 			<!-- An XML file specifying the vehicle fleet. The file format according to dvrp_vehicles_v1.dtd -->
-			<param name="vehiclesFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/berlin-drt-v5.5-10pct/input/drtVehicles/berlin-hundekopf-drt-v5.5.drt-by-rndLocations-1500vehicles-4seats.xml.gz"/>
+			<param name="vehiclesFile" value="https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/berlin-drt-v5.5-10pct/input/drtVehicles/berlin-hundekopf-drt-v5.5.drt-by-rndLocations-760vehicles-4seats.xml.gz"/>
 			<!-- Writes out detailed DRT customer stats in each iteration. True by default. -->
 			<param name="writeDetailedCustomerStats" value="true"/>
 			<parameterset type="drtfare">
 				<!-- Basefare per Trip (fare = positive value) -->
 				<param name="basefare" value="0.0"/>
 				<!-- Minimum fare per trip (paid instead of the sum of base, time and distance fare if that sum would be lower than the minimum fare, fee = positive value). -->
-				<param name="minFarePerTrip" value="2.0"/>
+				<param name="minFarePerTrip" value="0.0"/>
 				<!-- Daily subscription fee (fee = positive value) -->
 				<param name="dailySubscriptionFee" value="0.0"/>
 				<!-- drt fare per meter (fee = positive value) -->
-				<param name="distanceFare_m" value="0.00035"/>
+				<param name="distanceFare_m" value="0.0"/>
 				<!-- drt fare per hour (fee = positive value) -->
 				<param name="timeFare_h" value="0.0"/>
 			</parameterset>
@@ -226,18 +228,24 @@
 		<param name="travelTimeEstimationBeta" value="0.0"/>
 	</module>
 
-	<module name="intermodalTripFareCompensators">
-		<parameterset type="intermodalTripFareCompensator">
-			<!-- Compensation per Trip (compensation = refund paid to the customer = positive value) -->
-			<param name="compensationMoneyPerTrip" value="0.0"/>
-			<!-- Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay -->
-			<param name="compensationCondition" value="PtModeUsedInSameTrip"/>
-			<!-- drt modes for which the compensation applies (comma separated list). -->
-			<param name="nonPtModes" value="drt,drt_teleportation"/>
-			<!-- pt modes for which the compensation applies (comma separated list). -->
-			<param name="ptModes" value="pt" />
-		</parameterset>
-	</module>
+<!--	<module name="intermodalTripFareCompensators">-->
+<!--		<parameterset type="intermodalTripFareCompensator" >-->
+<!--			&lt;!&ndash; Condition which governs which agents are compensated. Options: PtModeUsedInSameTrip, PtModeUsedAnywhereInTheDay &ndash;&gt;-->
+<!--			<param name="compensationCondition" value="PtModeUsedAnywhereInTheDay" />-->
+<!--			&lt;!&ndash; Compensation money per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationMoneyPerDay" value="2.1" /> &lt;!&ndash; assume drt is part of pt. so, if both were used, return dailyMonetaryConstant &ndash;&gt;-->
+<!--			&lt;!&ndash; Compensation money per Trip (compensation = refund paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationMoneyPerTrip" value="0.0" />-->
+<!--			&lt;!&ndash; Compensation score per Day, i.e. only paid once per day no matter the number of trips. Not implemented yet for compensationCondition==PtModeUsedInSameTrip (compensation = refund score paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationScorePerDay" value="0.0" />-->
+<!--			&lt;!&ndash; Compensation score per Trip (compensation = refund score paid to the customer = positive value) &ndash;&gt;-->
+<!--			<param name="compensationScorePerTrip" value="0.0" />-->
+<!--			&lt;!&ndash; non pt modes for which the compensation applies (comma separated list). &ndash;&gt;-->
+<!--			<param name="nonPtModes" value="drt" />-->
+<!--			&lt;!&ndash; pt modes for which the compensation applies (comma separated list). Should also work for other modes than pt, but if pt is to be combined it has to be inserted here. &ndash;&gt;-->
+<!--			<param name="ptModes" value="pt" />-->
+<!--		</parameterset>-->
+<!--	</module>-->
 	
 	<module name="swissRailRaptor" >
 		<!-- KN comments: in principle, walk as alternative to drt will not work, since drt is always faster. Need to give the ASC to the router! However, with the reduced drt network we should be able to see differentiation.) -->

@@ -23,6 +23,7 @@ package org.matsim.run.replaceCarByDRT;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import org.apache.log4j.Logger;
+import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.drt.fare.DrtFareParams;
@@ -36,6 +37,8 @@ import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.run.BerlinExperimentalConfigGroup;
 import org.matsim.run.RunBerlinScenario;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
@@ -120,8 +123,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Config config = prepareConfig(configArgs);
 		Scenario scenario = prepareScenario(config);
 
-//		new PopulationWriter(scenario.getPopulation()).write("D:/replaceCarByDRT/TEST-inclQuellZiel/1pctTestPopulation.xml.gz");
-
 		Controler controler = prepareControler(scenario);
 
 		PostprocessingListener postprocessingListener = new PostprocessingListener(controler);
@@ -163,9 +164,16 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		//for the time being, assume one drt mode only
 		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
 		DvrpConfigGroup dvrpConfigGroup = DvrpConfigGroup.get(config);
+		IntermodalTripFareCompensatorsConfigGroup compensatorsConfig = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
-		//sets the drt mode to be dvrp network mode
-		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, DRT_STOP_BASED);
+		PlanCalcScoreConfigGroup.ModeParams ptParams = config.planCalcScore().getModes().get(TransportMode.pt);
+		PlanCalcScoreConfigGroup.ModeParams drtParams = config.planCalcScore().getModes().get(drtCfg.getMode());
+
+		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
+				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
+
+		//sets the drt mode to be dvrp network mode. sets fare compensitions for agents using both pt and drt
+		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, compensatorsConfig, DRT_STOP_BASED);
 
 		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
 		if (berlinCfg.getTagDrtLinksBufferAroundServiceAreaShp() <= 0.){
@@ -225,7 +233,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		}
 	}
 
-	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, boolean drtStopBased) {
+	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig, boolean drtStopBased) {
 		if(! dvrpConfigGroup.getNetworkModes().contains(drtConfigGroup.getMode()) ){
 			log.warn("the drt mode " + drtConfigGroup.getMode() + " is not registered as network mode for dvrp - which is necessary in a bannedCarInDRTServiceArea scenario");
 			log.warn("adding mode " + drtConfigGroup.getMode() + " as network mode for dvrp... ");
@@ -266,19 +274,36 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			drtConfigGroup.setUseModeFilteredSubnetwork(true);
 		}
 
-		if(! drtConfigGroup.getDrtFareParams().isPresent()){
-			log.info("you are not using " + DrtFareParams.SET_NAME + "params.");
-		} else {
+		if( drtConfigGroup.getDrtFareParams().isPresent()){
+			log.warn("you are using " + DrtFareParams.SET_NAME + "params. Will now override all fare values therein to 0, because we assume pt and drt fare integration. In Berlin, this is modeled via dailyMonetaryConstant.");
 			DrtFareParams fares = drtConfigGroup.getDrtFareParams().get();
-			log.warn("you are using " + DrtFareParams.SET_NAME + " params. " +
-					"These will now be overridden, resulting in 0 fares. This is because this scenario is not meant to work with mode choice.\n" +
-					"In order to obtain clean score statistics, fares are neglected here and need to be computed as a post process.");
 			fares.setBaseFare(0);
 			fares.setTimeFare_h(0);
 			fares.setDailySubscriptionFee(0);
 			fares.setDistanceFare_m(0);
 			fares.setMinFarePerTrip(0);
 		}
+
+		if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().size() > 0){
+			if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().stream()
+					.filter(cfg -> cfg.getNonPtModes().contains(drtConfigGroup.getMode()))
+					.filter(cfg -> cfg.getCompensationCondition().equals(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip) ||
+									cfg.getCompensationMoneyPerTrip() > 0 ||
+									cfg.getCompensationScorePerTrip() > 0 ||
+									cfg.getCompensationMoneyPerDay() != 2.1 ||
+									cfg.getCompensationScorePerDay() > 0)
+					.findAny().isPresent())
+			throw new RuntimeException("you are using " + IntermodalTripFareCompensatorConfigGroup.GROUP_NAME + " with configurations that contradict pt+drt fare integration!" +
+					" We rather abort here... Please check your config. ");
+		} else {
+
+			IntermodalTripFareCompensatorConfigGroup intermodalTripFareCompensatorConfigGroup = new IntermodalTripFareCompensatorConfigGroup();
+			intermodalTripFareCompensatorConfigGroup.setNonPtModesAsString(TransportMode.drt);
+			intermodalTripFareCompensatorConfigGroup.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedAnywhereInTheDay);
+			intermodalTripFareCompensatorConfigGroup.setCompensationMoneyPerDay(2.1);
+			compensatorsConfig.addParameterSet(intermodalTripFareCompensatorConfigGroup);
+		}
+
 	}
 
 	public static Scenario prepareScenario(Config config) {
@@ -326,12 +351,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		return scenario;
 	}
 
-	public static Controler prepareControler(Scenario scenario) {
+	static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
-
-
-
-
+		controler.addOverridingModule(new PersonMoneyEventsAnalysisModule());
 		return controler;
 	}
 

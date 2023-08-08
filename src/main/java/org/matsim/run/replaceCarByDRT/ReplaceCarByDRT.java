@@ -34,6 +34,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.common.util.StraightLineKnnFinder;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -136,7 +137,9 @@ class ReplaceCarByDRT {
 		MutableInt replacedTrips = new MutableInt();
 
 
-		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(1, Activity::getCoord, c -> c);
+		Random rnd = MatsimRandom.getRandom();
+
+		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(3, Activity::getCoord, c -> c);
 
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
@@ -220,10 +223,10 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							prStation =  straightLineKnnFinder.findNearest(act, prStations.stream().map(station ->  station.coord))
-									.stream()
-									.findFirst()
-									.orElseThrow();
+							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
+							Collections.shuffle(prStationCandidates);
+							int rndr = rnd.nextInt(prStationCandidates.size());
+							prStation = prStationCandidates.get(rndr);
 						}
 
 						lastCarPRStation = null;
@@ -260,11 +263,10 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							prStation = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord))
-									.stream()
-									.findFirst()
-									.orElseThrow();
-							if(mainMode.equals(TransportMode.car)) lastCarPRStation = prStation;
+							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
+							Collections.shuffle(prStationCandidates);
+							int rndr = rnd.nextInt(prStationCandidates.size());
+							prStation = prStationCandidates.get(rndr);
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);

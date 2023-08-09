@@ -69,6 +69,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 	private static boolean ENFORCE_MASS_CONSERVATION = true;
+	private static boolean EXTRA_PT_PLAN = false;
+	private static int K_PRSTATIONS = 1;
+
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -273,7 +276,9 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				ENFORCE_MASS_CONSERVATION
+				ENFORCE_MASS_CONSERVATION,
+				EXTRA_PT_PLAN,
+				K_PRSTATIONS
 		);
 
 		return scenario;

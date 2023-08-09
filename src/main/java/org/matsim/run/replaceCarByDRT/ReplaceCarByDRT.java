@@ -54,14 +54,8 @@ class ReplaceCarByDRT {
 
 	private static Logger log = Logger.getLogger(ReplaceCarByDRT.class);
 
-	static Id<Link> PR_SUEDKREUZ = Id.createLinkId(123744);
-	static Id<Link> PR_GESUNDBRUNNEN = Id.createLinkId(18796);
-	static Id<Link> PR_OSTKREUZ = Id.createLinkId(125468);
-	static Id<Link> PR_ZOB = Id.createLinkId(59825); //aka Westkreuz
-
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
-
 
 	/**
 	 *
@@ -121,7 +115,9 @@ class ReplaceCarByDRT {
 																				   URL url2PRStations,
 																				   MainModeIdentifier mainModeIdentifier,
 																				   PRStationChoice prStationChoice,
-																				   boolean enforceMassConservation){
+																				   boolean enforceMassConservation,
+																				   boolean extraPTPlan,
+                                                                                   int kPrStations){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -139,7 +135,7 @@ class ReplaceCarByDRT {
 
 		Random rnd = MatsimRandom.getRandom();
 
-		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(3, Activity::getCoord, c -> c);
+		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, c -> c);
 
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
@@ -170,7 +166,9 @@ class ReplaceCarByDRT {
 				}
 
 				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
-				plansToAdd.add(createPTOnlyPlan(plan, fac));
+				if(extraPTPlan){
+					plansToAdd.add(createPTOnlyPlan(plan, fac));
+				}
 
 				//for consistency checking
 				long nrOfBorderCrossingCarTrips = tripsToReplace.stream()
@@ -224,9 +222,10 @@ class ReplaceCarByDRT {
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
 							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							Collections.shuffle(prStationCandidates);
-							int rndr = rnd.nextInt(prStationCandidates.size());
-							prStation = prStationCandidates.get(rndr);
+							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							Collections.shuffle(mutableListCandidates);
+							int rndr = rnd.nextInt(mutableListCandidates.size());
+							prStation = mutableListCandidates.get(rndr);
 						}
 
 						lastCarPRStation = null;
@@ -264,9 +263,10 @@ class ReplaceCarByDRT {
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
 							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							Collections.shuffle(prStationCandidates);
-							int rndr = rnd.nextInt(prStationCandidates.size());
-							prStation = prStationCandidates.get(rndr);
+							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							Collections.shuffle(mutableListCandidates);
+							int rndr = rnd.nextInt(mutableListCandidates.size());
+							prStation = mutableListCandidates.get(rndr);
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
@@ -493,7 +493,7 @@ class ReplaceCarByDRT {
 
 class PRStation {
 
-	String name;
+	private String name;
 	Id<Link> linkId;
 	Coord coord;
 
@@ -503,4 +503,9 @@ class PRStation {
 		this.coord = coord;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public Coord getCoord() {return coord; }
 }

@@ -117,7 +117,7 @@ class ReplaceCarByDRT {
 																				   PRStationChoice prStationChoice,
 																				   boolean enforceMassConservation,
 																				   boolean extraPTPlan,
-                                                                                   PRStationChoice extraPRStationChoice){
+                                                                                   int kPrStations){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -135,7 +135,7 @@ class ReplaceCarByDRT {
 
 		Random rnd = MatsimRandom.getRandom();
 
-		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(3, Activity::getCoord, c -> c);
+		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, c -> c);
 
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
@@ -222,9 +222,10 @@ class ReplaceCarByDRT {
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
 							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							Collections.shuffle(prStationCandidates);
-							int rndr = rnd.nextInt(prStationCandidates.size());
-							prStation = prStationCandidates.get(rndr);
+							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							Collections.shuffle(mutableListCandidates);
+							int rndr = rnd.nextInt(mutableListCandidates.size());
+							prStation = mutableListCandidates.get(rndr);
 						}
 
 						lastCarPRStation = null;
@@ -260,11 +261,12 @@ class ReplaceCarByDRT {
 							}
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
-							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
+							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
 							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							Collections.shuffle(prStationCandidates);
-							int rndr = rnd.nextInt(prStationCandidates.size());
-							prStation = prStationCandidates.get(rndr);
+							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							Collections.shuffle(mutableListCandidates);
+							int rndr = rnd.nextInt(mutableListCandidates.size());
+							prStation = mutableListCandidates.get(rndr);
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);

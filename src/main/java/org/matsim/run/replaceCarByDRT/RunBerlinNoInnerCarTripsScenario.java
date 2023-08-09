@@ -71,7 +71,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static boolean ENFORCE_MASS_CONSERVATION = false;
 	private static boolean EXTRA_PT_PLAN = false;
 	private static boolean DRT_STOP_BASED = false;
-	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE; // TODO: change all booleans to enum
+	private static int K_PRSTATIONS; // TODO: change all booleans to enum
 
 	private static String OUTPUT_DIRECTORY;
 	private static String RUN_ID;
@@ -93,13 +93,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			EXTRA_PT_PLAN = true;
 			DRT_STOP_BASED = true;
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
-			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToInsideActivity;
+			K_PRSTATIONS = 3;
 
-			OUTPUT_DIRECTORY = "./scenarios/output/sample/";
+			OUTPUT_DIRECTORY = "./scenarios/output/sample-test/";
 			LAST_ITERATION = 0;
 			RUN_ID = "sample-run";
 
-			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
+			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-sample.config.test.xml",
 					"--config:controler.lastIteration", String.valueOf(LAST_ITERATION),
 					"--config:controler.outputDirectory", OUTPUT_DIRECTORY,
 					"--config:controler.runId", RUN_ID};
@@ -125,9 +125,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		Controler controler = prepareControler(scenario);
 
-		PostprocessingListener postprocessingListener = new PostprocessingListener(controler);
-		controler.addControlerListener(postprocessingListener);
-
 		controler.run();
 		RunBerlinScenario.runAnalysis(controler);
 	}
@@ -140,11 +137,11 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
-		ENFORCE_MASS_CONSERVATION = Boolean.valueOf(args[5]);
-		EXTRA_PT_PLAN = Boolean.valueOf(args[6]);
-		DRT_STOP_BASED = Boolean.valueOf(args[7]);
+		ENFORCE_MASS_CONSERVATION = Boolean.parseBoolean(args[5]);
+		EXTRA_PT_PLAN = Boolean.parseBoolean(args[6]);
+		DRT_STOP_BASED = Boolean.parseBoolean(args[7]);
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
-		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[9]);
+		K_PRSTATIONS = Integer.parseInt(args[9]);
 		configArgs = new String[args.length-10];
 		for(int i = 10; i < args.length; i++){
 			configArgs[i-10] = args[i];
@@ -250,11 +247,10 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		if(drtStopBased){
 			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
 
-			//TODO: ist das hier so richtig?
 			//drtConfigGroup.setTransitStopFile("drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 			drtConfigGroup.setTransitStopFile(String.valueOf(URL_2_DRT_STOPS));
 
-			log.warn("you are now using a stop based operational scheme for drt! This is in development.");
+			log.warn("you are now using a stop based operational scheme for drt! This is still under development.");
 
 			Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),
 					"this scenario currently only works with a specified stopFile for drt!");
@@ -345,13 +341,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				PR_STATION_CHOICE,
 				ENFORCE_MASS_CONSERVATION,
 				EXTRA_PT_PLAN,
-				EXTRA_PR_STATION_CHOICE
+				K_PRSTATIONS
 		);
 
 		return scenario;
 	}
 
-	static Controler prepareControler(Scenario scenario) {
+	public static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
 		controler.addOverridingModule(new PersonMoneyEventsAnalysisModule());
 		return controler;

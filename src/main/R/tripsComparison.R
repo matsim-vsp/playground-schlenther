@@ -18,16 +18,18 @@ library(ggalluvial)
 
 #10pct
 #baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/motorwayOnly"
 
 #1pct
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/closestToOutSideActivity/shareVehAtStations-0.5/pt,drt/closestToOutside-0.5-1506vehicles-8seats/"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-07-13/extraPtPlan/"
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
+
+baseTrips <- readTripsTable(baseCaseDirectory)
 
 policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
 policyTrips <- policyTrips %>% 
@@ -48,6 +50,27 @@ dir.create(paste0(policyCaseDirectory,"/analysis"))
 dir.create(paste0(policyCaseDirectory,"/analysis/trips"))
 
 policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
+
+########################################
+# Filter out all agents with scoreDiff > -400
+
+basePerson_filename <- "output_plans_selectedPlanScores.tsv"
+policyPerson_filename <- "output_plans_selectedPlanScores.tsv"
+basePerson_inputfile <- file.path(baseCaseDirectory, basePerson_filename)
+policyPerson_inputfile <- file.path(policyCaseDirectory, policyPerson_filename)
+
+basePersons <- read.table(file = basePerson_inputfile, sep = '\t', header = TRUE)
+policyPersons <- read.table(file = policyPerson_inputfile, sep = '\t', header = TRUE)
+
+personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
+personsJoined <- personsJoined %>%
+  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
+
+personsJoined <- personsJoined %>% filter(score_diff > -400)
+
+baseTrips <- baseTrips %>% filter(person %in% personsJoined$person)
+policyTrips <- policyTrips %>% filter(person %in% personsJoined$person)
+
 
 ########################################
 # Prepare tables
@@ -91,6 +114,7 @@ impacted_trips <- impacted_trips %>%
 
 ########################################
 "Modal Shift Sankeys"
+## TODO: Why do I filter out all this stuff? Need to explain or change
 
 "Grenztrips"
 prep_grenz_policy <- impGrenz_trips_policy %>% 
@@ -140,9 +164,9 @@ results_travTime <- data.frame(tripType = character(), avg_travTime_diff = numer
 for (tripType in tripTypes){
   iterator <- iterator + 1
   results_travTime[iterator, ] <- list(tripType, 
-                                            mean(boxplot_helper[which(boxplot_helper$tripType == tripType),48]), 
-                                            quantile((boxplot_helper[which(boxplot_helper$tripType == tripType),48]), probs = 0.95), 
-                                            sd(boxplot_helper[which(boxplot_helper$tripType == tripType),48])
+                                            mean(boxplot_helper[which(boxplot_helper$tripType == tripType),47]), 
+                                            quantile((boxplot_helper[which(boxplot_helper$tripType == tripType),47]), probs = 0.95), 
+                                            sd(boxplot_helper[which(boxplot_helper$tripType == tripType),47])
   )
 }
 
@@ -190,7 +214,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     title = "Verteilung der Reiseweite-Differenzen",
     subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
-    y = "Reiseweite Δ [s]"
+    y = "Reiseweite Δ [m]"
   ) +
   theme_classic() +
   theme(
@@ -251,7 +275,7 @@ for (case in tripCases){
       title = "Verteilung der Reiseweite-Differenzen",
       subtitle = paste0("nach Verkehrsmittel (Maßnahmenfall vs Basisfall - ", case ,")"),
       caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
-      y = "Reiseweite Δ [s]",
+      y = "Reiseweite Δ [m]",
       x = "Verkehrsmittel"
     ) +
     theme_classic() +
@@ -294,7 +318,7 @@ for (case in tripCases){
       title = "Verteilung der Reiseweite-Differenzen",
       subtitle = paste0("nach P+R-Station (Maßnahmenfall vs Basisfall - ", case ,")"),
       caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
-      y = "Reiseweite Δ [s]"
+      y = "Reiseweite Δ [m]"
     ) +
     theme_classic() +
     theme(
@@ -308,6 +332,63 @@ for (case in tripCases){
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_PRStation.png"))
   
 }
+
+########################################
+# Boxplots & Results - by hasPRStation
+
+prPersons <- personsJoined %>% filter(personsJoined$hasPRActivity_policy == "true")
+otherPersons <- personsJoined %>% filter(personsJoined$hasPRActivity_policy == "false")
+
+impGrenzPR_trips <- impGrenz_trips %>% filter(impGrenz_trips$person_policy %in% prPersons$person) %>%
+  add_column(hasPRStation = "true")
+impGrenzOther_trips <- impGrenz_trips %>% filter(impGrenz_trips$person_policy %in% otherPersons$person) %>%
+  add_column(hasPRStation = "false")
+
+boxplot_helper2 <- rbind(impGrenzPR_trips, impGrenzOther_trips)
+
+mean(impGrenzPR_trips$travTime_diff)
+mean(impGrenzOther_trips$travTime_diff)
+
+mean(impGrenz_trips$travTime_diff)
+
+"Boxplot"
+ggplot(boxplot_helper2, aes(x = hasPRStation, y = travTime_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Verteilung der Reisezeit-Differenzen",
+    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
+    y = "Reisezeit Δ [s]"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank()
+  )
+ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_hasPRStation.png"))
+
+"Boxplot"
+ggplot(boxplot_helper2, aes(x = hasPRStation, y = traveledDistance_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  labs(
+    title = "Verteilung der Reiseweite-Differenzen",
+    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
+    y = "Reiseweite Δ [m]"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
+    plot.caption = element_text(face = "italic"),
+    axis.ticks.x = element_blank(),
+    axis.title.x = element_blank()
+  )
+ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_hasPRStation.png"))
+
 
 ########################################
 # Test: filterByRegion-Probleme, Case 2 only works without extraPtPlan=true

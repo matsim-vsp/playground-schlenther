@@ -3,13 +3,9 @@ package org.matsim.run.replaceCarByDRT;
 import com.opencsv.CSVWriter;
 import org.apache.log4j.Logger;
 import org.matsim.analysis.RunTripsPreparation;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
@@ -41,9 +37,9 @@ public class RunPRActivityEventHandler {
     public static void main(String[] args) {
 
         if (args.length == 0) {
-            String runDirectory = "scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/";
+            String runDirectory = "scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/";
             //Cluster: scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/
-            String runId = "massConservation-1506vehicles-8seats";
+            String runId = "extraPtPlan-drtStopBased-1506vehicles-8seats";
             String tsvFilePath = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
 
             RunPRActivityEventHandler prActivities = new RunPRActivityEventHandler(runDirectory, runId, tsvFilePath);
@@ -83,10 +79,12 @@ public class RunPRActivityEventHandler {
         //write to CSV file
         String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_prStartsPerHour.tsv";
         String outputFileName2 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_prActivitiesPerMinute.tsv";
-        String outputFileName3 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_agentsPerPRStation.tsv";
-        agentsPerPRStation2CSV(handler1.getAgentsPerPRStation(), network, outputFileName3);
+        String outputFileName3 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_activitiesPerPRStation.tsv";
+        String outputFileName4 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_carsInPrStationPerMinute.tsv";
+        agentsPerPRStation2CSV(handler1.getActivitiesPerPRStation(), network, outputFileName3);
         prStartsPerHour2CSV(handler1.getPrStartsPerHour(),outputFileName1);
         prActivitiesPerMinute2CSV(handler1.getPrActivitiesPerMinute(), outputFileName2);
+        carsInPrStationPerMinute2CSV(handler1.getCarsInPrStationPerMinute(), outputFileName4);
     }
 
     private static void agentsPerPRStation2CSV(Map<PRStation, Integer> prActivities, Network network, String outputFileName){
@@ -97,7 +95,7 @@ public class RunPRActivityEventHandler {
             for (Map.Entry<PRStation, Integer> entry : prActivities.entrySet()) {
                 PRStation station = entry.getKey();
                 Integer agentsPerPRStation = entry.getValue();
-                Link link = network.getLinks().get(station.linkId);
+                Link link = network.getLinks().get(station.getLinkId());
                 Double edgeCapacity = link.getCapacity();
                 Double agentsByEdgeCapacity = Double.valueOf(agentsPerPRStation) / (edgeCapacity * 36);
 
@@ -167,4 +165,33 @@ public class RunPRActivityEventHandler {
         }
 
     }
+
+    private static void carsInPrStationPerMinute2CSV(Map<PRStation, int[]> prActivities, String outputFileName) {
+        try {
+            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+
+            List<String> header = new ArrayList<String>();
+            header.add("PRStation");
+            for (int i = 0; i < 36; i++){
+                for(int j = 0; j < 60; j++) {
+                    header.add(i + ":" + j + ":00 - " + i + ":" + j + ":59");
+                }
+            }
+            writer.writeNext(header.toArray(new String[0]));
+
+            for (Map.Entry<PRStation, int[]> entry : prActivities.entrySet()) {
+                PRStation station = entry.getKey();
+                int[] agentsPerMinute = entry.getValue();
+                String[] agents = Arrays.toString(agentsPerMinute).split("[\\[\\]]")[1].split(", ");
+                List<String> agentsList = new ArrayList<String>(Arrays.asList(agents));
+                agentsList.add(0, station.getName());
+
+                writer.writeNext(agentsList.toArray(new String[0]));
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

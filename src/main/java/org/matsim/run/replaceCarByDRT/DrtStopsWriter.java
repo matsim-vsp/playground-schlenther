@@ -55,8 +55,8 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 		network = NetworkUtils.readNetwork("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		new DrtStopsWriter(network,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2023-03-29-pr-stations.tsv"))
-			.write("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"))
+			.write("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-07-27-prStations.xml");
 	}
 
 	DrtStopsWriter(Network network, URL url2Shp, URL url2PRStations) {
@@ -119,10 +119,10 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 
 				boolean linkIdExists = linksInArea.stream()
 						.map(Link::getId)
-						.anyMatch(id -> id.equals(prStation.linkId));
+						.anyMatch(id -> id.equals(prStation.getLinkId()));
 
 				if (!linkIdExists) {
-					writeStop(csvWriter, network.getLinks().get(prStation.linkId));
+					writeStop(csvWriter, network.getLinks().get(prStation.getLinkId()));
 				}
 			}
 

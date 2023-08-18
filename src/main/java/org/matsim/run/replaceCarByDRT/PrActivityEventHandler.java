@@ -1,126 +1,96 @@
 package org.matsim.run.replaceCarByDRT;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
-import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
-import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-class PrActivityEventHandler implements ActivityStartEventHandler, ActivityEndEventHandler {
+/**
+ * this class analyses the usage of P+R stations over the course of the day.
+ * vehicles are assumed to be parked or picked up at P+R stations depending on whether the routing mode before/after
+ * the P+R activity was TransportMode.car or not.
+ */
+class PrActivityEventHandler implements /*ActivityStartEventHandler,*/ ActivityEndEventHandler, PersonDepartureEventHandler {
 
     private static final Logger log = Logger.getLogger(PrActivityEventHandler.class);
 
     //key = name, value = coord
-    private HashMap<PRStation, Integer> activitiesPerPRStation = new HashMap<>();
+    private HashMap<PRStation, MutableInt> activitiesPerPRStation = new HashMap<>();
 
-    private Map<PRStation, int[]> prStartsPerHour = new HashMap<>();
+//    private Map<PRStation, int[]> prStartsPerHour = new HashMap<>();
 
-    private Map<PRStation, int[]> prActivitiesPerMinute = new HashMap<>();
+//    private Map<PRStation, int[]> prActivitiesPerMinute = new HashMap<>();
 
     private Map<PRStation, int[]> carsInPrStationPerMinute = new HashMap<>();
 
-    private Map<Id<Person>, PRStation> personPerPrStation = new HashMap<>();
-    private Map<Id<Person>,Double> startTime = new HashMap<>();
+    private Map<Id<Person>, String> person2LastRoutingMode = new HashMap<>();
+
+    private Map<PRStation, Set<Id<Person>>> station2Users = new HashMap<>();
+
 
     public PrActivityEventHandler(Set<PRStation> prStations) {
         for (PRStation station : prStations){
-            this.activitiesPerPRStation.put(station, 0);
-            this.prStartsPerHour.put(station, new int[36]);
-            this.prActivitiesPerMinute.put(station, new int[36*60]);
+            this.activitiesPerPRStation.put(station, new MutableInt(0));
             this.carsInPrStationPerMinute.put(station, new int[36*60]);
         }
     }
 
     @Override
-    public void handleEvent(ActivityStartEvent event) {
-//        if(event.getPersonId().toString().equals("404930501")){
-            if (event.getActType().equals("P+R")) {
-
-                int hour = (int) Math.floor(event.getTime() / 3600); //TODO check if this works and whether we can improve (i.e. don't cast)
-                int minute = (int) Math.floor(event.getTime() / 60);
-
-                PRStation prStation = getPRStationWithCoord(event.getCoord());
-
-                if(prStation == null){
-                    throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
-                } else {
-                    activitiesPerPRStation.put(prStation, activitiesPerPRStation.get(prStation) + 1);
-                    for (int i = minute; i < 36*60; i++){
-                        prActivitiesPerMinute.get(prStation)[i] ++;
-                    }
-                    prStartsPerHour.get(prStation)[hour] ++;
-                }
-
-                Map<Id<Person>, PRStation> actualPersonInPrStation = new HashMap<>();
-                actualPersonInPrStation.put(event.getPersonId(), prStation);
-
-                if(!personPerPrStation.entrySet().containsAll(actualPersonInPrStation.entrySet())){
-                    personPerPrStation.put(event.getPersonId(), prStation);
-                    startTime.put(event.getPersonId(),event.getTime());
-                    for (int i = minute; i < 36*60; i++) {
-                        carsInPrStationPerMinute.get(prStation)[i] ++;
-                    }
-                }
-
-//            }
-        }
-
-
-
+    public void handleEvent(PersonDepartureEvent event) {
+        this.person2LastRoutingMode.put(event.getPersonId(), event.getRoutingMode());
     }
 
     @Override
     public void handleEvent(ActivityEndEvent event) {
-//        if(event.getPersonId().toString().equals("404930501")){
-            if(event.getActType().equals("P+R")){
-                int endHour = (int) Math.floor(event.getTime() / 3600);
-                int endMinute = (int) Math.floor(event.getTime() / 60);
+        if(event.getActType().equals("P+R")){
 
-                PRStation prStation = getPRStationWithCoord(event.getCoord());
+            int endMinute = (int) Math.floor(event.getTime() / 60);
 
-                if(prStation == null){
-                    throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
-                } else {
-                    for (int i = endMinute+1; i < 36*60; i++){
-                        prActivitiesPerMinute.get(prStation)[i] --;
-                    }
-                }
-
-                Map<Id<Person>, PRStation> actualPersonInPrStation = new HashMap<>();
-                actualPersonInPrStation.put(event.getPersonId(), prStation);
-
-                Double firstTime = startTime.get(event.getPersonId());
-                Double endTime = event.getTime();
-
-                if(personPerPrStation.entrySet().containsAll(actualPersonInPrStation.entrySet())){
-                    // TODO: Test all this
-                    if(Math.abs(endTime - firstTime) >= 6 * 60) {
-                        personPerPrStation.remove(event.getPersonId(), prStation);
+            //determine which station
+            PRStation prStation = getPRStationWithCoord(event.getCoord());
+            if(prStation == null){
+                throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
+            } else {
+                    //determine whether vehicle is about to be parked or to be picked up
+                    if(person2LastRoutingMode.get(event.getPersonId()).equals(TransportMode.car)){
+                        //person arrives with a car, thus car is now about to get parked
                         for (int i = endMinute; i < 36*60; i++) {
-                            carsInPrStationPerMinute.get(prStation)[i] --;
+                            carsInPrStationPerMinute.get(prStation)[i] ++;
+                        }
+                    } else {
+                        //vehicle is picked up
+                        if(this.station2Users.get(prStation).contains(event.getPersonId())) {
+                            for (int i = endMinute; i < 36 * 60; i++) {
+                                carsInPrStationPerMinute.get(prStation)[i]--;
+                            }
+                        } else {
+                            //person was not tracked at this station before (even though we pick up the car)
+                            // -> we are tracking a resident of the ban area and have to add the car for all previous time bins
+                            for (int i = endMinute - 1; i >= 0; i--) {
+                                carsInPrStationPerMinute.get(prStation)[i] ++;
+                            }
                         }
                     }
-                } else {
-                    log.warn("Agent leaves P+R Station without having entered it. This should not happen.");
                 }
-
-            }
-
-//        }
-
+            this.station2Users.get(prStation).add(event.getPersonId());
+            this.activitiesPerPRStation.get(prStation).increment();
+        }
     }
 
     @Nullable
     private PRStation getPRStationWithCoord(Coord coord){
-        PRStation result = null;
         for (PRStation prStation : activitiesPerPRStation.keySet()) {
             if(prStation.coord.equals(coord)) return prStation;
         }
@@ -128,8 +98,10 @@ class PrActivityEventHandler implements ActivityStartEventHandler, ActivityEndEv
     }
 
     private void init(){
-        for (PRStation prStation : activitiesPerPRStation.keySet()) {
-            activitiesPerPRStation.put(prStation, 0);
+        this.person2LastRoutingMode.clear();
+        for (PRStation prStation : this.activitiesPerPRStation.keySet()) {
+            this.activitiesPerPRStation.put(prStation, new MutableInt(0));
+            this.station2Users.put(prStation, new HashSet<>());
         }
     }
 
@@ -138,20 +110,11 @@ class PrActivityEventHandler implements ActivityStartEventHandler, ActivityEndEv
         init();
     }
 
-    public HashMap<PRStation, Integer> getActivitiesPerPRStation() {
+    public HashMap<PRStation, MutableInt> getActivitiesPerPRStation() {
         return activitiesPerPRStation;
-    }
-
-    public Map<PRStation, int[]> getPrStartsPerHour() {
-        return prStartsPerHour;
-    }
-
-    public Map<PRStation, int[]> getPrActivitiesPerMinute() {
-        return prActivitiesPerMinute;
     }
 
     public Map<PRStation, int[]> getCarsInPrStationPerMinute() {
         return carsInPrStationPerMinute;
     }
-
 }

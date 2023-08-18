@@ -1,6 +1,7 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.log4j.Logger;
 import org.matsim.analysis.RunTripsPreparation;
 import org.matsim.api.core.v01.network.Link;
@@ -82,22 +83,22 @@ public class RunPRActivityEventHandler {
         String outputFileName3 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_activitiesPerPRStation.tsv";
         String outputFileName4 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_carsInPrStationPerMinute.tsv";
         agentsPerPRStation2CSV(handler1.getActivitiesPerPRStation(), network, outputFileName3);
-        prStartsPerHour2CSV(handler1.getPrStartsPerHour(),outputFileName1);
-        prActivitiesPerMinute2CSV(handler1.getPrActivitiesPerMinute(), outputFileName2);
+//        prStartsPerHour2CSV(handler1.getPrStartsPerHour(),outputFileName1);
+//        prActivitiesPerMinute2CSV(handler1.getPrActivitiesPerMinute(), outputFileName2);
         carsInPrStationPerMinute2CSV(handler1.getCarsInPrStationPerMinute(), outputFileName4);
     }
 
-    private static void agentsPerPRStation2CSV(Map<PRStation, Integer> prActivities, Network network, String outputFileName){
+    private static void agentsPerPRStation2CSV(Map<PRStation, MutableInt> prActivities, Network network, String outputFileName){
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"PRStation","Agents","x","y","AgentsByEdgeCapacity"});
 
-            for (Map.Entry<PRStation, Integer> entry : prActivities.entrySet()) {
+            for (Map.Entry<PRStation, MutableInt> entry : prActivities.entrySet()) {
                 PRStation station = entry.getKey();
-                Integer agentsPerPRStation = entry.getValue();
+                MutableInt agentsPerPRStation = entry.getValue();
                 Link link = network.getLinks().get(station.getLinkId());
                 Double edgeCapacity = link.getCapacity();
-                Double agentsByEdgeCapacity = Double.valueOf(agentsPerPRStation) / (edgeCapacity * 36);
+                Double agentsByEdgeCapacity = agentsPerPRStation.doubleValue() / (edgeCapacity * 36);
 
                 writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY()),String.valueOf(agentsByEdgeCapacity)});
             }

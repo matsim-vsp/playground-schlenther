@@ -11,10 +11,7 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * this class analyses the usage of P+R stations over the course of the day.
@@ -32,6 +29,8 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
     private Map<PRStation, Set<Id<Person>>> station2Users = new HashMap<>();
 
     private Map<Id<Person>, Map.Entry<PRStation,Integer>> possibleRiders = new HashMap<>();
+
+    private List<ActivityEndEvent> prActivityEndEvents = new LinkedList<>();
 
 
     public PrActivityEventHandler(Set<PRStation> prStations) {
@@ -70,6 +69,8 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
     @Override
     public void handleEvent(ActivityEndEvent event) {
            if(event.getActType().equals("P+R")){
+
+               this.prActivityEndEvents.add(event);
 
                 int endMinute = (int) Math.floor(event.getTime() / 60);
 
@@ -149,5 +150,9 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
     public Map<PRStation, int[]> getCarsInPrStationPerMinute() {
         return carsInPrStationPerMinute;
+    }
+
+    public List<ActivityEndEvent> getPrActivityEndEvents() {
+        return prActivityEndEvents;
     }
 }

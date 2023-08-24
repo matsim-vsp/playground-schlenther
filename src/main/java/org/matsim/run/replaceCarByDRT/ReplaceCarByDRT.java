@@ -165,36 +165,36 @@ class ReplaceCarByDRT {
 					continue; //nothing to do; skip the plan
 				}
 
-				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
-				if(extraPTPlan){
-					plansToAdd.add(createPTOnlyPlan(plan, fac));
-				}
-
 				//for consistency checking
 				long nrOfBorderCrossingCarTrips = tripsToReplace.stream()
 						.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
 						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.endingTrip) || trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.originatingTrip))
 						.count();
-				long nrOfOutsideTrips = tripsToReplace.stream()
+				long nrOfOutsideTripsWithModesToReplace = tripsToReplace.stream()
 						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
 						.count();
-				if(nrOfOutsideTrips == tripsToReplace.size()){
+				if(nrOfOutsideTripsWithModesToReplace == tripsToReplace.size()){
 					plan.setType("not-affected");
 					continue; //this agent is not affected by the prohibition zone.
 				}
 
+				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
+				if(extraPTPlan){
+					plansToAdd.add(createPTOnlyPlan(plan, fac));
+				}
+
 				plan.setType(replacingMode);
 
-				Coord firstPRStation = null;
+				Coord firstCarPRStation = null;
 				//we use this as 'iteration variable'
-				Coord lastCarPRStation = null;
+				Coord currentCarPRStation = null;
 
 				for (TripStructureUtils.Trip trip : tripsToReplace) {
 					TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
 					String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
 					if (tripType.equals(TripType.outsideTrip)){
-						if(mainMode.equals(TransportMode.car) && lastCarPRStation != null) throw new IllegalStateException("agent " + person + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
-								"\n but vehicle is still parked at link=" + lastCarPRStation);
+						if(mainMode.equals(TransportMode.car) && currentCarPRStation != null) throw new IllegalStateException("agent " + person + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
+								"\n but vehicle is still parked at link=" + currentCarPRStation);
 						continue;
 					}
 
@@ -215,8 +215,8 @@ class ReplaceCarByDRT {
 										"trip = " + trip);
 							}
 							//car has to be picked up where it was left the last time
-							if (lastCarPRStation != null && enforceMassConservation){
-								prStation = lastCarPRStation;
+							if (currentCarPRStation != null && enforceMassConservation){
+								prStation = currentCarPRStation;
 							}
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
@@ -228,7 +228,7 @@ class ReplaceCarByDRT {
 							prStation = mutableListCandidates.get(rndr);
 						}
 
-						lastCarPRStation = null;
+						currentCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
@@ -256,7 +256,7 @@ class ReplaceCarByDRT {
 								}
 								//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
 								if(enforceMassConservation){
-									prStation = firstPRStation;
+									prStation = firstCarPRStation;
 								}
 							}
 						}
@@ -267,6 +267,9 @@ class ReplaceCarByDRT {
 							Collections.shuffle(mutableListCandidates);
 							int rndr = rnd.nextInt(mutableListCandidates.size());
 							prStation = mutableListCandidates.get(rndr);
+							if(mainMode.equals(TransportMode.car)){
+								currentCarPRStation = prStation;
+							}
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
@@ -287,8 +290,8 @@ class ReplaceCarByDRT {
 					} else {
 						throw new IllegalArgumentException("unknown trip type: " + tripType);
 					}
-					//change value of firstPRStation only one time
-					firstPRStation = firstPRStation == null ? lastCarPRStation : firstPRStation;
+					//change value of firstCarPRStation only one time
+					firstCarPRStation = firstCarPRStation == null ? currentCarPRStation : firstCarPRStation;
 					//insert new trip into plan
 					TripRouter.insertTrip(plan.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
 					replacedTrips.increment();

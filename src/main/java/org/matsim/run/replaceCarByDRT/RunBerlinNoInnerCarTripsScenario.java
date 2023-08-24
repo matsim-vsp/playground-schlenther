@@ -34,6 +34,7 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
@@ -69,7 +70,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 	private static boolean ENFORCE_MASS_CONSERVATION = true;
-	private static boolean EXTRA_PT_PLAN = false;
+	private static boolean EXTRA_PT_PLAN = true;
 	private static int K_PRSTATIONS = 1;
 
 
@@ -287,6 +288,16 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
 		controler.addOverridingModule(new PersonMoneyEventsAnalysisModule());
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				PrActivityEventHandler handler = new PrActivityEventHandler(URL_2_PR_STATIONS);
+				bind(PrActivityEventHandler.class).toInstance(handler);
+				addEventHandlerBinding().toInstance(handler);
+				addControlerListenerBinding().toInstance(handler);
+			}
+		});
+
 		return controler;
 	}
 

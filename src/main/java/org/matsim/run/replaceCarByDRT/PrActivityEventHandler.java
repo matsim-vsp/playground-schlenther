@@ -1,5 +1,6 @@
 package org.matsim.run.replaceCarByDRT;
 
+import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -9,19 +10,22 @@ import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.controler.events.ShutdownEvent;
+import org.matsim.core.controler.listener.ShutdownListener;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * this class analyses the usage of P+R stations over the course of the day.
  * vehicles are assumed to be parked or picked up at P+R stations depending on whether the routing mode before/after
  * the P+R activity was TransportMode.car or not.
  */
-class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler {
+class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler, ShutdownListener {
 
     private HashMap<PRStation, MutableInt> activitiesPerPRStation = new HashMap<>();
 
@@ -33,8 +37,11 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
     private Map<Id<Person>, Map.Entry<PRStation,Integer>> possibleRiders = new HashMap<>();
 
+    private List<ActivityEndEvent> prActivityEndEvents = new LinkedList<>();
 
-    public PrActivityEventHandler(Set<PRStation> prStations) {
+
+    public PrActivityEventHandler(URL url2PRStations) {
+        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(url2PRStations);
         for (PRStation station : prStations){
             this.activitiesPerPRStation.put(station, new MutableInt(0));
             this.carsInPrStationPerMinute.put(station, new int[36*60]);
@@ -70,6 +77,8 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
     @Override
     public void handleEvent(ActivityEndEvent event) {
            if(event.getActType().equals("P+R")){
+
+               this.prActivityEndEvents.add(event);
 
                 int endMinute = (int) Math.floor(event.getTime() / 60);
 
@@ -132,8 +141,10 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
     private void init(){
         this.person2LastRoutingMode.clear();
+        this.prActivityEndEvents.clear();
         for (PRStation prStation : this.activitiesPerPRStation.keySet()) {
             this.activitiesPerPRStation.put(prStation, new MutableInt(0));
+            this.carsInPrStationPerMinute.put(prStation, new int[36*60]);
             this.station2Users.put(prStation, new HashSet<>());
         }
     }
@@ -149,5 +160,78 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
     public Map<PRStation, int[]> getCarsInPrStationPerMinute() {
         return carsInPrStationPerMinute;
+    }
+
+    public List<ActivityEndEvent> getPrActivityEndEvents() {
+        return prActivityEndEvents;
+    }
+
+    @Override
+    public void notifyShutdown(ShutdownEvent event) {
+
+        //write to CSV file
+        String pathTotalActivitiesPerStation = event.getServices().getControlerIO().getOutputFilename("activitiesPerPRStation.tsv");
+        String pathActivitiesPerMinute = event.getServices().getControlerIO().getOutputFilename("carsInPrStationPerMinute.tsv");
+        String prActivitiesFile = event.getServices().getControlerIO().getOutputFilename("PR_activities.tsv");
+
+        try {
+            writeAgentsPerPRStation(pathTotalActivitiesPerStation);
+            writeCarsInPrStationPerMinute(pathActivitiesPerMinute);
+            writePRActivitiesFile(prActivitiesFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private void writePRActivitiesFile(String prActivitiesFile) throws IOException {
+        CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(prActivitiesFile)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+        writer.writeNext(new String[]{"time","person","linkId","x","y"});
+        for (ActivityEndEvent prActivityEndEvent : this.prActivityEndEvents) {
+            writer.writeNext(new String[]{
+                    "" + prActivityEndEvent.getTime(),
+                    prActivityEndEvent.getPersonId().toString(),
+                    prActivityEndEvent.getLinkId().toString(),
+                    "" + prActivityEndEvent.getCoord().getX(),
+                    "" + prActivityEndEvent.getCoord().getY()
+            });
+        }
+    }
+
+    private void writeAgentsPerPRStation(String outputFileName) throws IOException {
+        CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+        writer.writeNext(new String[]{"PRStation","Agents","x","y"});
+
+        for (Map.Entry<PRStation, MutableInt> entry : this.activitiesPerPRStation.entrySet()) {
+            PRStation station = entry.getKey();
+            MutableInt agentsPerPRStation = entry.getValue();
+
+
+            writer.writeNext(new String[]{station.name,String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
+        }
+        writer.close();
+    }
+
+    private void writeCarsInPrStationPerMinute(String outputFileName) throws IOException {
+        CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+
+        List<String> header = new ArrayList<String>();
+        header.add("PRStation");
+        for (int i = 0; i < 36; i++){
+            for(int j = 0; j < 60; j++) {
+                header.add(i + ":" + j);
+            }
+        }
+        writer.writeNext(header.toArray(new String[0]));
+        for (Map.Entry<PRStation, int[]> entry : this.carsInPrStationPerMinute.entrySet()) {
+            PRStation station = entry.getKey();
+            int[] agentsPerMinute = entry.getValue();
+            String[] agents = Arrays.toString(agentsPerMinute).split("[\\[\\]]")[1].split(", ");
+            List<String> agentsList = new ArrayList<String>(Arrays.asList(agents));
+            agentsList.add(0, station.name);
+
+            writer.writeNext(agentsList.toArray(new String[0]));
+        }
+        writer.close();
     }
 }

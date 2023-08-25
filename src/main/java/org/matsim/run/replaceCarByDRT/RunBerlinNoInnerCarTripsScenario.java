@@ -34,6 +34,7 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
@@ -126,7 +127,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Scenario scenario = prepareScenario(config);
 
 		Controler controler = prepareControler(scenario);
-
 		controler.run();
 		RunBerlinScenario.runAnalysis(controler);
 	}
@@ -354,6 +354,16 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	public static Controler prepareControler(Scenario scenario) {
 		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
 		controler.addOverridingModule(new PersonMoneyEventsAnalysisModule());
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				PrActivityEventHandler handler = new PrActivityEventHandler(URL_2_PR_STATIONS);
+				bind(PrActivityEventHandler.class).toInstance(handler);
+				addEventHandlerBinding().toInstance(handler);
+				addControlerListenerBinding().toInstance(handler);
+			}
+		});
+
 		return controler;
 	}
 

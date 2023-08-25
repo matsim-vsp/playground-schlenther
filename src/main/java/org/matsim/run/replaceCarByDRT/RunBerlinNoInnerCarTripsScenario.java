@@ -41,7 +41,6 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.run.BerlinExperimentalConfigGroup;
-import org.matsim.run.RunBerlinScenario;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
 
@@ -79,7 +78,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		String[] configArgs;
 		if ( args.length==0 ) {
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-0.1pct.config.test.xml",
-					"--config:controler.lastIteration", "2" ,
+					"--config:controler.lastIteration", "1" ,
 					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-0.1pct/replaceCarByDRT-hundekopfTest"};
 		} else {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
@@ -99,7 +98,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		Controler controler = prepareControler(scenario);
 		controler.run();
-		RunBerlinScenario.runAnalysis(controler);
+//		RunBerlinScenario.runAnalysis(controler);
 	}
 
 	static Config prepareConfig(String [] args, ConfigGroup... customModules) {

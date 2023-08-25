@@ -89,10 +89,11 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
                 }
 
                 // agents who ride to the station get skipped
-                if(!person2LastRoutingMode.get(event.getPersonId()).equals(TransportMode.ride)){
+               String lastRoutingMode = person2LastRoutingMode.get(event.getPersonId());
+                if(!lastRoutingMode.equals(TransportMode.ride)){
 
                     //determine whether vehicle is about to be parked or to be picked up
-                    if(person2LastRoutingMode.get(event.getPersonId()).equals(TransportMode.car)){
+                    if(lastRoutingMode.equals(TransportMode.car)){
                         //person arrives with a car, thus car is now about to get parked
                         for (int i = endMinute; i < 36*60; i++) {
                             carsInPrStationPerMinute.get(prStation)[i] ++;
@@ -196,6 +197,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
                     "" + prActivityEndEvent.getCoord().getY()
             });
         }
+        writer.close();
     }
 
     private void writeAgentsPerPRStation(String outputFileName) throws IOException {

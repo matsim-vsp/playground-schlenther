@@ -1,8 +1,11 @@
 package org.matsim.analysis;
 
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.run.replaceCarByDRT.RunPRActivityEventHandler;
 import org.matsim.run.replaceCarByDRT.RunScorePreparation;
 import org.matsim.run.replaceCarByDRT.RunTrafficVolumeEventHandler;
+
+import java.net.URL;
 
 public class RunPostprocessingAfterSim {
     private final String INPUT_RUNDIRECTORY;
@@ -10,12 +13,12 @@ public class RunPostprocessingAfterSim {
     private final String INPUT_RSCRIPTCOMMAND;
     private final String INPUT_INNERCITYSHP;
     private final String INPUT_BERLINSHP;
-    private final String INPUT_PRSTATIONS;
+    private final URL INPUT_PRSTATIONS;
     private final String INPUT_BOUNDARYSHP;
 
 
 
-    public RunPostprocessingAfterSim(String runDirectory, String runId, String rScriptCommand, String inner_city_shp, String berlin_shp, String pr_stations, String boundary_shp){
+    public RunPostprocessingAfterSim(String runDirectory, String runId, String rScriptCommand, String inner_city_shp, String berlin_shp, URL pr_stations, String boundary_shp){
         this.INPUT_RUNDIRECTORY = runDirectory;
         this.INPUT_RUNID = runId;
         this.INPUT_RSCRIPTCOMMAND = rScriptCommand;
@@ -32,7 +35,7 @@ public class RunPostprocessingAfterSim {
             String rScriptCommand = "C:/Program Files/R/R-4.2.2/bin/Rscript.exe";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
             String boundary_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-boundaries-500m.shp";
 
             RunPostprocessingAfterSim postprocessorAfterSim = new RunPostprocessingAfterSim(runDirectory, runId, rScriptCommand, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
@@ -44,7 +47,7 @@ public class RunPostprocessingAfterSim {
             String rScriptCommand = args[2];
             String inner_city_shp = args[3];
             String berlin_shp = args[4];
-            String pr_stations = args[5];
+            URL pr_stations = IOUtils.resolveFileOrResource(args[5]);
             String boundary_shp = args[6];
 
             RunPostprocessingAfterSim postprocessorAfterSim = new RunPostprocessingAfterSim(runDirectory, runId, rScriptCommand, inner_city_shp, berlin_shp, pr_stations, boundary_shp);

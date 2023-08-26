@@ -1,11 +1,13 @@
 package org.matsim.analysis;
 
 import org.apache.log4j.Logger;
+import org.matsim.core.utils.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 
 public class RunTripsPreparation {
 
@@ -14,12 +16,12 @@ public class RunTripsPreparation {
     private final String population;
     private final String inner_city_shp;
     private final String berlin_shp;
-    private final String pr_stations;
+    private final URL pr_stations;
     private final String rScriptCommand;
 
     private static final Logger log = Logger.getLogger(RunTripsPreparation.class);
 
-    public RunTripsPreparation(String runDirectory, String runId, String population, String inner_city_shp, String berlin_shp, String pr_stations, String rScriptCommand) {
+    public RunTripsPreparation(String runDirectory, String runId, String population, String inner_city_shp, String berlin_shp, URL pr_stations, String rScriptCommand) {
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.population = population;
@@ -44,7 +46,7 @@ public class RunTripsPreparation {
             String population = runDirectory + runId + ".output_plans.xml.gz";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 
             RunTripsPreparation postprocessor = new RunTripsPreparation(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations, rScriptCommand);
             postprocessor.run();
@@ -55,7 +57,7 @@ public class RunTripsPreparation {
             String population = runDirectory + runId + ".output_plans.xml.gz";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
+            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 
             RunTripsPreparation postprocessor = new RunTripsPreparation(runDirectory, runId, population, inner_city_shp, berlin_shp, pr_stations, rScriptCommand);
             postprocessor.run();
@@ -71,7 +73,7 @@ public class RunTripsPreparation {
         try {
             // Build the command for each R script
             String[] commands = {
-                    rScriptCommand, "src/main/R/policyTripsPreparation.R", runDirectory, pr_stations,
+                    rScriptCommand, "src/main/R/policyTripsPreparation.R", runDirectory, String.valueOf(pr_stations),
 //                    rScriptCommand, "src/main/R/scoreComparison.R", runDirectory, pr_stations,
 //                    rScriptCommand, "src/main/R/tripsComparison.R", runDirectory, pr_stations
             };

@@ -225,7 +225,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 					"Following, all mode choice strategies will be disabled. Their strategy weights will be distributed to one selecotr (50%) and to all reroute strategies (the other 50%)." +
 					"Please consider to decrease the number of iterations! Probably, you will not require as many iterations now, as mode choice gets disabled...");
 			if(rerouteSettings.isEmpty()) throw new IllegalArgumentException("you have not configured any reroute strategy");
-			selector.setWeight(selector.getWeight() + 0.5*totalOldWeightModeChoiceStrategies );
+			selector.setWeight(selector.getWeight() + 0.5 * totalOldWeightModeChoiceStrategies );
 			for (StrategyConfigGroup.StrategySettings rerouteSetting : rerouteSettings) {
 				rerouteSetting.setWeight(rerouteSetting.getWeight() + 0.5/rerouteSettings.size()*totalOldWeightModeChoiceStrategies);
 			}

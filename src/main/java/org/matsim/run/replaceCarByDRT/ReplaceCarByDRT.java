@@ -244,6 +244,9 @@ class ReplaceCarByDRT {
 									prStation = mutableListCandidates.get(rndr);
 								}
 
+								//change value of firstPRStation only one time
+								firstPRStation = firstPRStation == null ? prStation : firstPRStation;
+
 								lastCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
@@ -305,8 +308,7 @@ class ReplaceCarByDRT {
 							} else {
 								throw new IllegalArgumentException("unknown trip type: " + tripType);
 							}
-							//change value of firstPRStation only one time
-							firstPRStation = firstPRStation == null ? lastCarPRStation : firstPRStation;
+
 							//insert new trip into plan
 							TripRouter.insertTrip(planCopyExtra.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
 							replacedTrips.increment();
@@ -394,6 +396,9 @@ class ReplaceCarByDRT {
 								prStation = mutableListCandidates.get(rndr);
 							}
 
+							//change value of firstPRStation only one time
+							firstPRStation = firstPRStation == null ? prStation : firstPRStation;
+
 							lastCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
@@ -455,8 +460,7 @@ class ReplaceCarByDRT {
 						} else {
 							throw new IllegalArgumentException("unknown trip type: " + tripType);
 						}
-						//change value of firstPRStation only one time
-						firstPRStation = firstPRStation == null ? lastCarPRStation : firstPRStation;
+
 						//insert new trip into plan
 						TripRouter.insertTrip(planCopyOutside.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
 						replacedTrips.increment();
@@ -541,10 +545,12 @@ class ReplaceCarByDRT {
 							prStation = mutableListCandidates.get(rndr);
 						}
 
-						 //change value of firstCarPRStation only one time
+						//change value of firstCarPRStation only one time
 						firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
+
 						currentCarPRStation = null;
 
+//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
 						parkAndRideAct.setMaximumDuration(5 * 60);
 

@@ -25,7 +25,14 @@ import java.util.stream.Collectors;
 import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.PR_ACTIVITY_TYPE;
 
 
-//TODO write a copy of this test class, set up simulation with PRStationChoice.closesToInside, check for PR activity locations
+//TODO write a copy of this test class, set up simulation with PRStationChoice.closestToInside, check for PR activity locations
+
+/**
+ * These test are meant to work with the following configuration:
+ * PRStationChoice = closestToOutside
+ * replacingModes = pt+drt
+ * extraPtPlan = true
+ */
 public class BerlinNoInnerCarTripsScenarioTest {
 
 	private static Scenario scenario;
@@ -36,7 +43,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	@BeforeClass
 	public static void main() {
 		//TODO: explicitly set parameters
-		String[] configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-0.1pct.config.test.xml",
+		String[] configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.xml",
 				"--config:controler.lastIteration", "0",
 				"--config:plans.inputPlansFile", "replaceCarByDRT.testPlans.xml.gz",
 				"--config:controler.outputDirectory", "test/output/org/matsim/run/replaceCarByDRT/closestToOutside"};
@@ -55,7 +62,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 	@Test
 	public void testTotalNumberOfPRActivities(){
-		Assert.assertEquals(6, prActivityEventHandler.getPrActivityEndEvents().size());
+		Assert.assertEquals(17, prActivityEventHandler.getPrActivityEndEvents().size());
 	}
 
 	@Test
@@ -94,6 +101,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 	@Test
 	public void testBerlinerWithExternalTripsOnly(){
+		// this agent lives outside the prohibition zone & has external trips -> should not be affected.
 
 		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(340500501));
 
@@ -111,6 +119,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 	@Test
 	public void testBrandenburgerWith2PRActivities(){
+		// this agent lives in Brandenburg, enters the prohibition zone once -> has 2 PRActivities like this
 
 		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(38250801));
 
@@ -136,17 +145,69 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	}
 
 	@Test
-	public void testInhabitantOfProhibitionZoneWithMultipleBorderCrossings(){
-		//TODO: test agent that has multiple trips across the border of prohibition zone (at best 4 or more - possibly at different PR stations). test that firstPRStation = lasPRStation
+	public void testBrandenburgerWith4PRActivities(){
+		// this agent (lives outside prohibition zone) and has multiple (4) border-crossing trips -> 4x PRActivities. First and last PR station can be different!
 
+		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(116685501));
+
+		Assert.assertEquals("brandenburg", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
+		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
+
+		//test all plans
+		for (Plan plan : person.getPlans()) {
+			if(!plan.getType().equals("ptOnly")){
+				assertPRActivitiesCountToX(plan, 4);
+			} else {
+				assertPRActivitiesCountToX(plan, 0);
+			}
+		}
+
+		//test events
+		assertPRActivityEndEventsCountToX(person, 4);
+		List<ActivityEndEvent> personsPRends = prActivityEventHandler.getPrActivityEndEvents().stream()
+				.filter(event -> event.getPersonId().equals(person.getId()))
+				.collect(Collectors.toList());
+		Assert.assertEquals(Id.createLinkId(12307),personsPRends.get(0).getLinkId());
+		Assert.assertEquals(Id.createLinkId(12307),personsPRends.get(1).getLinkId());
+		Assert.assertEquals(Id.createLinkId(63685),personsPRends.get(2).getLinkId());
+		Assert.assertEquals(Id.createLinkId(63685),personsPRends.get(3).getLinkId());
+	}
+
+	@Test
+	public void testInhabitantOfProhibitionZoneWithMultipleBorderCrossings(){
+		//this agent has multiple trips across the border of prohibition zone (at best 4 or more - possibly at different PR stations). Testing that firstPRStation = lastPRStation
+
+		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(390998601));
+		Assert.assertEquals("expecting agent's home-activity-zone to be berlin", "berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
+		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
+
+		//test all plans
+		for (Plan plan : person.getPlans()) {
+			if(!plan.getType().equals("ptOnly")){
+				assertPRActivitiesCountToX(plan, 4);
+			} else {
+				assertPRActivitiesCountToX(plan, 0);
+			}
+		}
+
+		//test events
+		assertPRActivityEndEventsCountToX(person, 4);
+		List<ActivityEndEvent> personsPRends = prActivityEventHandler.getPrActivityEndEvents().stream()
+				.filter(event -> event.getPersonId().equals(person.getId()))
+				.collect(Collectors.toList());
+		Assert.assertEquals(Id.createLinkId(85582),personsPRends.get(0).getLinkId());
+		Assert.assertEquals(Id.createLinkId(79212),personsPRends.get(1).getLinkId());
+		Assert.assertEquals(Id.createLinkId(79212),personsPRends.get(2).getLinkId());
+		Assert.assertEquals(Id.createLinkId(85582),personsPRends.get(3).getLinkId());
 
 	}
 
 	@Test
 	public void testInhabitantOfProhibitionZoneWithOutSideCarSubtour(){
-		//this agent lives in the prohibition zone, travels to work outside,
+		// this agent lives in the prohibition zone, travels to work outside,
 		// than has a subtour outside that could normally be a car subtour, but unfortunately the coordinates of both work differ slightly
 		// meaning that the ptOnly plan replaces ALL trips by pt trips, inclduing the subtour that could remain car!
+		// for not ptOnly-plan: testing firstCarPRStation == lastCarPRStation
 		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(259563501));
 		Assert.assertEquals("expecting agent's home-activity-zone to be berlin", "berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
@@ -159,10 +220,13 @@ public class BerlinNoInnerCarTripsScenarioTest {
 			}
 		}
 
+		//test events
+		assertPRActivityEndEventsCountToX(person, 2);
+
 	}
 
 	@Test
-	public void testInhabitantPfProhibitionZoneWithOutsideANDCrossingSubtours(){
+	public void testInhabitantOfProhibitionZoneWithOutsideANDCrossingSubtours(){
 		//this agent lives in berlin outside the prohibiton zone
 		//.. has one outside subtour and one border-crossing subtour, both start+end @ home
 		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(446367901));
@@ -220,13 +284,54 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	}
 
 
-	//TODO test agent (lives ooutside prohibition zone) with multiple (best 4 or more) border-crossing trips. First and last PR station can be different!
 
-	//TODO: test agent with mode ride that uses different PR stations (as this is not subject to mass conservation)
+	@Test
+	public void testRiderWithDifferentPRStations(){
+		// test agent with mode ride that uses different PR stations (as this is not subject to mass conservation)
 
-	//TODO: test agent that uses ride in combination with other modes in one subtour that touches prohibition zone
+		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(116317401));
 
-	//TODO: test agent that uses pt only plan (?)
+		//test all plans
+		for (Plan plan : person.getPlans()) {
+			if(!plan.getType().equals("ptOnly")){
+				assertPRActivitiesCountToX(plan, 2);
+			} else {
+				assertPRActivitiesCountToX(plan, 0);
+			}
+		}
+
+		//test events
+		assertPRActivityEndEventsCountToX(person, 2);
+		List<ActivityEndEvent> personsPRends = prActivityEventHandler.getPrActivityEndEvents().stream()
+				.filter(event -> event.getPersonId().equals(person.getId()))
+				.collect(Collectors.toList());
+		Assert.assertEquals(Id.createLinkId(57218),personsPRends.get(0).getLinkId());
+		Assert.assertEquals(Id.createLinkId(18796),personsPRends.get(1).getLinkId());
+
+	}
+
+
+	@Test
+	public void testRiderWith2BorderCrossingTripsANDDifferentModes(){
+		// this agent is a rider and has two border crossing trips. The one is mode "ride", the other mode "pt" -> should contain 1 PRActivity
+
+		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(100370701));
+
+		//test all plans
+		for (Plan plan : person.getPlans()) {
+			if(!plan.getType().equals("ptOnly")){
+				assertPRActivitiesCountToX(plan, 1);
+			} else {
+				assertPRActivitiesCountToX(plan, 0);
+			}
+		}
+
+		//test events
+		assertPRActivityEndEventsCountToX(person, 1);
+
+	}
+
+
 
 	private static void assertPRActivityEndEventsCountToX(Person person, int expected) {
 		Assert.assertEquals("there should be exactly " + expected + " ActivityEndEvents for activityType = " + PR_ACTIVITY_TYPE + " with personId= " + person.getId(),

@@ -1,6 +1,5 @@
 package org.matsim.run.replaceCarByDRT;
 
-import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;

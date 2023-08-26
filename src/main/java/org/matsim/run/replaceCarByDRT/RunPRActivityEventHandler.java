@@ -62,14 +62,35 @@ public class RunPRActivityEventHandler {
         events.finishProcessing();
 
         //write to CSV file
-        String outputFileName3 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_activitiesPerPRStation.tsv";
-        String outputFileName4 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_carsInPrStationPerMinute.tsv";
-        agentsPerPRStation2CSV(handler1.getActivitiesPerPRStation(), outputFileName3);
-        carsInPrStationPerMinute2CSV(handler1.getCarsInPrStationPerMinute(), outputFileName4);
+        String pathTotalActivitiesPerStation = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_activitiesPerPRStation.tsv";
+        String pathActivitiesPerMinute = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_carsInPrStationPerMinute.tsv";
+        String prActivitiesFile = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_PR_activites.tsv";
+
+        try {
+            writeAgentsPerPRStation(handler.getActivitiesPerPRStation(), pathTotalActivitiesPerStation);
+            writeCarsInPrStationPerMinute(handler.getCarsInPrStationPerMinute(), pathActivitiesPerMinute);
+            writePRActivitiesFile(handler, prActivitiesFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
-    private static void agentsPerPRStation2CSV(Map<PRStation, MutableInt> prActivities, String outputFileName){
-        try {
+    private static void writePRActivitiesFile(PrActivityEventHandler handler, String prActivitiesFile) throws IOException {
+        CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(prActivitiesFile)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
+        writer.writeNext(new String[]{"time","person","linkId","x","y"});
+        for (ActivityEndEvent prActivityEndEvent : handler.getPrActivityEndEvents()) {
+            writer.writeNext(new String[]{
+                    "" + prActivityEndEvent.getTime(),
+                    prActivityEndEvent.getPersonId().toString(),
+                    prActivityEndEvent.getLinkId().toString(),
+                    "" + prActivityEndEvent.getCoord().getX(),
+                    "" + prActivityEndEvent.getCoord().getY()
+            });
+        }
+    }
+
+    private static void writeAgentsPerPRStation(Map<PRStation, MutableInt> prActivities, String outputFileName) throws IOException {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"PRStation","Agents","x","y"});
 
@@ -82,14 +103,10 @@ public class RunPRActivityEventHandler {
             }
             writer.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
-    private static void carsInPrStationPerMinute2CSV(Map<PRStation, int[]> prActivities, String outputFileName) {
-        try {
+    private static void writeCarsInPrStationPerMinute(Map<PRStation, int[]> prActivities, String outputFileName) throws IOException {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
 
             List<String> header = new ArrayList<String>();

@@ -2,6 +2,7 @@ package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
@@ -52,8 +53,8 @@ public class RunPRActivityEventHandler {
         EventsManager events = EventsUtils.createEventsManager();
 
         //create the handler and add it + sets LinkOfInterest to current PRLink
-        PrActivityEventHandler handler1 = new PrActivityEventHandler(pr_stations);
-        events.addHandler(handler1);
+        PrActivityEventHandler handler = new PrActivityEventHandler(pr_stations);
+        events.addHandler(handler);
 
         //create the reader and read the file
         events.initProcessing();
@@ -107,6 +108,7 @@ public class RunPRActivityEventHandler {
     }
 
     private static void writeCarsInPrStationPerMinute(Map<PRStation, int[]> prActivities, String outputFileName) throws IOException {
+        try{
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
 
             List<String> header = new ArrayList<String>();

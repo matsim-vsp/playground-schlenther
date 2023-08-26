@@ -14,15 +14,17 @@ library(ggalluvial)
 #HPC Cluster
 #args <- commandArgs(trailingOnly = TRUE)
 #policyCaseDirectory <- args[1]
-#shp <- "?"
+
 
 #10pct
 #baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/motorwayOnly"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
 
 #1pct
 baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-07-13/extraPtPlan/"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-08-11/stationChoice-closestToOutside/"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
+
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
@@ -112,6 +114,7 @@ impacted_trips <- impacted_trips %>%
   add_column(euclideanDistance_diff = impacted_trips$euclidean_distance_policy - impacted_trips$euclidean_distance_base)
 
 
+tester <- impGrenz_trips %>% filter(grepl("car",modes_policy, fixed = TRUE))
 ########################################
 "Modal Shift Sankeys"
 ## TODO: Why do I filter out all this stuff? Need to explain or change
@@ -129,7 +132,6 @@ ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 "Binnentrips"
 prep_binnen_policy <- impBinnen_trips_policy %>% 
   filter(!grepl("+", main_mode, fixed = TRUE)) %>%
-  filter(!main_mode == "bicycle") %>%
   filter(!main_mode == "car") %>%
   filter(!main_mode == "ride")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
@@ -323,11 +325,12 @@ for (case in tripCases){
     theme_classic() +
     theme(
       plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5, size = 8),
+      plot.caption = element_text(face = "italic", size = 6),
       axis.ticks.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+      axis.text.x = element_text(angle = 90,, vjust = 0.5, hjust = 1, size = 6),
+      axis.text.y = element_text(size = 6)
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_PRStation.png"))
   
@@ -346,8 +349,8 @@ impGrenzOther_trips <- impGrenz_trips %>% filter(impGrenz_trips$person_policy %i
 
 boxplot_helper2 <- rbind(impGrenzPR_trips, impGrenzOther_trips)
 
-mean(impGrenzPR_trips$travTime_diff)
-mean(impGrenzOther_trips$travTime_diff)
+mean(impGrenzPR_trips$traveledDistance_diff)
+mean(impGrenzOther_trips$traveledDistance_diff)
 
 mean(impGrenz_trips$travTime_diff)
 
@@ -356,7 +359,7 @@ ggplot(boxplot_helper2, aes(x = hasPRStation, y = travTime_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
     title = "Verteilung der Reisezeit-Differenzen",
-    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    subtitle = "Betroffene Grenztrips (Maßnahmenfall vs Basisfall)",
     caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
     y = "Reisezeit Δ [s]"
   ) +
@@ -371,11 +374,14 @@ ggplot(boxplot_helper2, aes(x = hasPRStation, y = travTime_diff)) +
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_hasPRStation.png"))
 
 "Boxplot"
+means <- aggregate(traveledDistance_diff ~ hasPRStation, boxplot_helper2, mean)
 ggplot(boxplot_helper2, aes(x = hasPRStation, y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
+  stat_summary(fun.y = mean, colour = "red") +
+  geom_text(data = means, aes(label = traveledDistance_diff, y = traveledDistance_diff + 2)) +
   labs(
     title = "Verteilung der Reiseweite-Differenzen",
-    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
+    subtitle = "Betroffene Grenztrips (Maßnahmenfall vs Basisfall)",
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
     y = "Reiseweite Δ [m]"
   ) +
@@ -391,11 +397,12 @@ ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_hasPRStation.pn
 
 
 ########################################
-# Test: filterByRegion-Probleme, Case 2 only works without extraPtPlan=true
+# Test: filterByRegion-Probleme, Cases only work without extraPtPlan=true
 
+# Merging all trips
 allTrips <- merge(policyTrips, baseTrips, by = "trip_id", suffixes = c("_policy","_base"))
 
-"PR trips = all those trips that got replaced by P+R"
+# "PR trips = all those trips that got replaced by P+R"
 pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
 pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
 
@@ -406,11 +413,23 @@ pr_trips <- pr_trips %>%
   add_column(traveledDistance_diff = pr_trips$traveled_distance_policy - pr_trips$traveled_distance_base) %>%
   add_column(euclideanDistance_diff = pr_trips$euclidean_distance_policy - pr_trips$euclidean_distance_base)
 
-# Case 1: Falsely classified as non-impacted Trip -> has PR Trip, but no Grenztrip?
-non_impacted_trips <- allTrips %>% filter(!trip_id %in% impacted_trips$trip_id)
-lupe <- pr_trips %>% filter(trip_id %in% non_impacted_trips$trip_id)
+# TODO
+# Goal: Identify 830 trips that are falsely classified as non-impacted trip (without needing P+R!!)
+## Something´s wrong here! There are bicycle changes that are not supposed to be there, e.g. Agent 100753501 -> what is it?
+## Another error: Agent 107031801 uses a PRStation even though had PT before -> not supposed to be like this.
+changedMode_trips <- allTrips %>% filter(main_mode_base %in% c("car","ride")) %>%
+  filter(!main_mode_policy == main_mode_base) %>%
+  filter(main_mode_policy == "bicycle")
 
-# Case 2: Falsely classified as impacted Trip -> no PR Trip, but is Grenztrip?
+changedMode_trips <- allTrips %>% filter(main_mode_base %in% c("car","ride")) %>%
+  filter(!main_mode_policy == main_mode_base) %>%
+  filter(!main_mode_policy == "bicycle")
+
+# Case 1: Falsely classified as non-impacted Trip -> has PR Trip, but no Grenztrip? (only works without extraPtPlan)
+non_impacted_trips <- allTrips %>% filter(!trip_id %in% impacted_trips$trip_id)
+lupe <- pr_trips %>% filter(pr_trips$trip_id %in% non_impacted_trips$trip_id)
+
+# Case 2: Falsely classified as impacted Trip -> no PR Trip, but is Grenztrip? (only works without extraPtPlan)
 not_pr_trips <- allTrips %>% filter(!trip_id %in% pr_trips$trip_id)
 lupe2 <- not_pr_trips %>% filter(trip_id %in% impGrenz_trips$trip_id) %>%
   filter(!main_mode_policy == "pt") %>%

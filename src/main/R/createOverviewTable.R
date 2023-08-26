@@ -1,8 +1,22 @@
 library(tidyverse)
 library(dplyr)
 
-drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-07-13/extraPtPlan/"
-runId <- "extraPtPlan-true"
+#HPC Cluster
+#args <- commandArgs(trailingOnly = TRUE)
+#drtTableDirectory <- args[1]
+#runId <- args[2]
+
+#1pct
+runId <- "stationChoice-extraPrStationPlan"
+dResultsDir <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-08-11/"
+drtTableDirectory <- file.path(gResultsDir,runId)
+
+#drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
+#runId <- "extraPtPlan-drtStopBased-1506vehicles-8seats"
+
+#10pct
+#drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+#runId <- "final-10pct-7503vehicles-8seats"
 
 outputDirectory <- paste0(drtTableDirectory,"/analysis")
 
@@ -43,16 +57,18 @@ drtEmptyRatio <- drtVehicleTable$emptyRatio[drtVehicleTable$iteration == "500"]
 drtDPDTRatio <- drtVehicleTable$d_p.d_t[drtVehicleTable$iteration == "500"]
 
 overviewTable <- data.frame(key = character(), value = numeric()) %>%
-  add_row(key = "Durchschnittliche Score-Differenz (aller Agenten)", value = avgScoreDiffAll) %>%
-  add_row(key = "Durchschnittliche Score-Differenz (aller betroffenen Agenten)", value = avgScoreDiffImp) %>%
-  add_row(key = "Durchschnittliche Reisezeit-Differenz (aller betroffenen Trips) [s]", value = avgTripsTimeAll) %>%
-  add_row(key = "Durchschnittliche Reisezeit-Differenz (aller betroffenen Quell- und Zieltrips) [s]", value = avgTripsTimeGrenz) %>%
-  add_row(key = "Durchschnittliche Reisezeit-Differenz (aller betroffenen Binnentrips) [s]", value = avgTripsTimeBinnen) %>%
-  add_row(key = "Durchschnittliche Reiseweiten-Differenz (aller betroffenen Trips) [m]", value = avgTripsDistAll) %>%
-  add_row(key = "Durchschnittliche Reiseweiten-Differenz (aller betroffenen Quell- und Zieltrips) [m]", value = avgTripsDistGrenz) %>%
-  add_row(key = "Durchschnittliche Reiseweiten-Differenz (aller betroffenen Binnentrips) [m]", value = avgTripsDistBinnen) %>%
-  add_row(key = "Durchschnittliche Wartezeit (DRT-System)", value = avgWaitDrt) %>%
-  add_row(key = "Anteil leere Fahrten (DRT-System)", value = drtEmptyRatio) %>%
-  add_row(key = "Verhältnis Pkm/Fz-km (DRT-System)", value = drtDPDTRatio)
+  add_row(key = "Ø Score-Diff. (Alle)", value = avgScoreDiffAll) %>%
+  add_row(key = "Ø Score-Diff. (Betr.)", value = avgScoreDiffImp) %>%
+  add_row(key = "Ø RZ-Diff. (betr. Trips) [s]", value = avgTripsTimeAll) %>%
+  add_row(key = "Ø RZ-Diff. (betr. Q/Z-Trips) [s]", value = avgTripsTimeGrenz) %>%
+  add_row(key = "Ø RZ-Diff. (betr. B-Trips) [s]", value = avgTripsTimeBinnen) %>%
+  add_row(key = "Ø RW-Diff. (betr. Trips) [m]", value = avgTripsDistAll) %>%
+  add_row(key = "Ø RW-Diff. (betr. Q/Z-Trips) [m]", value = avgTripsDistGrenz) %>%
+  add_row(key = "Ø RW-Diff. (betr. B-Trips) [m]", value = avgTripsDistBinnen) %>%
+  add_row(key = "Ø Wartezeit (DRT)", value = avgWaitDrt) %>%
+  add_row(key = "% leere Fahrten (DRT)", value = drtEmptyRatio) %>%
+  add_row(key = "Pkm/Fz-km (DRT)", value = drtDPDTRatio)
+
+overviewTable$value <- formatC(overviewTable$value, digits = 2, format = "f")
   
 write.table(overviewTable,file.path(outputDirectory,"runOverview.tsv"),row.names = FALSE, sep = "\t")

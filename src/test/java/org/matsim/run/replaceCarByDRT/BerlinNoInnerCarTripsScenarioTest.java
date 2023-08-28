@@ -42,7 +42,6 @@ public class BerlinNoInnerCarTripsScenarioTest {
 				"--config:controler.outputDirectory", "test/output/org/matsim/run/replaceCarByDRT/closestToOutside"};
 		try {
 			Config config = RunBerlinNoInnerCarTripsScenario.prepareConfig(configArgs);
-//			DrtConfigGroup.getSingleModeDrtConfig(config).setNumberOfThreads(4);
 			scenario = RunBerlinNoInnerCarTripsScenario.prepareScenario(config);
 			Controler controler = RunBerlinNoInnerCarTripsScenario.prepareControler(scenario);
 			controler.run();

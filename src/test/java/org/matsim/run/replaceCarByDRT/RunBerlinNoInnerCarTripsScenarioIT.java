@@ -1,7 +1,7 @@
 package org.matsim.run.replaceCarByDRT;
 
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.net.MalformedURLException;
 

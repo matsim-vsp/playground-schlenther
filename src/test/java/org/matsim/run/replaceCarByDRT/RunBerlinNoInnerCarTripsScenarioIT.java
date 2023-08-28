@@ -5,10 +5,10 @@ import org.junit.Test;
 
 import java.net.MalformedURLException;
 
-class RunBerlinNoInnerCarTripsScenarioIT {
+public class RunBerlinNoInnerCarTripsScenarioIT {
 
 	@Test
-	void main() {
+	public void main() {
 		try {
 			RunBerlinNoInnerCarTripsScenario.main(new String[0]);
 		} catch (MalformedURLException e) {

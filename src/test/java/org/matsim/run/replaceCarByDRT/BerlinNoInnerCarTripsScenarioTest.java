@@ -16,22 +16,23 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.PR_ACTIVITY_TYPE;
+import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.readPRStationFile;
+import static org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario.URL_2_PR_STATIONS;
 
 
 //TODO write a copy of this test class, set up simulation with PRStationChoice.closesToInside, check for PR activity locations
 public class BerlinNoInnerCarTripsScenarioTest {
 
-	private static Scenario scenario;
-	private static PrActivityEventHandler prActivityEventHandler;
+	private static Scenario SCENARIO;
+	private static PrActivityEventHandler PR_HANDLER;
 
 	private static Logger log = LogManager.getLogger(BerlinNoInnerCarTripsScenarioTest.class);
+
+	private static Map<String, PRStation> PR_STATIONS;
 
 	@BeforeClass
 	public static void main() {
@@ -42,10 +43,12 @@ public class BerlinNoInnerCarTripsScenarioTest {
 				"--config:controler.outputDirectory", "test/output/org/matsim/run/replaceCarByDRT/closestToOutside"};
 		try {
 			Config config = RunBerlinNoInnerCarTripsScenario.prepareConfig(configArgs);
-			scenario = RunBerlinNoInnerCarTripsScenario.prepareScenario(config);
-			Controler controler = RunBerlinNoInnerCarTripsScenario.prepareControler(scenario);
+			SCENARIO = RunBerlinNoInnerCarTripsScenario.prepareScenario(config);
+			Controler controler = RunBerlinNoInnerCarTripsScenario.prepareControler(SCENARIO);
 			controler.run();
-			prActivityEventHandler = controler.getInjector().getInstance(PrActivityEventHandler.class);
+			PR_HANDLER = controler.getInjector().getInstance(PrActivityEventHandler.class);
+
+			PR_STATIONS = readPRStationFile(URL_2_PR_STATIONS).stream().collect(Collectors.toMap(station -> station.name, station -> station));
 
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -54,14 +57,14 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 	@Test
 	public void testTotalNumberOfPRActivities(){
-		Assert.assertEquals(6, prActivityEventHandler.getPrActivityEndEvents().size());
+		Assert.assertEquals(6, PR_HANDLER.getPrActivityEndEvents().size());
 	}
 
 	@Test
 	public void testAgentAttributesAndPlanTypes(){
 		Set<String> violations = new HashSet<>();
 
-		for (Person person : scenario.getPopulation().getPersons().values()) {
+		for (Person person : SCENARIO.getPopulation().getPersons().values()) {
 			if(!PopulationUtils.getSubpopulation(person).equals("person")) continue;
 
 			if (person.getAttributes().getAttribute("livesInProhibitionZone") == null){
@@ -94,7 +97,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	@Test
 	public void testBerlinerWithExternalTripsOnly(){
 
-		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(340500501));
+		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(340500501));
 
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 
@@ -111,7 +114,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	@Test
 	public void testBrandenburgerWith2PRActivities(){
 
-		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(38250801));
+		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(38250801));
 
 		Assert.assertEquals("brandenburg", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
@@ -127,11 +130,15 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 		//test events
 		assertPRActivityEndEventsCountToX(person, 2);
-		List<ActivityEndEvent> personsPRends = prActivityEventHandler.getPrActivityEndEvents().stream()
+		List<ActivityEndEvent> personsPRends = PR_HANDLER.getPrActivityEndEvents().stream()
 				.filter(event -> event.getPersonId().equals(person.getId()))
 				.collect(Collectors.toList());
-		Assert.assertEquals(Id.createLinkId(6726),personsPRends.get(0).getLinkId());
-		Assert.assertEquals(Id.createLinkId(6726),personsPRends.get(1).getLinkId());
+
+		Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,personsPRends.get(0).getLinkId());
+		Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,personsPRends.get(0).getCoord());
+
+		Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,personsPRends.get(1).getLinkId());
+		Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,personsPRends.get(1).getCoord());
 	}
 
 	@Test
@@ -146,7 +153,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 		//this agent lives in the prohibition zone, travels to work outside,
 		// than has a subtour outside that could normally be a car subtour, but unfortunately the coordinates of both work differ slightly
 		// meaning that the ptOnly plan replaces ALL trips by pt trips, inclduing the subtour that could remain car!
-		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(259563501));
+		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(259563501));
 		Assert.assertEquals("expecting agent's home-activity-zone to be berlin", "berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
@@ -164,7 +171,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	public void testInhabitantPfProhibitionZoneWithOutsideANDCrossingSubtours(){
 		//this agent lives in berlin outside the prohibiton zone
 		//.. has one outside subtour and one border-crossing subtour, both start+end @ home
-		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(446367901));
+		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(446367901));
 
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
@@ -203,7 +210,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	@Test
 	public void testBerlinerWithInnerTripsOnly(){
 
-		Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(272337601));
+		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(272337601));
 
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
@@ -230,7 +237,7 @@ public class BerlinNoInnerCarTripsScenarioTest {
 	private static void assertPRActivityEndEventsCountToX(Person person, int expected) {
 		Assert.assertEquals("there should be exactly " + expected + " ActivityEndEvents for activityType = " + PR_ACTIVITY_TYPE + " with personId= " + person.getId(),
 				expected,
-				prActivityEventHandler.getPrActivityEndEvents().stream()
+				PR_HANDLER.getPrActivityEndEvents().stream()
 						.filter(event -> event.getPersonId().equals(person.getId()))
 						.count());
 	}

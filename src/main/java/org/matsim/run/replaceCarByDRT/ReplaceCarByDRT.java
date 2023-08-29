@@ -186,7 +186,11 @@ class ReplaceCarByDRT {
 
 				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
 				if(extraPTPlan){
-					plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
+					if(nrOfBorderCrossingCarTrips != 0){
+//					we have checked whether the plan contains only external trips, above. So if we have no border-crossing trips, here, the plan only consists of inner trips.
+//						if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+						plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
+					}
 				}
 
 				plan.setType(replacingMode);

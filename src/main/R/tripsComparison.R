@@ -115,6 +115,7 @@ impacted_trips <- impacted_trips %>%
 
 
 tester <- impGrenz_trips %>% filter(grepl("car",modes_policy, fixed = TRUE))
+
 ########################################
 "Modal Shift Sankeys"
 ## TODO: Why do I filter out all this stuff? Need to explain or change
@@ -148,19 +149,15 @@ ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
 ########################################
 # General results - travelTime of impacted_trips, impacted_binnen_trips, pr_trips
 
-"Test 1"
-impGrenz_trips$tripType <- "Impacted_Grenz_Trips"
-impBinnen_trips$tripType <- "Impacted_Binnen_Trips"
-impacted_trips$tripType <- "All_Impacted_Trips"
+impGrenz_trips$tripType <- "Betr. Quell-/Zielverkehr"
+impBinnen_trips$tripType <- "Betr. Binnenverkehr"
+impacted_trips$tripType <- "Betr. Verkehr"
 
-"Test 2"
 boxplot_helper <- rbind(impGrenz_trips,impBinnen_trips,impacted_trips)
 
 "Results table"
 tripTypes <- unique(boxplot_helper$tripType)
 iterator = 0
-
-"Test 3"
 results_travTime <- data.frame(tripType = character(), avg_travTime_diff = numeric(), pt95_travTime_diff = numeric(), sd_travTime_diff = numeric())
 
 for (tripType in tripTypes){
@@ -177,6 +174,8 @@ boxplot_helper$travTime_diff <- as.numeric(boxplot_helper$travTime_diff)
 "Boxplot"
 ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   geom_boxplot(fill = "#0099f8") +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   labs(
     title = "Verteilung der Reisezeit-Differenzen",
     subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
@@ -185,11 +184,14 @@ ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   ) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-    plot.caption = element_text(face = "italic"),
+    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
-    axis.title.x = element_blank()
+    axis.text.x = element_text(size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20)
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime.png"))
 
@@ -217,14 +219,19 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
     y = "Reiseweite Δ [m]"
-  ) +
+  ) 
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-    plot.caption = element_text(face = "italic"),
+    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
-    axis.title.x = element_blank()
+    axis.text.x = element_text(size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20)
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 
@@ -232,10 +239,10 @@ ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 ########################################
 # Boxplots & Results 
 
-tripCases <- list("Betroffener Quell-/Zielverkehr","Betroffener Binnenverkehr","Betroffener Verkehr")
+tripCases <- list("Betroffener Quell- und Zielverkehr","Betroffener Binnenverkehr","Betroffener Verkehr")
 
 for (case in tripCases){
-  if(case == "Betroffener Quell-/Zielverkehr"){
+  if(case == "Betroffener Quell- und Zielverkehr"){
     caseTrips <- impGrenz_trips
   }
   if(case == "Betroffener Binnenverkehr"){
@@ -261,12 +268,18 @@ for (case in tripCases){
       y = "Reisezeit Δ [s]",
       x = "Verkehrsmittel"
     ) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_mainMode.png"))
   
@@ -280,12 +293,18 @@ for (case in tripCases){
       y = "Reiseweite Δ [m]",
       x = "Verkehrsmittel"
     ) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_mainMode.png"))
   
@@ -303,12 +322,14 @@ for (case in tripCases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5, size = 20),
+      plot.caption = element_text(face = "italic", size = 20),
       axis.ticks.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 25),
+      axis.text.y = element_text(size = 20),
+      axis.title.y = element_text(size = 20)
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_PRStation.png"))
   
@@ -324,13 +345,14 @@ for (case in tripCases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5, size = 8),
-      plot.caption = element_text(face = "italic", size = 6),
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5, size = 20),
+      plot.caption = element_text(face = "italic", size = 20),
       axis.ticks.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.text.x = element_text(angle = 90,, vjust = 0.5, hjust = 1, size = 6),
-      axis.text.y = element_text(size = 6)
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 25),
+      axis.text.y = element_text(size = 20),
+      axis.title.y = element_text(size = 20)
     )
   ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_PRStation.png"))
   
@@ -363,13 +385,18 @@ ggplot(boxplot_helper2, aes(x = hasPRStation, y = travTime_diff)) +
     caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
     y = "Reisezeit Δ [s]"
   ) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-    plot.caption = element_text(face = "italic"),
+    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
-    axis.title.x = element_blank()
+    axis.text.x = element_text(size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20)
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_hasPRStation.png"))
 
@@ -385,13 +412,18 @@ ggplot(boxplot_helper2, aes(x = hasPRStation, y = traveledDistance_diff)) +
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
     y = "Reiseweite Δ [m]"
   ) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-    plot.caption = element_text(face = "italic"),
+    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
-    axis.title.x = element_blank()
+    axis.text.x = element_text(size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20)
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_hasPRStation.png"))
 

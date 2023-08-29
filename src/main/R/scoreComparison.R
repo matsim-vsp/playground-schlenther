@@ -146,6 +146,8 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "Allgemeine Ergebnisse (Maßnahmenfall vs Basisfall)",
@@ -154,12 +156,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
       axis.ticks.x = element_blank(),
+      axis.text.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.text.x = element_blank()
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_general.png"))
   
@@ -185,6 +189,8 @@ for (case in cases){
     
     ggplot(relevant_persons, aes(x = score_diff)) +
       geom_histogram(binwidth = 5) +
+      stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+      stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
       labs(
         title = paste0("Verteilung der Score-Differenzen (",case,")"),
         subtitle = paste("nutzt P+R-Station =",entry, "(Maßnahmenfall vs Basisfall)"),
@@ -193,9 +199,14 @@ for (case in cases){
       ) +
       theme_classic() +
       theme(
-        plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-        plot.caption = element_text(face = "italic")
+        plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+        plot.caption = element_text(face = "italic", size = 20),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 20),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.y = element_text(size = 20)
       )
     ggsave(file.path(policyCaseOutputDir,paste0("histogram_hasPRActivity_",entry,".png")))
   }
@@ -204,6 +215,8 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = hasPRActivity_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "Agent nutzt mind. 1 P+R-Station (Maßnahmenfall vs Basisfall)",
@@ -212,10 +225,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_hasPRActivity.png"))
   
@@ -249,9 +266,14 @@ for (case in cases){
       ) +
       theme_classic() +
       theme(
-        plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-        plot.caption = element_text(face = "italic")
+        plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+        plot.caption = element_text(face = "italic", size = 20),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 20),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.y = element_text(size = 20)
       )
     ggsave(file.path(policyCaseOutputDir,paste0("histogram_livesInsideBoundaryZone_policy_",entry,".png")))
   }
@@ -260,6 +282,8 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = livesInsideBoundaryZone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "lebt max. 500m außerhalb der Verbotszone (Maßnahmenfall vs Basisfall)",
@@ -268,10 +292,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_livesInsideBoundaryZone_policy.png"))
   
@@ -307,6 +335,8 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = isCarUser_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "nutzt privaten Pkw (Maßnahmenfall vs Basisfall)",
@@ -315,10 +345,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_isCarUser_policy.png"))
   
@@ -351,9 +385,14 @@ for (case in cases){
       ) +
       theme_classic() +
       theme(
-        plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-        plot.caption = element_text(face = "italic")
+        plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+        plot.caption = element_text(face = "italic", size = 20),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 20),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.y = element_text(size = 20)
       )
     ggsave(file.path(policyCaseOutputDir,paste0("histogram_homeActivityZone_",entry,".png")))
   }
@@ -362,6 +401,8 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = home.activity.zone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
       subtitle = "nach Wohnort (Maßnahmenfall vs Basisfall)",
@@ -370,10 +411,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"))
   
@@ -406,9 +451,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic")
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_noOfActivities.png"))
   
@@ -431,9 +481,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic")
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_scoreByTravelledDistance.png"))
   
@@ -468,9 +523,14 @@ for (case in cases){
       ) +
       theme_classic() +
       theme(
-        plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-        plot.caption = element_text(face = "italic")
+        plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+        plot.caption = element_text(face = "italic", size = 20),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 20),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.y = element_text(size = 20)
       )
     ggsave(file.path(policyCaseOutputDir,paste0("histogram_mainMode_",entry,".png")))
   }
@@ -487,10 +547,14 @@ for (case in cases){
     ) +
     theme_classic() +
     theme(
-      plot.title = element_text(color = "#0099f8", size = 16, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(face = "bold.italic", hjust = 0.5),
-      plot.caption = element_text(face = "italic"),
-      axis.title.x = element_blank()
+      plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+      plot.caption = element_text(face = "italic", size = 20),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_text(size = 20),
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 20),
+      axis.text.y = element_text(size = 20)
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_mainMode.png"))
   

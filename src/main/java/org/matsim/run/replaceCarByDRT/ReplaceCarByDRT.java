@@ -141,8 +141,7 @@ class ReplaceCarByDRT {
 
 		Random rnd = MatsimRandom.getRandom();
 
-		StraightLineKnnFinder<Activity,Coord> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, c -> c);
-
+		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
@@ -190,9 +189,9 @@ class ReplaceCarByDRT {
 
 				plan.setType(replacingMode);
 
-				Coord firstCarPRStation = null;
+				PRStation firstCarPRStation = null;
 				//we use this as 'iteration variable'
-				Coord currentCarPRStation = null;
+				PRStation currentCarPRStation = null;
 
 				for (TripStructureUtils.Trip trip : tripsToReplace) {
 					TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
@@ -204,7 +203,7 @@ class ReplaceCarByDRT {
 					}
 
 					List<PlanElement> newTrip;
-					Coord prStation = null;
+					PRStation prStation = null;
 
 					if(tripType.equals(TripType.innerTrip)) {
 						Leg l1 = fac.createLeg(replacingMode);
@@ -226,8 +225,8 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
+							List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 							Collections.shuffle(mutableListCandidates);
 							int rndr = rnd.nextInt(mutableListCandidates.size());
 							prStation = mutableListCandidates.get(rndr);
@@ -237,8 +236,9 @@ class ReplaceCarByDRT {
 						firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
 						currentCarPRStation = null;
 
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
+						parkAndRideAct.setLinkId(prStation.linkId);
 
 						newTrip = new ArrayList<>();
 						Leg l1 = fac.createLeg(replacingMode);
@@ -268,8 +268,8 @@ class ReplaceCarByDRT {
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
 							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-							List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+							List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
+							List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 							Collections.shuffle(mutableListCandidates);
 							int rndr = rnd.nextInt(mutableListCandidates.size());
 							prStation = mutableListCandidates.get(rndr);
@@ -279,8 +279,10 @@ class ReplaceCarByDRT {
 						}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
+						parkAndRideAct.setLinkId(prStation.linkId);
+
 						newTrip = new ArrayList<>();
 
 						Leg l1 = fac.createLeg(mainMode);
@@ -555,4 +557,7 @@ class PRStation {
 		this.coord = coord;
 	}
 
+	public Coord getCoord() {
+		return coord;
+	}
 }

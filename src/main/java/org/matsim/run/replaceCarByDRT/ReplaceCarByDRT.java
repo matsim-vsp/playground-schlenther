@@ -200,9 +200,9 @@ class ReplaceCarByDRT {
 							continue; //this agent is not affected by the prohibition zone.
 						}
 
-						Coord firstPRStation = null;
+						PRStation firstPRStation = null;
 						//we use this as 'iteration variable'
-						Coord lastCarPRStation = null;
+						PRStation lastCarPRStation = null;
 
 						for (TripStructureUtils.Trip trip : tripsToReplace) {
 							TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
@@ -214,7 +214,7 @@ class ReplaceCarByDRT {
 							}
 
 							List<PlanElement> newTrip;
-							Coord prStation = null;
+							PRStation prStation = null;
 
 							if(tripType.equals(TripType.innerTrip)) {
 								Leg l1 = fac.createLeg(replacingMode2);
@@ -236,8 +236,8 @@ class ReplaceCarByDRT {
 								}
 								if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
 									Activity act = extraPRStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-									List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-									List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+									List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
+									List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 									Collections.shuffle(mutableListCandidates);
 									int rndr = rnd.nextInt(mutableListCandidates.size());
 									prStation = mutableListCandidates.get(rndr);
@@ -249,7 +249,7 @@ class ReplaceCarByDRT {
 								lastCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
 
 								newTrip = new ArrayList<>();
@@ -280,8 +280,8 @@ class ReplaceCarByDRT {
 								}
 								if(prStation == null) { //if not the last border-crossing car or a ride trip
 									Activity act = extraPRStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-									List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream().map(station -> station.coord));
-									List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+									List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
+									List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 									Collections.shuffle(mutableListCandidates);
 									int rndr = rnd.nextInt(mutableListCandidates.size());
 									prStation = mutableListCandidates.get(rndr);
@@ -290,7 +290,7 @@ class ReplaceCarByDRT {
 								}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
 								newTrip = new ArrayList<>();
 
@@ -351,22 +351,22 @@ class ReplaceCarByDRT {
 					// change replacingMode to PT
 					String newReplacingMode = "pt";
 
-					Coord firstPRStation = null;
+					PRStation firstCarPRStation = null;
 					//we use this as 'iteration variable'
-					Coord lastCarPRStation = null;
+					PRStation currentCarPRStation = null;
 
 					for (TripStructureUtils.Trip trip : tripsToReplace) {
 						TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
 						String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
 						if (tripType.equals(TripType.outsideTrip)) {
-							if (mainMode.equals(TransportMode.car) && lastCarPRStation != null)
+							if (mainMode.equals(TransportMode.car) && currentCarPRStation != null)
 								throw new IllegalStateException("agent " + person + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
-										"\n but vehicle is still parked at link=" + lastCarPRStation);
+										"\n but vehicle is still parked at link=" + currentCarPRStation);
 							continue;
 						}
 
 						List<PlanElement> newTrip;
-						Coord prStation = null;
+						PRStation prStation = null;
 
 						if (tripType.equals(TripType.innerTrip)) {
 							Leg l1 = fac.createLeg(newReplacingMode);
@@ -382,26 +382,26 @@ class ReplaceCarByDRT {
 											"trip = " + trip);
 								}
 								//car has to be picked up where it was left the last time
-								if (lastCarPRStation != null && enforceMassConservation) {
-									prStation = lastCarPRStation;
+								if (currentCarPRStation != null && enforceMassConservation) {
+									prStation = currentCarPRStation;
 								}
 							}
 							if (prStation == null) { //if no car trip into zone was observed before or if the mode is ride, we enter here
 								Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-								List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream().map(station -> station.coord));
-								List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+								List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream());
+								List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 								Collections.shuffle(mutableListCandidates);
 								int rndr = rnd.nextInt(mutableListCandidates.size());
 								prStation = mutableListCandidates.get(rndr);
 							}
 
 							//change value of firstPRStation only one time
-							firstPRStation = firstPRStation == null ? prStation : firstPRStation;
+							firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
 
-							lastCarPRStation = null;
+							currentCarPRStation = null;
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
 
 							newTrip = new ArrayList<>();
@@ -426,23 +426,23 @@ class ReplaceCarByDRT {
 									}
 									//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
 									if (enforceMassConservation) {
-										prStation = firstPRStation;
+										prStation = firstCarPRStation;
 									}
 								}
 							}
 							if (prStation == null) { //if not the last border-crossing car or a ride trip
 								Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-								List<Coord> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream().map(station -> station.coord));
-								List<Coord> mutableListCandidates = new ArrayList<>(prStationCandidates);
+								List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream());
+								List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
 								Collections.shuffle(mutableListCandidates);
 								int rndr = rnd.nextInt(mutableListCandidates.size());
 								prStation = mutableListCandidates.get(rndr);
 
-								if (mainMode.equals(TransportMode.car)) lastCarPRStation = prStation;
+								if (mainMode.equals(TransportMode.car)) currentCarPRStation = prStation;
 							}
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation);
+							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
 							newTrip = new ArrayList<>();
 
@@ -639,6 +639,7 @@ class ReplaceCarByDRT {
 			//after we've iterated over existing plans, add all the plan copies
 			plansToAdd.forEach(plan -> person.addPlan(plan));
 		}
+
 		//TODO iterate over all plans, set score to null !!
 
 

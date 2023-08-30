@@ -66,7 +66,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 	private static URL URL_2_DRT_STOPS;
-	private static URL URL_2_PR_STATIONS;
+	protected static URL URL_2_PR_STATIONS;
 	private static URL URL_2_PR_STATIONS_OUTSIDE;
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;

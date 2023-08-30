@@ -249,7 +249,7 @@ public class DrtVehicleCreatorForBanScenario {
 
 			if(link == null) log.warn("will crash. station link id was " + station.linkId);
 
-			vehicles.add(ImmutableDvrpVehicleSpecification.newBuilder().id(Id.create("drt-" + station.name + "-" + i, DvrpVehicle.class))
+			vehicles.add(ImmutableDvrpVehicleSpecification.newBuilder().id(Id.create("drt-" + station.getName() + "-" + i, DvrpVehicle.class))
 					.startLinkId(link.getId())
 					.capacity(seats)
 					.serviceBeginTime(Math.round(1))

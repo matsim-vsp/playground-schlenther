@@ -142,7 +142,6 @@ class ReplaceCarByDRT {
 		Random rnd = MatsimRandom.getRandom();
 
 		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
-
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
@@ -185,7 +184,11 @@ class ReplaceCarByDRT {
 
 				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
 				if(extraPTPlan){
-					plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
+					if(nrOfBorderCrossingCarTrips != 0){
+//					we have checked whether the plan contains only external trips, above. So if we have no border-crossing trips, here, the plan only consists of inner trips.
+//						if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+						plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
+					}
 				}
 
 				plan.setType(replacingMode);
@@ -240,7 +243,6 @@ class ReplaceCarByDRT {
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
 						parkAndRideAct.setLinkId(prStation.linkId);
-
 
 						newTrip = new ArrayList<>();
 						Leg l1 = fac.createLeg(replacingMode);
@@ -326,7 +328,6 @@ class ReplaceCarByDRT {
 			plansToAdd.forEach(plan -> person.addPlan(plan));
 		}
 		//TODO iterate over all plans, set score to null !!
-
 
 
 		log.info("overall nr of trips replaced = " + replacedTrips);

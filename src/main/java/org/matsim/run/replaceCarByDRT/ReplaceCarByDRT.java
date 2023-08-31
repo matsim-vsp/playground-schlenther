@@ -177,16 +177,19 @@ class ReplaceCarByDRT {
 				long nrOfOutsideTripsWithModesToReplace = tripsToReplace.stream()
 						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
 						.count();
+				long nrOfInnerTripsToWithModesToReplace = tripsToReplace.stream()
+						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.innerTrip))
+						.count();
 				if(nrOfOutsideTripsWithModesToReplace == tripsToReplace.size()){
 					plan.setType("not-affected");
 					continue; //this agent is not affected by the prohibition zone.
 				}
 
-				//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
 				if(extraPTPlan){
-					if(nrOfBorderCrossingCarTrips != 0){
-//					we have checked whether the plan contains only external trips, above. So if we have no border-crossing trips, here, the plan only consists of inner trips.
-//						if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+//					if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+					if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
+							nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
+						//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
 						plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
 					}
 				}

@@ -528,9 +528,11 @@ class ReplaceCarByDRT {
 						.forEach(leg -> {
 							if(leg.getMode().equals(TransportMode.car)){
 								Route route = leg.getRoute();
-								boolean routeTouchesZone = (route instanceof NetworkRoute && ((NetworkRoute) route).getLinkIds().stream().filter(l -> forbiddenLinks.contains(l)).findAny().isPresent() );
-								if(routeTouchesZone || forbiddenLinks.contains(route.getStartLinkId()) || forbiddenLinks.contains(route.getEndLinkId()) ){
-									leg.setRoute(null);
+								if (route != null){
+									boolean routeTouchesZone = (route instanceof NetworkRoute && ((NetworkRoute) route).getLinkIds().stream().filter(l -> forbiddenLinks.contains(l)).findAny().isPresent() );
+									if(routeTouchesZone || forbiddenLinks.contains(route.getStartLinkId()) || forbiddenLinks.contains(route.getEndLinkId()) ){
+										leg.setRoute(null);
+									}
 								}
 							}
 						}));

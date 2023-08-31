@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -46,6 +47,8 @@ public class BerlinNoInnerCarTripsScenarioTest {
 
 		SCENARIO_CLOSEST_INSIDE = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		PopulationUtils.readPopulation(SCENARIO_CLOSEST_INSIDE.getPopulation(), "scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
+		NetworkUtils.readNetwork(SCENARIO_CLOSEST_INSIDE.getNetwork(),
+				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_CLOSEST_INSIDE,
 				Set.of(TransportMode.drt, TransportMode.pt),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
@@ -56,6 +59,26 @@ public class BerlinNoInnerCarTripsScenarioTest {
 				true,
 				1
 				);
+
+	}
+
+	@Test
+	public void testbanCarAndRideFromNetworkArea(){
+		ReplaceCarByDRT.banCarAndRideFromNetworkArea(SCENARIO_CLOSEST_INSIDE,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
+				Set.of("motorway"));
+
+		//TODO check 1 car route that touched one forbidden link and now the route is null
+		//TODO check 1 car route that did not touch one forbidden link and still has its route
+
+//		//motorway links inside ban area are still allowed for cars
+//		Assert.assertTrue(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("anyMotorwayLink")).getAllowedModes().contains(TransportMode.car));
+//
+//		//secondary links inside ban area do not allow cars anymore
+//		Assert.assertFalse(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("anySmallLink")).getAllowedModes().contains(TransportMode.car));
+//
+//		//secondary links outside ban area still allow cars
+//		Assert.assertFalse(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("anySmallLink")).getAllowedModes().contains(TransportMode.car));
 
 	}
 

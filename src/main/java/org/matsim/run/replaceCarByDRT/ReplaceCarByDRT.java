@@ -34,6 +34,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.common.util.StraightLineKnnFinder;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -55,6 +56,8 @@ class ReplaceCarByDRT {
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
+
+	private static boolean hasWarnedHardcodedChainMode = false;
 
 	/**
 	 *
@@ -247,7 +250,7 @@ class ReplaceCarByDRT {
 
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.linkId);
+						parkAndRideAct.setLinkId(prStation.getLinkId());
 
 						newTrip = new ArrayList<>();
 						Leg l1 = fac.createLeg(replacingMode);
@@ -290,7 +293,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.linkId);
+						parkAndRideAct.setLinkId(prStation.getLinkId());
 
 						newTrip = new ArrayList<>();
 
@@ -362,7 +365,11 @@ class ReplaceCarByDRT {
 						.findAny().isPresent();
 
 				if(subtourTouchesProhibitionZoneWithCarOrRide){
-					log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+					if(!hasWarnedHardcodedChainMode){
+						log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+						log.warn(Gbl.ONLYONCE);
+						hasWarnedHardcodedChainMode = true;
+					}
 					//if car is used, change all trips to pt
 					if(subtour.getTripsWithoutSubSubtours().stream()
 							.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
@@ -558,24 +565,3 @@ class ReplaceCarByDRT {
 }
 
 
-//TODO extract class
-class PRStation {
-
-	private String name;
-	Id<Link> linkId;
-	Coord coord;
-
-	PRStation(String name, Id<Link> linkId, Coord coord){
-		this.name = name;
-		this.linkId = linkId;
-		this.coord = coord;
-	}
-
-	public Coord getCoord() {
-		return coord;
-	}
-
-	public String getName() {
-		return name;
-	}
-}

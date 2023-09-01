@@ -135,7 +135,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
     @Nullable
     private PRStation getPRStationWithCoord(Coord coord){
         for (PRStation prStation : activitiesPerPRStation.keySet()) {
-            if(prStation.coord.equals(coord)) return prStation;
+            if(prStation.getCoord().equals(coord)) return prStation;
         }
         return null;
     }
@@ -209,7 +209,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
             MutableInt agentsPerPRStation = entry.getValue();
 
 
-            writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
+            writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.getCoord().getX()),String.valueOf(station.getCoord().getY())});
         }
         writer.close();
     }

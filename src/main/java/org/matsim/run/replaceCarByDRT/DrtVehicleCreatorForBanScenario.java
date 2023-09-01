@@ -20,17 +20,14 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.opencsv.CSVWriter;
-import org.apache.commons.math3.distribution.EnumeratedDistribution;
 import org.apache.commons.math3.util.Pair;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
 import org.matsim.contrib.dvrp.fleet.DvrpVehicleSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetWriter;
@@ -41,16 +38,11 @@ import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.NetworkWriter;
-import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.population.io.PopulationReader;
-import org.matsim.core.router.StageActivityTypeIdentifier;
-import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.facilities.MatsimFacilitiesReader;
 import org.matsim.prepare.drt.DrtVehicleCreator;
 import org.matsim.run.drt.BerlinShpUtils;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
@@ -245,9 +237,9 @@ public class DrtVehicleCreatorForBanScenario {
 	public final void createVehiclesAtPRStation(PRStation station, int amount, int seats, List<DvrpVehicleSpecification> vehicles) {
 
 		for (int i = 1; i <= amount; i++) {
-			Link link = drtNetwork.getLinks().get(station.linkId);
+			Link link = drtNetwork.getLinks().get(station.getLinkId());
 
-			if(link == null) log.warn("will crash. station link id was " + station.linkId);
+			if(link == null) log.warn("will crash. station link id was " + station.getLinkId());
 
 			vehicles.add(ImmutableDvrpVehicleSpecification.newBuilder().id(Id.create("drt-" + station.getName() + "-" + i, DvrpVehicle.class))
 					.startLinkId(link.getId())

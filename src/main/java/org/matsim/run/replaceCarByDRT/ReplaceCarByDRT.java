@@ -116,18 +116,18 @@ class ReplaceCarByDRT {
 	 * @param extraPTPlan
 	 * @param kPrStations
 	 */
-	static void replaceModeTripsInsideAreaAndSplitBorderCrossingTripsAtBorderLinks(Scenario scenario,
-																				   Set<String> modesToBeReplaced,
-																				   Set<String> replacingModes,
-																				   URL url2CarFreeSingleGeomShapeFile,
-																				   URL url2PRStations,
-																				   MainModeIdentifier mainModeIdentifier,
-																				   PRStationChoice prStationChoice,
-																				   boolean enforceMassConservation,
-																				   boolean extraPTPlan,
-                                                                                   int kPrStations,
-																				   PRStationChoice extraPRStationChoice,
-																				   URL url2PRStationsOutside){
+	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
+															  Set<String> modesToBeReplaced,
+															  Set<String> replacingModes,
+															  URL url2CarFreeSingleGeomShapeFile,
+															  URL url2PRStations,
+															  MainModeIdentifier mainModeIdentifier,
+															  PRStationChoice prStationChoice,
+															  boolean enforceMassConservation,
+															  boolean extraPTPlan,
+															  int kPrStations,
+															  PRStationChoice extraPRStationChoice,
+															  URL url2PRStationsOutside){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -251,6 +251,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
+								parkAndRideAct.setLinkId(prStation.linkId);
 
 								newTrip = new ArrayList<>();
 								Leg l1 = fac.createLeg(replacingMode2);
@@ -292,6 +293,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
+								parkAndRideAct.setLinkId(prStation.linkId);
 								newTrip = new ArrayList<>();
 
 								Leg l1 = fac.createLeg(mainMode);
@@ -403,6 +405,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
+							parkAndRideAct.setLinkId(prStation.linkId);
 
 							newTrip = new ArrayList<>();
 							Leg l1 = fac.createLeg(newReplacingMode);
@@ -444,6 +447,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
+							parkAndRideAct.setLinkId(prStation.linkId);
 							newTrip = new ArrayList<>();
 
 							Leg l1 = fac.createLeg(mainMode);
@@ -894,9 +898,5 @@ class PRStation {
 
 	public void setLinkId(Id<Link> linkId) {
 		this.linkId = linkId;
-	}
-
-	public String getName() {
-		return name;
 	}
 }

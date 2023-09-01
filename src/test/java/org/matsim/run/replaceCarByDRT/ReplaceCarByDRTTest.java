@@ -32,9 +32,14 @@ import static org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario.UR
 public class ReplaceCarByDRTTest {
 
 	private static Logger log = LogManager.getLogger(ReplaceCarByDRTTest.class);
-	private static Map<String, PRStation> PR_STATIONS = readPRStationFile(URL_2_PR_STATIONS).stream().collect(Collectors.toMap(station -> station.getName(), station -> station));
+	private static Map<String, PRStation> PR_STATIONS = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"))
+			.stream().collect(Collectors.toMap(station -> station.getName(), station -> station));
+	private static Map<String, PRStation> PR_STATIONS_OUTSIDE = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"))
+			.stream().collect(Collectors.toMap(station -> station.getName(), station -> station));
 	private static Scenario SCENARIO_CLOSEST_INSIDE;
 	private static Scenario SCENARIO_CLOSEST_OUTSIDE;
+	private static Scenario SCENARIO_BOTH;
+	private static Scenario SCENARIO_EXTRA_PRSTATIONS;
 	private static List<Scenario> SCENARIOS_TO_TEST = new ArrayList<>();
 
 	@BeforeClass
@@ -45,15 +50,17 @@ public class ReplaceCarByDRTTest {
 		NetworkUtils.readNetwork(SCENARIO_CLOSEST_INSIDE.getNetwork(),
 				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_CLOSEST_INSIDE,
+				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(TransportMode.drt, TransportMode.pt),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				URL_2_PR_STATIONS,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				true,
 				true,
-				1
-				);
+				1,
+				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_INSIDE);
 
 		SCENARIO_CLOSEST_OUTSIDE = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -62,16 +69,128 @@ public class ReplaceCarByDRTTest {
 				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_CLOSEST_OUTSIDE,
+				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(TransportMode.drt, TransportMode.pt),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				URL_2_PR_STATIONS,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
-				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
+				PRStationChoice.closestToOutSideActivity,
 				true,
 				true,
-				1
-		);
+				1,
+				PRStationChoice.closestToOutSideActivity,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_OUTSIDE);
+
+		SCENARIO_BOTH = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		PopulationUtils.readPopulation(SCENARIO_BOTH.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
+		NetworkUtils.readNetwork(SCENARIO_BOTH.getNetwork(),
+				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
+
+		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_BOTH,
+				Set.of(TransportMode.car, TransportMode.ride),
+				Set.of(TransportMode.drt, TransportMode.pt),
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
+				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
+				PRStationChoice.closestToOutSideActivity,
+				true,
+				true,
+				1,
+				PRStationChoice.closestToInsideActivity,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+
+		SCENARIO_EXTRA_PRSTATIONS = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		PopulationUtils.readPopulation(SCENARIO_EXTRA_PRSTATIONS.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
+		NetworkUtils.readNetwork(SCENARIO_EXTRA_PRSTATIONS.getNetwork(),
+				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
+
+		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_EXTRA_PRSTATIONS,
+				Set.of(TransportMode.car, TransportMode.ride),
+				Set.of(TransportMode.drt, TransportMode.pt),
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
+				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
+				PRStationChoice.closestToOutSideActivity,
+				true,
+				true,
+				1,
+				PRStationChoice.closestToOutSideActivity,
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"));
+	}
+
+	@Test
+	public void testBothPRStationChoices(){
+		// testing if plans for both PRStationChoices get created correctly
+		// this agent lives in Brandenburg, enters the prohibition zone once -> has 2 PRActivities at the same PRStation
+
+			Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(38250801));
+
+			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [drt,pt,ptOnly, Extra drt, Extra pt])", 5, person.getPlans().size());
+
+			for (Plan plan : person.getPlans()) {
+				List<Activity> prActs = getPRActivities(plan);
+				if(!plan.getType().equals("ptOnly")){
+					Assert.assertEquals(2, prActs.size()); //nr of PR acts
+
+					if(plan.getType().contains("Extra")) {
+						// in this case: Extra == closestToInside
+
+						log.warn("This is the linkId: " + prActs.get(0).getLinkId());
+						log.warn("This is the linkId: " + prActs.get(1).getLinkId());
+
+
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(1).getCoord());
+					} else {
+						// normal: closestToOutside
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(1).getCoord());
+					}
+				} else {
+					Assert.assertEquals(0, prActs.size()); //nr of PR acts
+				}
+			}
+	}
+
+	@Test
+	public void testExtraPRStationPlan(){
+		// for the specific case: testing if PrStation further outside gets used
+
+		Person person = SCENARIO_EXTRA_PRSTATIONS.getPopulation().getPersons().get(Id.createPersonId(38250801));
+		Assert.assertEquals("person " + person.getId() + " should have 4 plans (with types [drt,pt,ptOnly,prOutside])", 4, person.getPlans().size());
+
+		for (Plan plan : person.getPlans()) {
+			List<Activity> prActs = getPRActivities(plan);
+			if(!plan.getType().equals("ptOnly")){
+				Assert.assertEquals(2, prActs.size()); //nr of PR acts
+
+				if(plan.getType().equals("prOutside")) {
+					// in this case: PRStation further outside the zone gets used
+					log.warn("This is the linkId: " + prActs.get(0).getLinkId());
+					log.warn("This is the linkId: " + prActs.get(1).getLinkId());
+
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").linkId,prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").coord,prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").linkId,prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").coord,prActs.get(1).getCoord());
+
+				} else {
+					// otherwise: closestToOutside
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(1).getCoord());
+				}
+			} else {
+				Assert.assertEquals(0, prActs.size()); //nr of PR acts
+			}
+		}
+
 	}
 
 	@Test

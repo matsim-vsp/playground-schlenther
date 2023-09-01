@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.readPRStationFile;
-import static org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario.PR_STATION_CHOICE;
 
 public class PrActivityEventHandlerTest {
 

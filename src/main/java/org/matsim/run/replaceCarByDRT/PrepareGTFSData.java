@@ -34,7 +34,7 @@ public class PrepareGTFSData {
 
         String outputFileName = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv";
 
-        Set<PRStation> stops = ReplaceCarByDRT.readPRStationFile(IOUtils.resolveFileOrResource(stops_file));
+        Set<PRStation> stops = PRStation.readPRStationFile(IOUtils.resolveFileOrResource(stops_file));
         Network network = NetworkUtils.readNetwork(input_network);
 
         // Remove all pt links

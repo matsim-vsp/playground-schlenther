@@ -135,6 +135,7 @@ class ReplaceCarByDRT {
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
 		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
+		Set<PRStation> prStationsOutside = PRStation.readPRStationFile(url2PRStationsOutside);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
@@ -251,7 +252,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
-								parkAndRideAct.setLinkId(prStation.linkId);
+								parkAndRideAct.setLinkId(prStation.getLinkId());
 
 								newTrip = new ArrayList<>();
 								Leg l1 = fac.createLeg(replacingMode2);
@@ -293,7 +294,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 								Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 								parkAndRideAct.setMaximumDuration(5 * 60);
-								parkAndRideAct.setLinkId(prStation.linkId);
+								parkAndRideAct.setLinkId(prStation.getLinkId());
 								newTrip = new ArrayList<>();
 
 								Leg l1 = fac.createLeg(mainMode);
@@ -408,7 +409,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
-							parkAndRideAct.setLinkId(prStation.linkId);
+							parkAndRideAct.setLinkId(prStation.getLinkId());
 
 							newTrip = new ArrayList<>();
 							Leg l1 = fac.createLeg(newReplacingMode);
@@ -450,7 +451,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 							parkAndRideAct.setMaximumDuration(5 * 60);
-							parkAndRideAct.setLinkId(prStation.linkId);
+							parkAndRideAct.setLinkId(prStation.getLinkId());
 							newTrip = new ArrayList<>();
 
 							Leg l1 = fac.createLeg(mainMode);

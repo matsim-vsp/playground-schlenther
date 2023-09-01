@@ -73,7 +73,7 @@ public class RunScorePreparation {
         List<PreparedGeometry> berlin = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BERLIN_SHP));
         List<PreparedGeometry> boundaryZone = ShpGeometryUtils.loadPreparedGeometries(IOUtils.resolveFileOrResource(INPUT_BOUNDARY_SHP));
 
-        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(INPUT_PR_STATIONS);
+        Set<PRStation> prStations = PRStation.readPRStationFile(INPUT_PR_STATIONS);
 
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");

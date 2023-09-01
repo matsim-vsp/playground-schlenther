@@ -78,11 +78,11 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
-				PRStationChoice.closestToOutSideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				true,
 				true,
 				1,
-				PRStationChoice.closestToOutSideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_OUTSIDE);
 
@@ -97,11 +97,11 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
-				PRStationChoice.closestToOutSideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				true,
 				true,
 				1,
-				PRStationChoice.closestToInsideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 
 		SCENARIO_EXTRA_PRSTATIONS = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -115,11 +115,11 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
-				PRStationChoice.closestToOutSideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				true,
 				true,
 				1,
-				PRStationChoice.closestToOutSideActivity,
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"));
 	}
 
@@ -139,21 +139,16 @@ public class ReplaceCarByDRTTest {
 
 					if(plan.getType().contains("Extra")) {
 						// in this case: Extra == closestToInside
-
-						log.warn("This is the linkId: " + prActs.get(0).getLinkId());
-						log.warn("This is the linkId: " + prActs.get(1).getLinkId());
-
-
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(1).getCoord());
 					} else {
 						// normal: closestToOutside
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(1).getCoord());
 					}
 				} else {
 					Assert.assertEquals(0, prActs.size()); //nr of PR acts
@@ -175,20 +170,17 @@ public class ReplaceCarByDRTTest {
 
 				if(plan.getType().equals("prOutside")) {
 					// in this case: PRStation further outside the zone gets used
-					log.warn("This is the linkId: " + prActs.get(0).getLinkId());
-					log.warn("This is the linkId: " + prActs.get(1).getLinkId());
-
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").linkId,prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").coord,prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").linkId,prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").coord,prActs.get(1).getCoord());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getLinkId(),prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getCoord(),prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getLinkId(),prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getCoord(),prActs.get(1).getCoord());
 
 				} else {
 					// otherwise: closestToOutside
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(1).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(1).getCoord());
 				}
 			} else {
 				Assert.assertEquals(0, prActs.size()); //nr of PR acts

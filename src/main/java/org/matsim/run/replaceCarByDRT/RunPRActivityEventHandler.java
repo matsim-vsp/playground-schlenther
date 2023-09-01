@@ -100,7 +100,7 @@ public class RunPRActivityEventHandler {
                 MutableInt agentsPerPRStation = entry.getValue();
 
 
-                writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
+                writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.getCoord().getX()),String.valueOf(station.getCoord().getY())});
             }
             writer.close();
 

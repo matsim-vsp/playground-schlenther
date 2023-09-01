@@ -37,7 +37,7 @@ import java.util.Set;
 class PRStation {
 
 	private final String name;
-	private final Id<Link> linkId;
+	private Id<Link> linkId;
 	private final Coord coord;
 	private static final Logger LOG = Logger.getLogger(PRStation.class);
 
@@ -79,7 +79,9 @@ class PRStation {
 		return name;
 	}
 
-	protected Id<Link> getLinkId() {
-		return linkId;
-	}
+	public Id<Link> getLinkId() { return linkId; }
+
+	public void setLinkId(Id<Link> linkId) {this.linkId = linkId; }
+
+
 }

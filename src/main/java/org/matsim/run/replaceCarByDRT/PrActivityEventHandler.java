@@ -209,7 +209,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
             MutableInt agentsPerPRStation = entry.getValue();
 
 
-            writer.writeNext(new String[]{station.name,String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
+            writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
         }
         writer.close();
     }
@@ -230,7 +230,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
             int[] agentsPerMinute = entry.getValue();
             String[] agents = Arrays.toString(agentsPerMinute).split("[\\[\\]]")[1].split(", ");
             List<String> agentsList = new ArrayList<String>(Arrays.asList(agents));
-            agentsList.add(0, station.name);
+            agentsList.add(0, station.getName());
 
             writer.writeNext(agentsList.toArray(new String[0]));
         }

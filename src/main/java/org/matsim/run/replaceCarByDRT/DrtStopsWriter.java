@@ -111,7 +111,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 				writeStop(csvWriter, link);
 			}
 			//write a stop for each P+R link
-			Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(url2PRStations);
+			Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
 			for (PRStation prStation : prStations) {
 				writeStop(csvWriter, network.getLinks().get(prStation.getLinkId()));
 			}

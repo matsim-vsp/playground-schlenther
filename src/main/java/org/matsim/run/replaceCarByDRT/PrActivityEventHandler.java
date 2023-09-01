@@ -41,7 +41,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
 
     public PrActivityEventHandler(URL url2PRStations) {
-        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(url2PRStations);
+        Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
         for (PRStation station : prStations){
             this.activitiesPerPRStation.put(station, new MutableInt(0));
             this.carsInPrStationPerMinute.put(station, new int[36*60]);

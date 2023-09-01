@@ -21,8 +21,6 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -41,11 +39,9 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.utils.io.IOUtils;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -135,7 +131,7 @@ class ReplaceCarByDRT {
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
-		Set<PRStation> prStations = readPRStationFile(url2PRStations);
+		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
@@ -405,30 +401,6 @@ class ReplaceCarByDRT {
 				TripStructureUtils.setRoutingMode(leg, TransportMode.pt);
 				TripRouter.insertTrip(planCopy, trip.getOriginActivity(), List.of(leg), trip.getDestinationActivity());
 		}
-	}
-
-	/**
-	 *
-	 * @param url2PRStations a .tsv input file with the following columns (and a header row): 'name', 'x', 'y' and 'linkId'. The order should not matter.
-	 * @return
-	 */
-	static Set<PRStation> readPRStationFile(URL url2PRStations) {
-		log.info("read input file for P+R stations");
-		Set<PRStation> prStations = new HashSet<>();
-		//assume tsv with a header and linkId in the last column
-		try {
-			CSVParser parser = CSVParser.parse(IOUtils.getBufferedReader(url2PRStations), CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader());
-			Map<String, Integer> headerMap = parser.getHeaderMap();
-			parser.getRecords().forEach(record -> {
-				String name = record.get(headerMap.get("name"));
-				Id<Link> linkId = Id.createLinkId(record.get(headerMap.get("linkId")));
-				Coord coord = new Coord(Double.parseDouble(record.get(headerMap.get("x"))), Double.parseDouble(record.get(headerMap.get("y"))));
-				prStations.add(new PRStation(name, linkId, coord));
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return prStations;
 	}
 
 	/**

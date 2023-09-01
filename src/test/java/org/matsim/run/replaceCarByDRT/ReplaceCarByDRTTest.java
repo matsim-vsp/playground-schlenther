@@ -23,8 +23,8 @@ import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.matsim.run.replaceCarByDRT.PRStation.readPRStationFile;
 import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.PR_ACTIVITY_TYPE;
-import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.readPRStationFile;
 import static org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario.URL_2_PR_STATIONS;
 
 /**

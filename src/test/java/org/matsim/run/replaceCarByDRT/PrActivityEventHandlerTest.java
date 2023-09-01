@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.readPRStationFile;
+import static org.matsim.run.replaceCarByDRT.PRStation.readPRStationFile;
 
 public class PrActivityEventHandlerTest {
 

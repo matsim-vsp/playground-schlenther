@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.net.MalformedURLException;
 
-public class RunBerlinNoInnerCarTripsScenarioIT {
+public class RunBerlinNoInnerCarTripsScenarioIntegrationTest {
 
 	@Test
 	public void main() {

@@ -78,7 +78,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		String[] configArgs;
 		if ( args.length==0 ) {
 			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-0.1pct.config.test.xml",
-					"--config:controler.lastIteration", "1" ,
+					"--config:controler.lastIteration", "0" ,
 					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-0.1pct/replaceCarByDRT-hundekopfTest"};
 		} else {
 			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);

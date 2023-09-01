@@ -34,7 +34,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.common.util.StraightLineKnnFinder;
-import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -143,7 +142,7 @@ class ReplaceCarByDRT {
 		PopulationFactory fac = scenario.getPopulation().getFactory();
 		MutableInt replacedTrips = new MutableInt();
 
-		Random rnd = MatsimRandom.getRandom();
+		Random rnd = new Random(4711);
 
 		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
@@ -171,6 +170,9 @@ class ReplaceCarByDRT {
 			if(!prStationChoice.equals(extraPRStationChoice)){
 				// EXTRA PR STATION CHOICE - just copied everything, changed prStationChoice to extraPRStationChoice
 				for (Plan plan : person.getPlans()) {
+
+					//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
+					plan.setScore(null);
 
 					//for all other replacing modes, we want to apply the same logic. so we can basically copy the plan and just override the leg modes.
 					while (replacingModeIterator2.hasNext()){
@@ -324,6 +326,9 @@ class ReplaceCarByDRT {
 			if(!url2PRStations.equals(url2PRStationsOutside)){
 				// EXTRA PROUTSIDE PLAN - just copied everything, changed prStationsSet, changed replacingMode, changed prStationChoice
 				for (Plan plan : person.getPlans()) {
+
+					//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
+					plan.setScore(null);
 
 					Plan planCopyOutside = fac.createPlan();
 					planCopyOutside.setPerson(plan.getPerson());
@@ -645,10 +650,10 @@ class ReplaceCarByDRT {
 			}
 			//after we've iterated over existing plans, add all the plan copies
 			plansToAdd.forEach(plan -> person.addPlan(plan));
+
+			//select random plan
+			person.setSelectedPlan(person.getPlans().get(rnd.nextInt(person.getPlans().size())));
 		}
-
-		//TODO iterate over all plans, set score to null !!
-
 
 		log.info("overall nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");

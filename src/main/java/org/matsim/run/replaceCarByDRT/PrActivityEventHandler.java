@@ -41,7 +41,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
 
     public PrActivityEventHandler(URL url2PRStations) {
-        Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(url2PRStations);
+        Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
         for (PRStation station : prStations){
             this.activitiesPerPRStation.put(station, new MutableInt(0));
             this.carsInPrStationPerMinute.put(station, new int[36*60]);
@@ -135,7 +135,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
     @Nullable
     private PRStation getPRStationWithCoord(Coord coord){
         for (PRStation prStation : activitiesPerPRStation.keySet()) {
-            if(prStation.coord.equals(coord)) return prStation;
+            if(prStation.getCoord().equals(coord)) return prStation;
         }
         return null;
     }
@@ -209,7 +209,7 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
             MutableInt agentsPerPRStation = entry.getValue();
 
 
-            writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.coord.getX()),String.valueOf(station.coord.getY())});
+            writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.getCoord().getX()),String.valueOf(station.getCoord().getY())});
         }
         writer.close();
     }

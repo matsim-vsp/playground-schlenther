@@ -21,8 +21,6 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.google.common.base.Preconditions;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -34,17 +32,16 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contrib.common.util.StraightLineKnnFinder;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.utils.io.IOUtils;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,6 +52,8 @@ class ReplaceCarByDRT {
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
+
+	private static boolean hasWarnedHardcodedChainMode = false;
 
 	/**
 	 *
@@ -135,8 +134,7 @@ class ReplaceCarByDRT {
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
-		Set<PRStation> prStations = readPRStationFile(url2PRStations);
-		Set<PRStation> prStationsOutside = readPRStationFile(url2PRStationsOutside);
+		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
@@ -566,7 +564,7 @@ class ReplaceCarByDRT {
 
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.linkId);
+						parkAndRideAct.setLinkId(prStation.getLinkId());
 
 						newTrip = new ArrayList<>();
 						Leg l1 = fac.createLeg(replacingMode);
@@ -609,7 +607,7 @@ class ReplaceCarByDRT {
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
 						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.linkId);
+						parkAndRideAct.setLinkId(prStation.getLinkId());
 
 						newTrip = new ArrayList<>();
 
@@ -681,7 +679,11 @@ class ReplaceCarByDRT {
 						.findAny().isPresent();
 
 				if(subtourTouchesProhibitionZoneWithCarOrRide){
-					log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+					if(!hasWarnedHardcodedChainMode){
+						log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+						log.warn(Gbl.ONLYONCE);
+						hasWarnedHardcodedChainMode = true;
+					}
 					//if car is used, change all trips to pt
 					if(subtour.getTripsWithoutSubSubtours().stream()
 							.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
@@ -717,30 +719,6 @@ class ReplaceCarByDRT {
 				TripStructureUtils.setRoutingMode(leg, TransportMode.pt);
 				TripRouter.insertTrip(planCopy, trip.getOriginActivity(), List.of(leg), trip.getDestinationActivity());
 		}
-	}
-
-	/**
-	 *
-	 * @param url2PRStations a .tsv input file with the following columns (and a header row): 'name', 'x', 'y' and 'linkId'. The order should not matter.
-	 * @return
-	 */
-	static Set<PRStation> readPRStationFile(URL url2PRStations) {
-		log.info("read input file for P+R stations");
-		Set<PRStation> prStations = new HashSet<>();
-		//assume tsv with a header and linkId in the last column
-		try {
-			CSVParser parser = CSVParser.parse(IOUtils.getBufferedReader(url2PRStations), CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader());
-			Map<String, Integer> headerMap = parser.getHeaderMap();
-			parser.getRecords().forEach(record -> {
-				String name = record.get(headerMap.get("name"));
-				Id<Link> linkId = Id.createLinkId(record.get(headerMap.get("linkId")));
-				Coord coord = new Coord(Double.parseDouble(record.get(headerMap.get("x"))), Double.parseDouble(record.get(headerMap.get("y"))));
-				prStations.add(new PRStation(name, linkId, coord));
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return prStations;
 	}
 
 	/**
@@ -874,34 +852,4 @@ class ReplaceCarByDRT {
 		closestToOutSideActivity, closestToInsideActivity
 	}
 
-}
-
-
-//TODO extract class
-class PRStation {
-
-	private String name;
-	Id<Link> linkId;
-	Coord coord;
-
-	PRStation(String name, Id<Link> linkId, Coord coord){
-		this.name = name;
-		this.linkId = linkId;
-		this.coord = coord;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public Coord getCoord() {return coord; }
-
-
-	public Id<Link> getLinkId() {
-		return linkId;
-	}
-
-	public void setLinkId(Id<Link> linkId) {
-		this.linkId = linkId;
-	}
 }

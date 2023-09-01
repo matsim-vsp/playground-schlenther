@@ -8,7 +8,10 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.*;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
@@ -20,7 +23,8 @@ import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.*;
+import static org.matsim.run.replaceCarByDRT.PRStation.readPRStationFile;
+import static org.matsim.run.replaceCarByDRT.ReplaceCarByDRT.PR_ACTIVITY_TYPE;
 import static org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario.URL_2_PR_STATIONS;
 
 /**
@@ -292,15 +296,15 @@ public class ReplaceCarByDRTTest {
 					Assert.assertEquals(2, prActs.size()); //nr of PR acts
 
 					if(scenario.equals(SCENARIO_CLOSEST_INSIDE)) {
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(1).getCoord());
 					} else if(scenario.equals(SCENARIO_CLOSEST_OUTSIDE)) {
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(1).getCoord());
 					}
 
 
@@ -330,14 +334,14 @@ public class ReplaceCarByDRTTest {
 				if(!plan.getType().equals("ptOnly")){
 					Assert.assertEquals(4, prActs.size()); //nr of PR acts
 
-					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").linkId,prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").coord,prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").linkId,prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").coord,prActs.get(1).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Wedding").linkId,prActs.get(2).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Wedding").coord,prActs.get(2).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Wedding").linkId,prActs.get(3).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Wedding").coord,prActs.get(3).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getLinkId(),prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getCoord(),prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getLinkId(),prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getCoord(),prActs.get(1).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Wedding").getLinkId(),prActs.get(2).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Wedding").getCoord(),prActs.get(2).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Wedding").getLinkId(),prActs.get(3).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Wedding").getCoord(),prActs.get(3).getCoord());
 
 				} else {
 					Assert.assertEquals(0, prActs.size()); //nr of PR acts
@@ -364,14 +368,14 @@ public class ReplaceCarByDRTTest {
 				if(!plan.getType().equals("ptOnly")){
 					Assert.assertEquals(4, prActs.size()); //nr of PR acts
 
-					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").linkId,prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").coord,prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").linkId,prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").coord,prActs.get(1).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").linkId,prActs.get(2).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").coord,prActs.get(2).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").linkId,prActs.get(3).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").coord,prActs.get(3).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").getLinkId(),prActs.get(0).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").getCoord(),prActs.get(0).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").getLinkId(),prActs.get(1).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").getCoord(),prActs.get(1).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").getLinkId(),prActs.get(2).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Beusselstrasse").getCoord(),prActs.get(2).getCoord());
+					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").getLinkId(),prActs.get(3).getLinkId());
+					Assert.assertEquals(PR_STATIONS.get("Jungfernheide").getCoord(),prActs.get(3).getCoord());
 
 				} else {
 					Assert.assertEquals(0, prActs.size()); //nr of PR acts
@@ -485,15 +489,15 @@ public class ReplaceCarByDRTTest {
 
 					if(scenario.equals(SCENARIO_CLOSEST_INSIDE)) {
 						// here it´s actually same PRStation. TODO: find better agent to test?
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(1).getCoord());
 					} else if(scenario.equals(SCENARIO_CLOSEST_OUTSIDE)) {
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").linkId,prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").coord,prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").linkId,prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").coord,prActs.get(1).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(0).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(0).getCoord());
+						Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getLinkId(),prActs.get(1).getLinkId());
+						Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getCoord(),prActs.get(1).getCoord());
 					}
 
 

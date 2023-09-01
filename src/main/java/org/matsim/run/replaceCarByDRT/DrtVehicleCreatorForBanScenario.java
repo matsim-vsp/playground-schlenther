@@ -93,7 +93,7 @@ class DrtVehicleCreatorForBanScenario {
 		int seats = 8;
 
 		DrtVehicleCreatorForBanScenario vehicleCreator = new DrtVehicleCreatorForBanScenario(networkFile, drtServiceAreaShapeFile, ct);
-		Set<PRStation> prStations = ReplaceCarByDRT.readPRStationFile(prStationsFileURL);
+		Set<PRStation> prStations = PRStation.readPRStationFile(prStationsFileURL);
 
 		for (int numberOfVehicles: numbersOfVehicles) {
 			List<DvrpVehicleSpecification> vehicles = new ArrayList<>();

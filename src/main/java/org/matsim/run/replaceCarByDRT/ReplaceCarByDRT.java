@@ -531,9 +531,11 @@ class ReplaceCarByDRT {
 						.forEach(leg -> {
 							if(leg.getMode().equals(TransportMode.car)){
 								Route route = leg.getRoute();
-								boolean routeTouchesZone = (route instanceof NetworkRoute && ((NetworkRoute) route).getLinkIds().stream().filter(l -> forbiddenLinks.contains(l)).findAny().isPresent() );
-								if(routeTouchesZone || forbiddenLinks.contains(route.getStartLinkId()) || forbiddenLinks.contains(route.getEndLinkId()) ){
-									leg.setRoute(null);
+								if (route != null){
+									boolean routeTouchesZone = (route instanceof NetworkRoute && ((NetworkRoute) route).getLinkIds().stream().filter(l -> forbiddenLinks.contains(l)).findAny().isPresent() );
+									if(routeTouchesZone || forbiddenLinks.contains(route.getStartLinkId()) || forbiddenLinks.contains(route.getEndLinkId()) ){
+										leg.setRoute(null);
+									}
 								}
 							}
 						}));
@@ -552,9 +554,11 @@ class ReplaceCarByDRT {
 
 }
 
+
+//TODO extract class
 class PRStation {
 
-	String name;
+	private String name;
 	Id<Link> linkId;
 	Coord coord;
 
@@ -566,5 +570,9 @@ class PRStation {
 
 	public Coord getCoord() {
 		return coord;
+	}
+
+	public String getName() {
+		return name;
 	}
 }

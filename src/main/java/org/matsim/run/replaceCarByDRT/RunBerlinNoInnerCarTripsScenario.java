@@ -69,8 +69,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	protected static URL URL_2_PR_STATIONS;
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
-	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
-	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE;
 
 	public static void main(String[] args) throws MalformedURLException {
 
@@ -81,10 +79,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
 			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
-			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
-			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 
 			String OUTPUT_DIRECTORY = "./scenarios/output/sample-test/";
 			int LAST_ITERATION = 0;
@@ -127,10 +123,8 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 		ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
-		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[10]);
 		configArgs = new String[args.length-12];
 		System.arraycopy(args, 12, configArgs, 0, args.length - 12);
 
@@ -308,9 +302,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				REPLACING_MODES,
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
-				mainModeIdentifier,
-				PR_STATION_CHOICE,
-				EXTRA_PR_STATION_CHOICE
+				mainModeIdentifier
 		);
 
 		return scenario;

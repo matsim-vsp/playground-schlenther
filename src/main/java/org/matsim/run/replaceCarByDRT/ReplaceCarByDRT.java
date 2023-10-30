@@ -110,23 +110,19 @@ class ReplaceCarByDRT {
 	 * @param url2CarFreeSingleGeomShapeFile
 	 * @param url2PRStations
 	 * @param mainModeIdentifier
-	 * @param prStationChoice
 	 */
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
 															  Set<String> modesToBeReplaced,
 															  Set<String> replacingModes,
 															  URL url2CarFreeSingleGeomShapeFile,
 															  URL url2PRStations,
-															  MainModeIdentifier mainModeIdentifier,
-															  PRStationChoice prStationChoice,
-															  PRStationChoice extraPRStationChoice){
+															  MainModeIdentifier mainModeIdentifier){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
 		log.info("read input file for car ban area");
 		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
-		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
 		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
 
@@ -138,6 +134,10 @@ class ReplaceCarByDRT {
 
 		// Assuming that agents will choose a random PrStation out of the closest 3 PrStations (depending on the prStationChoice strategy)
 		int kPrStations = 3;
+
+		// Adding prStationChoices;
+		PRStationChoice prStationChoice = PRStationChoice.closestToOutSideActivity;
+		PRStationChoice extraPRStationChoice = PRStationChoice.closestToInsideActivity;
 
 		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
@@ -161,9 +161,8 @@ class ReplaceCarByDRT {
 			//Experimental: Introducing a second iterator for the 2.PRStationChoice
 			Iterator<String> replacingModeIterator2 = replacingModes.iterator();
 
-			// TODO Test: create and add another plan with the opposite PRStationChoice dynamic
+			// 1. Adding plans with one of the two PrStationChoice strategies for each replacing mode
 			if(!prStationChoice.equals(extraPRStationChoice)){
-				// EXTRA PR STATION CHOICE - just copied everything, changed prStationChoice to extraPRStationChoice
 				for (Plan plan : person.getPlans()) {
 
 					//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
@@ -316,7 +315,7 @@ class ReplaceCarByDRT {
 				}
 			}
 
-
+			// Changing plan with other prStationChoice strategy & adding a plan for each replacingMode & adding an extraPtPlan
 			for (Plan plan : person.getPlans()) {
 
 				//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.

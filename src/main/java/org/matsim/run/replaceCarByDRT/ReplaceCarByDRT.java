@@ -52,48 +52,7 @@ class ReplaceCarByDRT {
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
-
 	private static boolean hasWarnedHardcodedChainMode = false;
-
-	/**
-	 *
-	 * @param scenario
-	 * @param modesToBeReplaced
-	 * @param replacingMode
-	 * @param url2CarFreeSingleGeomShapeFile
-	 * @param mainModeIdentifier
-	 */
-	static void replaceInnerTripsOfModesInAreaByMode(Scenario scenario,
-													 Set<String> modesToBeReplaced,
-													 String replacingMode,
-													 URL url2CarFreeSingleGeomShapeFile,
-													 MainModeIdentifier mainModeIdentifier){
-
-		// First check whether we can properly interpret the shape file.
-		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
-		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
-		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
-
-		log.info("start modifying input plans....");
-		PopulationFactory fac = scenario.getPopulation().getFactory();
-		MutableInt replacedTrips = new MutableInt();
-
-		scenario.getPopulation().getPersons().values().stream()
-				.flatMap(person -> person.getPlans().stream())
-				.forEach(plan -> {
-					TripStructureUtils.getTrips(plan).stream()
-							.forEach(trip -> {
-								String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
-								if(modesToBeReplaced.contains(mainMode) && getTripType(scenario, trip, carFreeGeoms).equals(TripType.innerTrip)){
-									List<PlanElement> newTrip = List.of(fac.createLeg(replacingMode));
-									TripRouter.insertTrip(plan.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
-									replacedTrips.increment();
-								}
-							});
-				});
-		log.info("nr of trips replaced = " + replacedTrips);
-		log.info("finished modifying input plans....");
-	}
 
 	/**
 	 * Multiple side effects!! <br>
@@ -315,7 +274,7 @@ class ReplaceCarByDRT {
 				}
 			}
 
-			// Changing plan with other prStationChoice strategy & adding a plan for each replacingMode & adding an extraPtPlan
+			// 2. Changing plan with other prStationChoice strategy & adding a plan for each replacingMode & adding an extraPtPlan
 			for (Plan plan : person.getPlans()) {
 
 				//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.

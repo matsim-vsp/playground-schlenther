@@ -118,15 +118,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	public static String[] prepareConfigArguments(String[] args){
 		String[] configArgs;
 
-		//TODO!! See that args fit again
-
 		URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 		ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-		REPLACING_MODES = Set.of(args[4].split(","));
-		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
-		configArgs = new String[args.length-12];
-		System.arraycopy(args, 12, configArgs, 0, args.length - 12);
+		REPLACING_MODES = Set.of(args[3].split(","));
+		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[4]);
+		configArgs = new String[args.length-5];
+		System.arraycopy(args, 5, configArgs, 0, args.length - 5);
 
 		return configArgs;
 	}
@@ -288,13 +286,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario, URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,roadTypesWithCarAllowed);
 
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
-		//replace all inner car and ride trips within the drt service area by drt legs
-//		ReplaceCarByDRT.replaceInnerTripsOfModesInAreaByMode(scenario,
-//				Set.of(TransportMode.car, TransportMode.ride),
-//				drtCfg.getMode(),
-//				drtCfg.getDrtServiceAreaShapeFileURL(config.getContext()),
-//				mainModeIdentifier
-//				);
 
 		// replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,

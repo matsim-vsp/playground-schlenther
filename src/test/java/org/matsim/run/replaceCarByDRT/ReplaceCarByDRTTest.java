@@ -480,7 +480,7 @@ public class ReplaceCarByDRTTest {
 					Assert.assertEquals(2, prActs.size()); //nr of PR acts
 
 					if(scenario.equals(SCENARIO_CLOSEST_INSIDE)) {
-						// here it´s actually same PRStation. TODO: find better agent to test?
+						// here it´s actually same PRStation
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(0).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(0).getCoord());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(1).getLinkId());

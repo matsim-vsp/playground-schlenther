@@ -66,7 +66,7 @@ public class BerlinRunOfflineNoiseAnalysis {
         noiseParameters.setConsideredActivitiesForDamageCalculationArray(consideredActivitiesForDamages);
         noiseParameters.setUseActualSpeedLevel(false);
         noiseParameters.setAllowForSpeedsOutsideTheValidRange(false);
-        noiseParameters.setScaleFactor(100.0D);
+        noiseParameters.setScaleFactor(10.0D);
         noiseParameters.setComputePopulationUnits(true);
         noiseParameters.setComputeNoiseDamages(true);
         noiseParameters.setInternalizeNoiseDamages(false);

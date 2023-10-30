@@ -482,6 +482,9 @@ class ReplaceCarByDRT {
 
 			for (Plan plan : person.getPlans()) {
 
+				//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
+				plan.setScore(null);
+
 				//will in fact put an attribute into the origin activity
 				List<TripStructureUtils.Trip> tripsToReplace = collectAndAttributeTripsToReplace(scenario, plan, mainModeIdentifier, modesToBeReplaced, carFreeGeoms);
 				if (tripsToReplace.isEmpty()){

@@ -159,10 +159,10 @@ class DrtVehicleCreatorForBanScenario {
 //	public final void setLinkWeightsByActivities(String populationFile, String facilitiesFile) {
 //		links2weights.clear(); // initial reset if already set before
 //		PopulationReader popReader = new PopulationReader(scenario);
-//		popReader.readFile(populationFile); //TODO: coord transformations
+//		popReader.readFile(populationFile); //coord transformations to do
 //		if (facilitiesFile != null && !facilitiesFile.equals("")) {
 //			MatsimFacilitiesReader facilitiesReader = new MatsimFacilitiesReader(scenario);
-//			facilitiesReader.readFile(facilitiesFile); //TODO: coord transformations
+//			facilitiesReader.readFile(facilitiesFile); // coord transformations to do
 //		}
 //
 //		Map<Id<Link>, Long> link2Occurences = scenario.getPopulation().getPersons().values().stream().

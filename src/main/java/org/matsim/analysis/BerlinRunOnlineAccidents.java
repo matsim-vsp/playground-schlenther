@@ -7,7 +7,9 @@ import org.matsim.contrib.accidents.AccidentsModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.ControlerUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
 import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 
@@ -33,8 +35,13 @@ public class BerlinRunOnlineAccidents {
     private final String extraPtPlan;
     private final String drtStopBased;
     private final String drtStops;
+    private final String kPrStations;
+    private final String extraPrStationChoice;
+    private final String prStationsOutsideFile;
 
-    public BerlinRunOnlineAccidents(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice, String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops){
+    public BerlinRunOnlineAccidents(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice,
+                                    String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops,
+                                    String kPrStations, String extraPrStationChoice, String prStationsOutsideFile){
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.analysisOutputDirectory = analysisOutputDirectory;
@@ -49,6 +56,9 @@ public class BerlinRunOnlineAccidents {
         this.extraPtPlan = extraPtPlan;
         this.drtStopBased = drtStopBased;
         this.drtStops = drtStops;
+        this.kPrStations = kPrStations;
+        this.extraPrStationChoice = extraPrStationChoice;
+        this.prStationsOutsideFile = prStationsOutsideFile;
 
     }
 
@@ -68,6 +78,9 @@ public class BerlinRunOnlineAccidents {
         String extraPtPlan = "";
         String drtStopBased = "";
         String drtStops = "";
+        String kPrStations = "";
+        String extraPrStationChoice = "";
+        String prStationsOutsideFile = "";
 
         if (args.length == 0) {
             runDirectory = "scenarios/output/runs-2023-05-26/baseCaseContinued/";
@@ -83,7 +96,11 @@ public class BerlinRunOnlineAccidents {
             extraPtPlan = "false";
             drtStopBased = "false";
             drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
-        } if (args.length == 13) {
+            kPrStations = "3";
+            extraPrStationChoice = "";
+            prStationsOutsideFile = "";
+
+        } if (args.length == 16) {
             runDirectory = args[0];
             runId = args[1];
             analysisOutputDirectory = args[2];
@@ -98,6 +115,9 @@ public class BerlinRunOnlineAccidents {
             extraPtPlan = args[10];
             drtStopBased = args[11];
             drtStops = args[12];
+            kPrStations = args[13];
+            extraPrStationChoice = args[14];
+            prStationsOutsideFile = args[15];
 
 
         } else {
@@ -116,7 +136,8 @@ public class BerlinRunOnlineAccidents {
                 enforceMassConservation,
                 extraPtPlan,
                 drtStopBased,
-                drtStops);
+                drtStops,
+                kPrStations, extraPrStationChoice, prStationsOutsideFile);
 
         accAnalysis.run();
     }
@@ -143,6 +164,9 @@ public class BerlinRunOnlineAccidents {
                     extraPtPlan,
                     drtStopBased,
                     drtStops,
+                    kPrStations,
+                    extraPrStationChoice,
+                    prStationsOutsideFile,
                     outputConfigName
             };
 
@@ -179,7 +203,6 @@ public class BerlinRunOnlineAccidents {
         }
 
         controler.addOverridingModule(new AccidentsModule());
-
         controler.run();
     }
 }

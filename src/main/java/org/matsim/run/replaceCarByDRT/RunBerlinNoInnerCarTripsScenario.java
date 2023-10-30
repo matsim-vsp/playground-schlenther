@@ -74,7 +74,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static boolean ENFORCE_MASS_CONSERVATION = false;
 	private static boolean EXTRA_PT_PLAN = false;
 	private static boolean DRT_STOP_BASED = false;
-	private static int K_PRSTATIONS; // TODO: change all booleans to enum
+	private static int K_PRSTATIONS;
 	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE;
 
 	public static void main(String[] args) throws MalformedURLException {
@@ -167,7 +167,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		PlanCalcScoreConfigGroup.ModeParams ptParams = config.planCalcScore().getModes().get(TransportMode.pt);
 		PlanCalcScoreConfigGroup.ModeParams drtParams = config.planCalcScore().getModes().get(drtCfg.getMode());
-
 		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
 				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
 
@@ -333,7 +332,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 //				mainModeIdentifier
 //				);
 
-		//replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
+		// replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
 				REPLACING_MODES,

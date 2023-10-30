@@ -71,7 +71,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
-	private static boolean DRT_STOP_BASED = false;
 	private static int K_PRSTATIONS;
 	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE;
 
@@ -86,7 +85,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			DRT_STOP_BASED = false;
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 			K_PRSTATIONS = 1;
 			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
@@ -137,7 +135,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
-		DRT_STOP_BASED = Boolean.parseBoolean(args[7]);
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
 		K_PRSTATIONS = Integer.parseInt(args[9]);
 		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[10]);
@@ -167,7 +164,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
 
 		//sets the drt mode to be dvrp network mode. sets fare compensitions for agents using both pt and drt
-		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, compensatorsConfig, DRT_STOP_BASED);
+		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, compensatorsConfig);
 
 		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
 		if (berlinCfg.getTagDrtLinksBufferAroundServiceAreaShp() <= 0.){
@@ -227,7 +224,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		}
 	}
 
-	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig, boolean drtStopBased) {
+	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig) {
 		if(! dvrpConfigGroup.getNetworkModes().contains(drtConfigGroup.getMode()) ){
 			log.warn("the drt mode " + drtConfigGroup.getMode() + " is not registered as network mode for dvrp - which is necessary in a bannedCarInDRTServiceArea scenario");
 			log.warn("adding mode " + drtConfigGroup.getMode() + " as network mode for dvrp... ");
@@ -240,27 +237,12 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
 				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
 
-		// Setting different operational schemes depending on input
-		if(drtStopBased){
-			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
-
-			//drtConfigGroup.setTransitStopFile("drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
-			drtConfigGroup.setTransitStopFile(String.valueOf(URL_2_DRT_STOPS));
-
-			log.warn("you are now using a stop based operational scheme for drt! This is still under development.");
-
-			Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),
-					"this scenario currently only works with a specified stopFile for drt!");
-
-		} else {
-			drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.serviceAreaBased);
-			log.warn("you are not using service area based operational scheme for drt! However, this scenario currently reads the drt service area shp file specified in " + drtConfigGroup +
-						" for specifying the area where to ban car and ride from. Make sure that your stop network fit that area, otherwise you will most probably get unintented results!!");
-
-			Preconditions.checkNotNull(drtConfigGroup.getDrtServiceAreaShapeFile(),
-					"this scenario currently only works with a specified serviceArea for drt! Even if you assume a different operational scheme, the shp file is needed for banning cars and ride from" +
-							"the corresponding zone! Please provide a shape file and make sure that your stop network fits that area!");
-		}
+		// Setting operational scheme to stop based
+		drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
+		drtConfigGroup.setTransitStopFile(String.valueOf(URL_2_DRT_STOPS));
+		log.warn("you are now using a stop based operational scheme for drt! This is still under development.");
+		Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),
+				"this scenario currently only works with a specified stopFile for drt!");
 
 		if(! drtConfigGroup.isUseModeFilteredSubnetwork()){
 			log.warn("setting drtConfigGroup.isUseModeFilteredSubnetwork() to true! Was false before......");

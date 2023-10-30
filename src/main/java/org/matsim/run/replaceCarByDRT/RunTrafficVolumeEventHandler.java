@@ -95,9 +95,9 @@ public class RunTrafficVolumeEventHandler {
         String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyTrafficVolume_vehicles.tsv";
         String mileageOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyMileage_vehicles.tsv";
         String HTVOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_hourlyTrafficVolume_vehicles.tsv";
-//        DTVPerLink2CSV(handler1.getDTVPerLink_Total(), handler1.getDTVPerLink_DRT(), handler1.getDTVPerLink_nonDRT(), network, innerCity, berlin, boundary, outputFileName1);
+        DTVPerLink2CSV(handler1.getDTVPerLink_Total(), handler1.getDTVPerLink_DRT(), handler1.getDTVPerLink_nonDRT(), network, innerCity, berlin, boundary, outputFileName1);
         mileagePerLink2CSV(handler1.getDTVPerLink_Total(), handler1.getDTVPerLink_DRT(), handler1.getDTVPerLink_nonDRT(), network, innerCity, berlin, boundary, mileageOutputFileName);
-//        HTVPerLink2CSV(handler1.getHTVPerLink_Total(), network, innerCity, berlin, HTVOutputFileName);
+        HTVPerLink2CSV(handler1.getHTVPerLink_Total(), network, innerCity, berlin, HTVOutputFileName);
     }
 
     private static void DTVPerLink2CSV(Map<Id<Link>, Integer> DTVPerLink, Map<Id<Link>, Integer> DTVPerLink_DRT, Map<Id<Link>, Integer> DTVPerLink_nonDRT,

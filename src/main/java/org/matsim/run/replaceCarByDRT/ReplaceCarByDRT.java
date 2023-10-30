@@ -111,7 +111,6 @@ class ReplaceCarByDRT {
 	 * @param url2PRStations
 	 * @param mainModeIdentifier
 	 * @param prStationChoice
-	 * @param kPrStations
 	 */
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
 															  Set<String> modesToBeReplaced,
@@ -120,7 +119,6 @@ class ReplaceCarByDRT {
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
 															  PRStationChoice prStationChoice,
-															  int kPrStations,
 															  PRStationChoice extraPRStationChoice,
 															  URL url2PRStationsOutside){
 
@@ -139,6 +137,9 @@ class ReplaceCarByDRT {
 		MutableInt replacedTrips = new MutableInt();
 
 		Random rnd = new Random(4711);
+
+		// Assuming that agents will choose a random PrStation out of the closest 3 PrStations (depending on the prStationChoice strategy)
+		int kPrStations = 3;
 
 		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");

@@ -71,7 +71,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
-	private static int K_PRSTATIONS;
 	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE;
 
 	public static void main(String[] args) throws MalformedURLException {
@@ -86,7 +85,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
-			K_PRSTATIONS = 1;
 			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 //			URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv");
 			URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
@@ -136,7 +134,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
-		K_PRSTATIONS = Integer.parseInt(args[9]);
 		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[10]);
 		URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource(args[11]);
 		configArgs = new String[args.length-12];
@@ -318,7 +315,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				K_PRSTATIONS,
 				EXTRA_PR_STATION_CHOICE,
 				URL_2_PR_STATIONS_OUTSIDE
 		);

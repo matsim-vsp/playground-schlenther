@@ -60,7 +60,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
-				1,
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_INSIDE);
@@ -77,7 +76,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				1,
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_OUTSIDE);
@@ -94,7 +92,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				1,
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
 
@@ -110,7 +107,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				1,
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"));
 	}

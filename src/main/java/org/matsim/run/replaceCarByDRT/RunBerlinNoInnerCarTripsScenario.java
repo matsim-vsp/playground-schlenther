@@ -67,7 +67,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 	private static URL URL_2_DRT_STOPS;
 	protected static URL URL_2_PR_STATIONS;
-	private static URL URL_2_PR_STATIONS_OUTSIDE;
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
@@ -86,9 +85,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 			EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
-//			URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv");
-			URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
-
 
 			String OUTPUT_DIRECTORY = "./scenarios/output/sample-test/";
 			int LAST_ITERATION = 0;
@@ -135,7 +131,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		REPLACING_MODES = Set.of(args[4].split(","));
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
 		EXTRA_PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[10]);
-		URL_2_PR_STATIONS_OUTSIDE = IOUtils.resolveFileOrResource(args[11]);
 		configArgs = new String[args.length-12];
 		System.arraycopy(args, 12, configArgs, 0, args.length - 12);
 
@@ -315,8 +310,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				EXTRA_PR_STATION_CHOICE,
-				URL_2_PR_STATIONS_OUTSIDE
+				EXTRA_PR_STATION_CHOICE
 		);
 
 		return scenario;

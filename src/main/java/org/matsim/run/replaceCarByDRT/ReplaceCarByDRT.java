@@ -119,8 +119,7 @@ class ReplaceCarByDRT {
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
 															  PRStationChoice prStationChoice,
-															  PRStationChoice extraPRStationChoice,
-															  URL url2PRStationsOutside){
+															  PRStationChoice extraPRStationChoice){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -130,7 +129,6 @@ class ReplaceCarByDRT {
 		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
 		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
-		Set<PRStation> prStationsOutside = PRStation.readPRStationFile(url2PRStationsOutside);
 
 		log.info("start modifying input plans....");
 		PopulationFactory fac = scenario.getPopulation().getFactory();
@@ -316,162 +314,6 @@ class ReplaceCarByDRT {
 						plansToAdd.add(planCopyExtra);
 					}
 				}
-			}
-
-			// TODO Test: Create and add a plan, where all the trips to replace use a PR-Station further outside in/outside the city
-			if(!url2PRStations.equals(url2PRStationsOutside)){
-				// EXTRA PROUTSIDE PLAN - just copied everything, changed prStationsSet, changed replacingMode, changed prStationChoice
-				for (Plan plan : person.getPlans()) {
-
-					//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
-					plan.setScore(null);
-
-					Plan planCopyOutside = fac.createPlan();
-					planCopyOutside.setPerson(plan.getPerson());
-					PopulationUtils.copyFromTo(plan, planCopyOutside); //important to copy first and than set the type, because in the copy method the type is included for copying...
-					planCopyOutside.setType("prOutside");
-
-					//will in fact put an attribute into the origin activity
-					List<TripStructureUtils.Trip> tripsToReplace = collectAndAttributeTripsToReplace(scenario, planCopyOutside, mainModeIdentifier, modesToBeReplaced, carFreeGeoms);
-					if (tripsToReplace.isEmpty()) {
-						planCopyOutside.setType("not-affected");
-						continue; //nothing to do; skip the plan
-					}
-
-					//for consistency checking
-					long nrOfBorderCrossingCarTrips = tripsToReplace.stream()
-							.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
-							.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.endingTrip) || trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.originatingTrip))
-							.count();
-					long nrOfOutsideTrips = tripsToReplace.stream()
-							.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
-							.count();
-					if (nrOfOutsideTrips == tripsToReplace.size()) {
-						planCopyOutside.setType("not-affected");
-						continue; //this agent is not affected by the prohibition zone.
-					}
-
-					// change replacingMode to PT
-					String newReplacingMode = "pt";
-
-					PRStation firstCarPRStation = null;
-					//we use this as 'iteration variable'
-					PRStation currentCarPRStation = null;
-
-					for (TripStructureUtils.Trip trip : tripsToReplace) {
-						TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
-						String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
-						if (tripType.equals(TripType.outsideTrip)) {
-							if (mainMode.equals(TransportMode.car) && currentCarPRStation != null)
-								throw new IllegalStateException("agent " + person + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
-										"\n but vehicle is still parked at link=" + currentCarPRStation);
-							continue;
-						}
-
-						List<PlanElement> newTrip;
-						PRStation prStation = null;
-
-						if (tripType.equals(TripType.innerTrip)) {
-							Leg l1 = fac.createLeg(newReplacingMode);
-							TripStructureUtils.setRoutingMode(l1, newReplacingMode);
-							l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-							newTrip = List.of(l1);
-						} else if (tripType.equals(TripType.originatingTrip)) {
-							if (mainMode.equals(TransportMode.car)) {
-								nrOfBorderCrossingCarTrips--;
-								//some consistency (mass conservation) checks
-								if (nrOfBorderCrossingCarTrips == 0 && livesInProhibitionZone) {
-									throw new IllegalStateException("agent " + person.getId() + "lives inside but travels outside the border with car without returning with a prohibited mode.\n" +
-											"trip = " + trip);
-								}
-								//car has to be picked up where it was left the last time
-								if (currentCarPRStation != null) {
-									prStation = currentCarPRStation;
-								}
-							}
-							if (prStation == null) { //if no car trip into zone was observed before or if the mode is ride, we enter here
-								Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-								List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream());
-								List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
-								Collections.shuffle(mutableListCandidates);
-								int rndr = rnd.nextInt(mutableListCandidates.size());
-								prStation = mutableListCandidates.get(rndr);
-							}
-
-							//change value of firstPRStation only one time
-							firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
-
-							currentCarPRStation = null;
-
-//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-							parkAndRideAct.setMaximumDuration(5 * 60);
-							parkAndRideAct.setLinkId(prStation.getLinkId());
-
-							newTrip = new ArrayList<>();
-							Leg l1 = fac.createLeg(newReplacingMode);
-							TripStructureUtils.setRoutingMode(l1, newReplacingMode);
-							l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-							Leg l2 = fac.createLeg(mainMode);
-							TripStructureUtils.setRoutingMode(l2, mainMode);
-
-							newTrip.add(l1); //new mode
-							newTrip.add(parkAndRideAct);
-							newTrip.add(l2); //old main mode
-
-						} else if (tripType.equals(TripType.endingTrip)) {
-							if (mainMode.equals(TransportMode.car)) {
-								nrOfBorderCrossingCarTrips--;
-								if (nrOfBorderCrossingCarTrips == 0) {
-									//some consistency (mass conservation) checks
-									if (!livesInProhibitionZone) {
-										throw new IllegalStateException("agent " + person.getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
-												"trip = " + trip);
-									}
-									//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-									prStation = firstCarPRStation;
-								}
-							}
-							if (prStation == null) { //if not the last border-crossing car or a ride trip
-								Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-								List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStationsOutside.stream());
-								List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
-								Collections.shuffle(mutableListCandidates);
-								int rndr = rnd.nextInt(mutableListCandidates.size());
-								prStation = mutableListCandidates.get(rndr);
-
-								if (mainMode.equals(TransportMode.car)) currentCarPRStation = prStation;
-							}
-
-//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-							Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-							parkAndRideAct.setMaximumDuration(5 * 60);
-							parkAndRideAct.setLinkId(prStation.getLinkId());
-							newTrip = new ArrayList<>();
-
-							Leg l1 = fac.createLeg(mainMode);
-							TripStructureUtils.setRoutingMode(l1, mainMode);
-							Leg l2 = fac.createLeg(newReplacingMode);
-							TripStructureUtils.setRoutingMode(l2, newReplacingMode);
-							l2.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-
-							newTrip.add(l1); //old main mode
-							newTrip.add(parkAndRideAct);
-							newTrip.add(l2); //new mode
-
-						} else {
-							throw new IllegalArgumentException("unknown trip type: " + tripType);
-						}
-
-						//insert new trip into plan
-						TripRouter.insertTrip(planCopyOutside.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
-						replacedTrips.increment();
-
-					}
-					plansToAdd.add(planCopyOutside);
-
-				}
-
 			}
 
 

@@ -60,8 +60,7 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
-				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity);
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_INSIDE);
 
 		SCENARIO_CLOSEST_OUTSIDE = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -76,8 +75,7 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity);
 		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_OUTSIDE);
 
 		SCENARIO_BOTH = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -92,8 +90,7 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity);
 
 		SCENARIO_EXTRA_PRSTATIONS = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		PopulationUtils.readPopulation(SCENARIO_EXTRA_PRSTATIONS.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
@@ -107,8 +104,7 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"));
+				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity);
 	}
 
 	@Test

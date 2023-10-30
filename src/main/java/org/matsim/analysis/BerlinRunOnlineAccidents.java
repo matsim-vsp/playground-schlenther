@@ -13,6 +13,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
 import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 
+import javax.management.RuntimeErrorException;
+
 /**
  * @author Hugo
  */
@@ -20,7 +22,6 @@ import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 
 public class BerlinRunOnlineAccidents {
 
-    private static final Logger log = Logger.getLogger(RunBerlinAccidents.class);
     private final String runDirectory;
     private final String runId;
     private final String analysisOutputDirectory;
@@ -29,19 +30,11 @@ public class BerlinRunOnlineAccidents {
     private final String shapeFile;
     private final String roadTypesCarAllowed;
     private final String stationsFile;
-    private final String prStationChoice;
     private final String replacingModes;
-    private final String enforceMassConservation;
-    private final String extraPtPlan;
-    private final String drtStopBased;
     private final String drtStops;
-    private final String kPrStations;
-    private final String extraPrStationChoice;
-    private final String prStationsOutsideFile;
 
-    public BerlinRunOnlineAccidents(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile, String prStationChoice,
-                                    String replacingModes, String enforceMassConservation, String extraPtPlan, String drtStopBased, String drtStops,
-                                    String kPrStations, String extraPrStationChoice, String prStationsOutsideFile){
+    public BerlinRunOnlineAccidents(String runDirectory, String runId, String analysisOutputDirectory, String runType, String shapeFile, String roadTypesCarAllowed, String stationsFile,
+                                    String replacingModes, String drtStops){
         this.runDirectory = runDirectory;
         this.runId = runId;
         this.analysisOutputDirectory = analysisOutputDirectory;
@@ -50,15 +43,8 @@ public class BerlinRunOnlineAccidents {
         this.shapeFile = shapeFile;
         this.roadTypesCarAllowed = roadTypesCarAllowed;
         this.stationsFile = stationsFile;
-        this.prStationChoice = prStationChoice;
         this.replacingModes = replacingModes;
-        this.enforceMassConservation = enforceMassConservation;
-        this.extraPtPlan = extraPtPlan;
-        this.drtStopBased = drtStopBased;
         this.drtStops = drtStops;
-        this.kPrStations = kPrStations;
-        this.extraPrStationChoice = extraPrStationChoice;
-        this.prStationsOutsideFile = prStationsOutsideFile;
 
     }
 
@@ -72,15 +58,8 @@ public class BerlinRunOnlineAccidents {
         String shapeFile = "";
         String roadTypesCarAllowed = "";
         String stationsFile = "";
-        String prStationChoice = "";
         String replacingModes = "";
-        String enforceMassConservation = "";
-        String extraPtPlan = "";
-        String drtStopBased = "";
         String drtStops = "";
-        String kPrStations = "";
-        String extraPrStationChoice = "";
-        String prStationsOutsideFile = "";
 
         if (args.length == 0) {
             runDirectory = "scenarios/output/runs-2023-05-26/baseCaseContinued/";
@@ -90,17 +69,10 @@ public class BerlinRunOnlineAccidents {
             shapeFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             roadTypesCarAllowed = "motorwayAndPrimaryAndTrunk";
             stationsFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
-            prStationChoice = "closestToOutSideActivity";
             replacingModes = "pt,drt";
-            enforceMassConservation = "true";
-            extraPtPlan = "false";
-            drtStopBased = "false";
             drtStops = "scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml";
-            kPrStations = "3";
-            extraPrStationChoice = "";
-            prStationsOutsideFile = "";
 
-        } if (args.length == 16) {
+        } if (args.length == 9) {
             runDirectory = args[0];
             runId = args[1];
             analysisOutputDirectory = args[2];
@@ -109,19 +81,11 @@ public class BerlinRunOnlineAccidents {
             shapeFile = args[4];
             roadTypesCarAllowed = args[5];
             stationsFile = args[6];
-            prStationChoice = args[7];
-            replacingModes = args[8];
-            enforceMassConservation = args[9];
-            extraPtPlan = args[10];
-            drtStopBased = args[11];
-            drtStops = args[12];
-            kPrStations = args[13];
-            extraPrStationChoice = args[14];
-            prStationsOutsideFile = args[15];
-
+            replacingModes = args[7];
+            drtStops = args[8];
 
         } else {
-            System.out.println("Insufficient arguments provided.");
+            System.err.println("Insufficient arguments provided.");
         }
 
         BerlinRunOnlineAccidents accAnalysis = new BerlinRunOnlineAccidents(runDirectory,
@@ -131,13 +95,8 @@ public class BerlinRunOnlineAccidents {
                 shapeFile,
                 roadTypesCarAllowed,
                 stationsFile,
-                prStationChoice,
                 replacingModes,
-                enforceMassConservation,
-                extraPtPlan,
-                drtStopBased,
-                drtStops,
-                kPrStations, extraPrStationChoice, prStationsOutsideFile);
+                drtStops);
 
         accAnalysis.run();
     }
@@ -158,15 +117,8 @@ public class BerlinRunOnlineAccidents {
                     shapeFile,
                     roadTypesCarAllowed,
                     stationsFile,
-                    prStationChoice,
                     replacingModes,
-                    enforceMassConservation,
-                    extraPtPlan,
-                    drtStopBased,
                     drtStops,
-                    kPrStations,
-                    extraPrStationChoice,
-                    prStationsOutsideFile,
                     outputConfigName
             };
 

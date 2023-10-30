@@ -105,10 +105,12 @@ policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+car"] <- "car+pt"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt_w_drt_used+car"] <- "car+pt_w_drt_used"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "walk+car"] <- "car+walk"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+car"] <- "car+drt"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "bicycle+car"] <- "car+bicycle"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+ride"] <- "ride+pt"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt_w_drt_used+ride"] <- "ride+pt_w_drt_used"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "walk+ride"] <- "ride+walk"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "drt+ride"] <- "ride+drt"
+policyTripsPrep$main_mode[policyTripsPrep$main_mode == "bicycle+ride"] <- "ride+bicycle"
 
 policyTripsPrep <- policyTripsPrep %>% filter(!trip_number == 0)
 

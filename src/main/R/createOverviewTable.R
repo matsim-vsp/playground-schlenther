@@ -2,21 +2,17 @@ library(tidyverse)
 library(dplyr)
 
 #HPC Cluster
-#args <- commandArgs(trailingOnly = TRUE)
-#drtTableDirectory <- args[1]
-#runId <- args[2]
+# args <- commandArgs(trailingOnly = TRUE)
+# drtTableDirectory <- args[1]
+# runId <- args[2]
 
 #1pct
-runId <- "stationChoice-extraPrStationPlan"
-dResultsDir <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-08-11/"
-drtTableDirectory <- file.path(gResultsDir,runId)
-
-#drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
-#runId <- "extraPtPlan-drtStopBased-1506vehicles-8seats"
+# drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-noDRT/"
+# runId <- "optimum-noDRT"
 
 #10pct
-#drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
-#runId <- "final-10pct-7503vehicles-8seats"
+drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
+runId <- "noDRT"
 
 outputDirectory <- paste0(drtTableDirectory,"/analysis")
 
@@ -46,12 +42,12 @@ drtVehicleTable <- read.table(file = drtVehicleFilepath, sep = ";", header = TRU
 
 avgScoreDiffAll <- scoreAllTable$avg_score_diff
 avgScoreDiffImp <- scoreImpTable$avg_score_diff
-avgTripsTimeAll <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "All_Impacted_Trips"]
-avgTripsTimeBinnen <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "Impacted_Binnen_Trips"]
-avgTripsTimeGrenz <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "Impacted_Grenz_Trips"]
-avgTripsDistAll <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "All_Impacted_Trips"]
-avgTripsDistBinnen <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "Impacted_Binnen_Trips"]
-avgTripsDistGrenz <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "Impacted_Grenz_Trips"]
+avgTripsTimeAll <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "Betr. Verkehr"]
+avgTripsTimeBinnen <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "Betr. Binnenverkehr"]
+avgTripsTimeGrenz <- tripsTimeTable$avg_travTime_diff[tripsTimeTable$tripType == "Betr. Quell-/Zielverkehr"]
+avgTripsDistAll <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "Betr. Verkehr"]
+avgTripsDistBinnen <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "Betr. Binnenverkehr"]
+avgTripsDistGrenz <- tripsDistTable$avg_travelledDistance_diff[tripsDistTable$tripType == "Betr. Quell-/Zielverkehr"]
 avgWaitDrt <- drtCustomerTable$wait_average[drtCustomerTable$iteration == "500"]
 drtEmptyRatio <- drtVehicleTable$emptyRatio[drtVehicleTable$iteration == "500"]
 drtDPDTRatio <- drtVehicleTable$d_p.d_t[drtVehicleTable$iteration == "500"]

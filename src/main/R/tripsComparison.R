@@ -11,22 +11,23 @@ library(ggalluvial)
 ########################################
 # Preparation
 
-#HPC Cluster
-#args <- commandArgs(trailingOnly = TRUE)
-#policyCaseDirectory <- args[1]
+# #HPC Cluster
+# args <- commandArgs(trailingOnly = TRUE)
+# policyCaseDirectory <- args[1]
 
 
-#10pct
-#baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/baseCaseContinued-10pct"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-13/finalRun-10pct/massConservation-true"
+# 10pct
+baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
+policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
 
-#1pct
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-08-11/stationChoice-closestToOutside/"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
+# #1pct
+# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
+# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
+# #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
 
 
 shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+shp_berlin <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
 
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
@@ -67,12 +68,12 @@ policyPersons <- read.table(file = policyPerson_inputfile, sep = '\t', header = 
 personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
 personsJoined <- personsJoined %>%
   add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
-
 personsJoined <- personsJoined %>% filter(score_diff > -400)
+
+impacted_persons <- personsJoined %>% filter(person %in% impacted_trips$person_policy)
 
 baseTrips <- baseTrips %>% filter(person %in% personsJoined$person)
 policyTrips <- policyTrips %>% filter(person %in% personsJoined$person)
-
 
 ########################################
 # Prepare tables
@@ -89,7 +90,8 @@ impGrenz_trips <- impGrenz_trips %>%
   add_column(travTime_diff = impGrenz_trips$trav_time_policy - impGrenz_trips$trav_time_base) %>%
   add_column(waitTime_diff = impGrenz_trips$wait_time_policy - impGrenz_trips$wait_time_base) %>%
   add_column(traveledDistance_diff = impGrenz_trips$traveled_distance_policy - impGrenz_trips$traveled_distance_base) %>%
-  add_column(euclideanDistance_diff = impGrenz_trips$euclidean_distance_policy - impGrenz_trips$euclidean_distance_base)
+  add_column(euclideanDistance_diff = impGrenz_trips$euclidean_distance_policy - impGrenz_trips$euclidean_distance_base) %>%
+  filter(travTime_diff < 20000)
 
 "Impacted Binnentrips"
 impBinnen_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, TRUE)
@@ -100,7 +102,8 @@ impBinnen_trips <- impBinnen_trips %>%
   add_column(travTime_diff = impBinnen_trips$trav_time_policy - impBinnen_trips$trav_time_base) %>%
   add_column(waitTime_diff = impBinnen_trips$wait_time_policy - impBinnen_trips$wait_time_base) %>%
   add_column(traveledDistance_diff = impBinnen_trips$traveled_distance_policy - impBinnen_trips$traveled_distance_base) %>%
-  add_column(euclideanDistance_diff = impBinnen_trips$euclidean_distance_policy - impBinnen_trips$euclidean_distance_base)
+  add_column(euclideanDistance_diff = impBinnen_trips$euclidean_distance_policy - impBinnen_trips$euclidean_distance_base)%>%
+  filter(travTime_diff < 20000)
 
 "Impacted trips (Impacted Grenztrips + Impacted Binnentrips)"
 impacted_trips_base <- rbind(impGrenz_trips_base,impBinnen_trips_base)
@@ -111,14 +114,86 @@ impacted_trips <- impacted_trips %>%
   add_column(travTime_diff = impacted_trips$trav_time_policy - impacted_trips$trav_time_base) %>%
   add_column(waitTime_diff = impacted_trips$wait_time_policy - impacted_trips$wait_time_base) %>%
   add_column(traveledDistance_diff = impacted_trips$traveled_distance_policy - impacted_trips$traveled_distance_base)  %>%
-  add_column(euclideanDistance_diff = impacted_trips$euclidean_distance_policy - impacted_trips$euclidean_distance_base)
+  add_column(euclideanDistance_diff = impacted_trips$euclidean_distance_policy - impacted_trips$euclidean_distance_base)%>%
+  filter(travTime_diff < 20000)
 
+########################################
+# Backup: Trying to explain differences between scaled scenarios
 
-tester <- impGrenz_trips %>% filter(grepl("car",modes_policy, fixed = TRUE))
+#tester <- impGrenz_trips %>% filter(grepl("car",modes_policy, fixed = TRUE))
+#tester2 <- non_impacted_trips %>% filter(grepl("car",modes_policy, fixed = TRUE)) %>%
+#  add_column(traveled_distance_diff = tester2$traveled_distance_policy - tester2$traveled_distance_base)
+
+# tester3 <- impGrenz_trips %>% filter(main_mode_policy == "pt" | main_mode_policy == "pt_w_drt_used")
+# mean(tester3$trav_time_policy) - mean(tester4$trav_time_policy)
+# mean(tester3$traveled_distance_policy) - mean(tester4$traveled_distance_policy)
+# tester4 <- impGrenz_trips %>% filter(grepl("+", main_mode_policy, fixed = TRUE))
+
+# tester <- impGrenz_trips %>% filter(grepl("+",main_mode_policy,fixed=TRUE))
+# mean(tester$travTime_diff)
+# 
+# tester2 <- impGrenz_trips %>% filter(!grepl("+",main_mode_policy,fixed=TRUE))
+# mean(tester2$travTime_diff)
+# 
+# 
+# ### TRYOUTS Explanation RZ-Diff Binnen
+# mean(impBinnen_trips$travTime_diff)
+# drtBinnen <- impBinnen_trips %>% filter(main_mode_policy == "drt")
+# mean(drtBinnen$travTime_diff)
+# walkBinnen <- impBinnen_trips %>% filter(main_mode_policy == "walk")
+# mean(walkBinnen$travTime_diff)
+# ptBinnen <- impBinnen_trips %>% filter(main_mode_policy == "pt")
+# mean(ptBinnen$travTime_diff)
+# mixedBinnen <- impBinnen_trips %>% filter(main_mode_policy == "pt_w_drt_used")
+# mean(mixedBinnen$travTime_diff)
+# 
+# # Could the base case be the problem?
+# mean(impBinnen_trips$trav_time_base)
+# mean(drtBinnen$trav_time_base)
+# mean(walkBinnen$trav_time_base)
+# mean(ptBinnen$trav_time_base)
+# mean(mixedBinnen$trav_time_base)
+# 
+# mean(impBinnen_trips$trav_time_policy)
+# mean(drtBinnen$trav_time_policy)
+# mean(walkBinnen$trav_time_policy)
+# mean(ptBinnen$trav_time_policy)
+# mean(mixedBinnen$trav_time_policy)
+# 
+# 
+# ### TRYOUTS Explanation RW-Diff QZ
+# mean(impGrenz_trips$traveledDistance_diff)
+# combinedGrenz <- impGrenz_trips %>% filter(grepl("+",main_mode_policy,fixed=TRUE))
+# ptGrenz <- impGrenz_trips %>% filter(main_mode_policy == "pt")
+# mixedGrenz <- impGrenz_trips %>% filter(main_mode_policy == "pt_w_drt_used")
+# walkGrenz <- impGrenz_trips %>% filter(main_mode_policy == "walk")
+# mean(combinedGrenz$traveledDistance_diff)
+# mean(ptGrenz$traveledDistance_diff)
+# mean(mixedGrenz$traveledDistance_diff)
+# mean(walkGrenz$traveledDistance_diff)
+# 
+# # Could the base case be the problem?
+# mean(impGrenz_trips$traveled_distance_base)
+# mean(combinedGrenz$traveled_distance_base)
+# mean(ptGrenz$traveled_distance_base)
+# mean(mixedGrenz$traveled_distance_base)
+# mean(walkGrenz$traveled_distance_base)
+# 
+# mean(impGrenz_trips$traveled_distance_policy)
+# mean(combinedGrenz$traveled_distance_policy)
+# mean(ptGrenz$traveled_distance_policy)
+# mean(mixedGrenz$traveled_distance_policy)
+# mean(walkGrenz$traveled_distance_policy)
+# 
+# # Could the walking trips be the problem?
+# withoutGrenz <- impGrenz_trips %>% filter(!main_mode_policy == "walk")
+# mean(withoutGrenz$traveledDistance_diff)
+# mean(withoutGrenz$traveled_distance_base)
+# mean(withoutGrenz$traveled_distance_policy)
 
 ########################################
 "Modal Shift Sankeys"
-## TODO: Why do I filter out all this stuff? Need to explain or change
+# Filter bedingt durch teilweise falsch erkannte Trips durch filterByRegion, siehe trips_falselyClassified.tsv
 
 "Grenztrips"
 prep_grenz_policy <- impGrenz_trips_policy %>% 
@@ -126,6 +201,8 @@ prep_grenz_policy <- impGrenz_trips_policy %>%
   filter(!main_mode == "car") %>%
   filter(!main_mode == "drt") %>%
   filter(!main_mode == "bicycle")
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+ride"] <- "ride+bicycle"
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+car"] <- "car+bicycle"
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
 plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
@@ -134,10 +211,12 @@ ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 prep_binnen_policy <- impBinnen_trips_policy %>% 
   filter(!grepl("+", main_mode, fixed = TRUE)) %>%
   filter(!main_mode == "car") %>%
-  filter(!main_mode == "ride")
+  filter(!main_mode == "ride") %>%
+  filter(!main_mode == "bicycle")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
+
 
 "All impacted trips"
 prep_policy <- rbind(prep_grenz_policy, prep_binnen_policy)
@@ -145,7 +224,60 @@ prep_base <- rbind(prep_grenz_base, prep_binnen_base)
 plotModalShiftSankey(prep_base,prep_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
 
-"Test 0"
+# Zahlen Modal Split für betroffene Trips
+results_modalSplitAffected <- data.frame(key = character(), value = numeric()) %>%
+  add_row(key = "drt (Binnen) [%]", value = nrow(prep_binnen_policy %>% filter(main_mode == "drt")) / nrow(prep_binnen_policy) * 100) %>%
+  add_row(key = "pt_w_drt_used (Binnen) [%]", value = nrow(prep_binnen_policy %>% filter(main_mode == "pt_w_drt_used")) / nrow(prep_binnen_policy) * 100) %>%
+  add_row(key = "pt (Binnen) [%]", value = nrow(prep_binnen_policy %>% filter(main_mode == "pt")) / nrow(prep_binnen_policy) * 100) %>%
+  add_row(key = "walk (Binnen) [%]", value = nrow(prep_binnen_policy %>% filter(main_mode == "walk")) / nrow(prep_binnen_policy) * 100) %>%
+  add_row(key = "pt_only,pt_w_drt_used_only (QZ) [%]", value = nrow(prep_grenz_policy %>% filter(main_mode == "pt" | main_mode == "pt_w_drt_used")) / nrow(prep_grenz_policy) * 100) %>%
+  add_row(key = "pt_w_drt_used_only / all_pt_only (QZ) [%]", value = nrow(prep_grenz_policy %>% filter(main_mode == "pt_w_drt_used")) / nrow(prep_grenz_policy %>% filter(main_mode == "pt" | main_mode == "pt_w_drt_used")) * 100) %>%
+  add_row(key = "PR_used (QZ) [%]", value = nrow(prep_grenz_policy %>% filter(grepl("+",main_mode,fixed=TRUE))) / nrow(prep_grenz_policy) * 100) %>%
+  add_row(key = "drt_inside / PR_used (QZ) [%]", value = nrow(prep_grenz_policy  %>% filter(grepl("+drt",main_mode,fixed=TRUE))) / nrow(prep_grenz_policy %>% filter(grepl("+",main_mode,fixed=TRUE))) * 100)
+
+"All trips"
+# filterByRegion für Region Berlin, Aufteilen nach B + Q/Z
+quell_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
+ziel_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+grenz_base <- rbind(quell_base, ziel_base)
+binnen_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+
+quell_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
+ziel_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+grenz_policy <- rbind(quell_policy, ziel_policy)
+binnen_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+
+plotModalShiftSankey(grenz_base,grenz_policy)
+ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_grenz.png"))
+plotModalShiftSankey(binnen_base,binnen_policy)
+ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_binnen.png"))
+
+# "PR trips = all those trips that got replaced by P+R"
+pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
+pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
+
+# Zahlen Modal Split für ganz Berlin: Anteile der Verkehrsmittel am Modal Split vorher & nachher - normalisiert auf 100% für Policy-Case
+results_modalSplitAll <- data.frame(key = character(), value = numeric()) %>%
+  add_row(key = "car (base, Berlin) [%]", value = nrow(binnen_base %>% filter(main_mode == "car")) / nrow(binnen_base) * 100) %>%
+  add_row(key = "car (policy, Berlin) [%]", value = nrow(binnen_policy %>% filter(grepl("car",main_mode, fixed = TRUE))) / (nrow(binnen_policy) + nrow(binnen_policy %>% filter(grepl("+",main_mode,fixed=TRUE)))) * 100) %>%
+  add_row(key = "ride (base, Berlin) [%]", value = nrow(binnen_base %>% filter(main_mode == "ride")) / nrow(binnen_base) * 100) %>%
+  add_row(key = "ride (policy, Berlin) [%]", value = nrow(binnen_policy %>% filter(grepl("ride",main_mode, fixed = TRUE))) / (nrow(binnen_policy) + nrow(binnen_policy %>% filter(grepl("+",main_mode,fixed=TRUE)))) * 100) %>%
+  add_row(key = "pt (base, Berlin) [%]", value = nrow(binnen_base %>% filter(main_mode == "pt")) / nrow(binnen_base) * 100) %>%
+  add_row(key = "pt,drt,pt_w_drt_used (policy, Berlin) [%]", value = nrow(binnen_policy %>% filter(grepl("pt",main_mode, fixed = TRUE) | grepl("drt",main_mode,fixed=TRUE))) / (nrow(binnen_policy) + nrow(binnen_policy %>% filter(grepl("+",main_mode,fixed=TRUE)))) * 100) %>%
+  add_row(key = "pt_only (policy, Berlin) [%]", value = nrow(binnen_policy %>% filter(main_mode == "pt")) / nrow(binnen_policy) * 100) %>%
+  add_row(key = "car (base, QZ Berlin) [%]", value = nrow(grenz_base %>% filter(main_mode == "car" | main_mode == "ride")) / nrow(grenz_base) * 100) %>%
+  add_row(key = "car (policy, QZ Berlin) [%]", value = nrow(grenz_policy %>% filter(grepl("car",main_mode, fixed = TRUE) | grepl("ride",main_mode,fixed=TRUE))) / (nrow(grenz_policy) + nrow(grenz_policy %>% filter(grepl("+",main_mode,fixed=TRUE)))) * 100) %>%
+  add_row(key = "pt (base, QZ Berlin) [%]", value = nrow(grenz_base %>% filter(main_mode == "pt")) / nrow(grenz_base) * 100) %>%
+  add_row(key = "pt,drt,pt_w_drt_used (policy, QZ Berlin) [%]", value = nrow(grenz_policy %>% filter(grepl("pt",main_mode, fixed = TRUE) | grepl("drt",main_mode,fixed=TRUE))) / (nrow(grenz_policy) + nrow(grenz_policy %>% filter(grepl("+",main_mode,fixed=TRUE)))) * 100) %>%
+  add_row(key = "pt_only (policy, QZ Berlin) [%]", value = nrow(grenz_policy %>% filter(main_mode == "pt")) / nrow(grenz_policy) * 100) %>%
+  add_row(key = "car (base, all) [%]", value = nrow(baseTrips %>% filter(main_mode == "car" | main_mode == "ride")) / nrow(baseTrips) * 100) %>%
+  add_row(key = "car (policy, all) [%]", value = nrow(policyTrips %>% filter(grepl("car",main_mode, fixed = TRUE) | grepl("ride",main_mode,fixed=TRUE))) / (nrow(policyTrips) + nrow(pr_trips_policy)) * 100) %>%
+  add_row(key = "pt (base, all) [%]", value = nrow(baseTrips %>% filter(main_mode == "pt")) / nrow(baseTrips) * 100) %>%
+  add_row(key = "pt,drt,pt_w_drt_used (policy,all) [%]", value = nrow(policyTrips %>% filter(grepl("pt",main_mode, fixed = TRUE) | grepl("drt",main_mode,fixed=TRUE))) / (nrow(policyTrips) + nrow(pr_trips_policy)) * 100) %>%
+  add_row(key = "pt_only (policy,all) [%]", value = nrow(policyTrips %>% filter(main_mode == "pt")) / nrow(policyTrips) * 100) %>%
+  add_row(key = "PR_used / all trips (policy,all) [%]", value = nrow(policyTrips %>% filter(grepl("+",main_mode,fixed=TRUE))) / nrow(policyTrips) * 100) %>%
+  add_row(key = "% of trips impacted [%]", value = nrow(impacted_trips) / nrow(policyTrips) * 100)
+
 ########################################
 # General results - travelTime of impacted_trips, impacted_binnen_trips, pr_trips
 
@@ -219,7 +351,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
     y = "Reiseweite Δ [m]"
-  ) 
+  ) +
   stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
@@ -237,7 +369,9 @@ ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 
 
 ########################################
-# Boxplots & Results 
+# Boxplots & Results
+
+"Test 2"
 
 tripCases <- list("Betroffener Quell- und Zielverkehr","Betroffener Binnenverkehr","Betroffener Verkehr")
 
@@ -359,7 +493,7 @@ for (case in tripCases){
 }
 
 ########################################
-# Boxplots & Results - by hasPRStation
+# Boxplots & Results - by hasPRStation, TODO: landet im falschen Ordner, betrachtet nur QZ-Verkehr
 
 prPersons <- personsJoined %>% filter(personsJoined$hasPRActivity_policy == "true")
 otherPersons <- personsJoined %>% filter(personsJoined$hasPRActivity_policy == "false")
@@ -371,41 +505,40 @@ impGrenzOther_trips <- impGrenz_trips %>% filter(impGrenz_trips$person_policy %i
 
 boxplot_helper2 <- rbind(impGrenzPR_trips, impGrenzOther_trips)
 
-mean(impGrenzPR_trips$traveledDistance_diff)
-mean(impGrenzOther_trips$traveledDistance_diff)
-
-mean(impGrenz_trips$travTime_diff)
-
 "Boxplot"
+means1 <- aggregate(travTime_diff ~ hasPRStation, boxplot_helper2, mean)
 ggplot(boxplot_helper2, aes(x = hasPRStation, y = travTime_diff)) +
-  geom_boxplot(fill = "#0099f8") +
-  labs(
-    title = "Verteilung der Reisezeit-Differenzen",
-    subtitle = "Betroffene Grenztrips (Maßnahmenfall vs Basisfall)",
-    caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
-    y = "Reisezeit Δ [s]"
-  ) +
-  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
-  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
-  theme_classic() +
-  theme(
-    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
-    plot.caption = element_text(face = "italic", size = 20),
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = 20),
-    axis.title.x = element_blank(),
-    axis.title.y = element_text(size = 20),
-    axis.text.y = element_text(size = 20)
-  )
+ geom_boxplot(fill = "#0099f8") +
+ # stat_summary(fun = "mean", geom = "crossbar", aes(group = 1), colour = "red") +
+ # geom_text(data = means1, aes(label = travTime_diff, y = travTime_diff + 2)) +
+ labs(
+   title = "Verteilung der Reisezeit-Differenzen",
+   subtitle = "Betroffene Grenztrips (Maßnahmenfall vs Basisfall)",
+   caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
+   y = "Reisezeit Δ [s]"
+ ) +
+ stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+ stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
+ theme_classic() +
+ theme(
+   plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+   plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+   plot.caption = element_text(face = "italic", size = 20),
+   axis.ticks.x = element_blank(),
+   axis.text.x = element_text(size = 20),
+   axis.title.x = element_blank(),
+   axis.title.y = element_text(size = 20),
+   axis.text.y = element_text(size = 20)
+ )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_hasPRStation.png"))
 
+"Test 4"
+
 "Boxplot"
-means <- aggregate(traveledDistance_diff ~ hasPRStation, boxplot_helper2, mean)
+means2 <- aggregate(traveledDistance_diff ~ hasPRStation, boxplot_helper2, mean)
 ggplot(boxplot_helper2, aes(x = hasPRStation, y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
-  stat_summary(fun.y = mean, colour = "red") +
-  geom_text(data = means, aes(label = traveledDistance_diff, y = traveledDistance_diff + 2)) +
+  geom_text(data = means2, aes(label = traveledDistance_diff, y = traveledDistance_diff + 2)) +
   labs(
     title = "Verteilung der Reiseweite-Differenzen",
     subtitle = "Betroffene Grenztrips (Maßnahmenfall vs Basisfall)",
@@ -478,3 +611,7 @@ policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 write.table(results_travTime,file.path(policyTripsOutputDir,"trips_travTime.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_travelledDistance,file.path(policyTripsOutputDir,"trips_travelledDistance.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_falselyClassified,file.path(policyTripsOutputDir,"trips_falselyClassified.tsv"),row.names = FALSE, sep = "\t")
+
+write.table(results_modalSplitAffected,file.path(policyTripsOutputDir,"modalSplit_affectedTrips.tsv"),row.names = FALSE, sep = "\t")
+write.table(results_modalSplitAll,file.path(policyTripsOutputDir,"modalSplit_all.tsv"),row.names = FALSE, sep = "\t")
+

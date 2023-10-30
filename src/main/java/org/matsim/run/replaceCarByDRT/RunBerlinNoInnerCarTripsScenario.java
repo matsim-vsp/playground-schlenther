@@ -71,7 +71,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
-	private static boolean ENFORCE_MASS_CONSERVATION = false;
 	private static boolean EXTRA_PT_PLAN = false;
 	private static boolean DRT_STOP_BASED = false;
 	private static int K_PRSTATIONS;
@@ -88,7 +87,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			ENFORCE_MASS_CONSERVATION = true;
 			EXTRA_PT_PLAN = false;
 			DRT_STOP_BASED = false;
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
@@ -139,7 +137,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
-		ENFORCE_MASS_CONSERVATION = Boolean.parseBoolean(args[5]);
 		EXTRA_PT_PLAN = Boolean.parseBoolean(args[6]);
 		DRT_STOP_BASED = Boolean.parseBoolean(args[7]);
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
@@ -340,7 +337,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				ENFORCE_MASS_CONSERVATION,
 				EXTRA_PT_PLAN,
 				K_PRSTATIONS,
 				EXTRA_PR_STATION_CHOICE,

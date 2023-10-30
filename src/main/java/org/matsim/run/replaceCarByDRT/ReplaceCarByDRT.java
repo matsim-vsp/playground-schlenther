@@ -121,7 +121,6 @@ class ReplaceCarByDRT {
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
 															  PRStationChoice prStationChoice,
-															  boolean enforceMassConservation,
 															  boolean extraPTPlan,
 															  int kPrStations,
 															  PRStationChoice extraPRStationChoice,
@@ -231,7 +230,7 @@ class ReplaceCarByDRT {
 												"trip = " + trip);
 									}
 									//car has to be picked up where it was left the last time
-									if (lastCarPRStation != null && enforceMassConservation){
+									if (lastCarPRStation != null){
 										prStation = lastCarPRStation;
 									}
 								}
@@ -274,10 +273,9 @@ class ReplaceCarByDRT {
 											throw new IllegalStateException("agent " + person.getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
 													"trip = " + trip);
 										}
-										//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-										if(enforceMassConservation){
-											prStation = firstPRStation;
-										}
+
+										//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
+										prStation = firstPRStation;
 									}
 								}
 								if(prStation == null) { //if not the last border-crossing car or a ride trip
@@ -388,7 +386,7 @@ class ReplaceCarByDRT {
 											"trip = " + trip);
 								}
 								//car has to be picked up where it was left the last time
-								if (currentCarPRStation != null && enforceMassConservation) {
+								if (currentCarPRStation != null) {
 									prStation = currentCarPRStation;
 								}
 							}
@@ -431,10 +429,8 @@ class ReplaceCarByDRT {
 										throw new IllegalStateException("agent " + person.getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
 												"trip = " + trip);
 									}
-									//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-									if (enforceMassConservation) {
-										prStation = firstCarPRStation;
-									}
+									//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
+									prStation = firstCarPRStation;
 								}
 							}
 							if (prStation == null) { //if not the last border-crossing car or a ride trip
@@ -513,7 +509,7 @@ class ReplaceCarByDRT {
 					if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
 							nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
 						//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
-						plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
+						plansToAdd.add(createPTOnlyPlan(plan, mainModeIdentifier, fac));
 					}
 				}
 
@@ -549,7 +545,7 @@ class ReplaceCarByDRT {
 										"trip = " + trip);
 							}
 							//car has to be picked up where it was left the last time
-							if (currentCarPRStation != null && enforceMassConservation){
+							if (currentCarPRStation != null){
 								prStation = currentCarPRStation;
 							}
 						}
@@ -590,10 +586,9 @@ class ReplaceCarByDRT {
 									throw new IllegalStateException("agent " + person.getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
 											"trip = " + trip);
 								}
-								//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-								if(enforceMassConservation){
-									prStation = firstCarPRStation;
-								}
+								//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
+								prStation = firstCarPRStation;
+
 							}
 						}
 					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
@@ -661,56 +656,46 @@ class ReplaceCarByDRT {
 		log.info("finished modifying input plans....");
 	}
 
-	private static Plan createPTOnlyPlan(Plan originalPlan, boolean enforceMassConservation, MainModeIdentifier mainModeIdentifier, PopulationFactory fac) {
+	private static Plan createPTOnlyPlan(Plan originalPlan, MainModeIdentifier mainModeIdentifier, PopulationFactory fac) {
 		Plan planCopy = fac.createPlan();
 		planCopy.setPerson(originalPlan.getPerson());
 		PopulationUtils.copyFromTo(originalPlan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
 		planCopy.setType("ptOnly");
 
+		//beware: it might be that the person has multiple subtours and we only need to replace some of them.
+		// for example (home -> (work -> leisure -> work) -> home). with home being inside the prohibition zone and every other activity being outside
+		//even a bit more complicated: an agent might have (home -> (work -> leisure -> work) - other -> home)
+		//where, again, only home is inside the prohibition zone.
+		// In both cases, we can keep car for the work-leisure (so the inner) subtour, but not for the other part of the outer subtour (containing the inner one)
+		for(TripStructureUtils.Subtour subtour : TripStructureUtils.getSubtours(planCopy)){
 
-		if(enforceMassConservation){
-			//beware: it might be that the person has multiple subtours and we only need to replace some of them.
-			// for example (home -> (work -> leisure -> work) -> home). with home being inside the prohibition zone and every other activity being outside
-			//even a bit more complicated: an agent might have (home -> (work -> leisure -> work) - other -> home)
-			//where, again, only home is inside the prohibition zone.
-			// In both cases, we can keep car for the work-leisure (so the inner) subtour, but not for the other part of the outer subtour (containing the inner one)
-			for(TripStructureUtils.Subtour subtour : TripStructureUtils.getSubtours(planCopy)){
+			//if we find any trip that touches the prohibition zone within the exclusive trips of this subtour, we need to take action
+			boolean subtourTouchesProhibitionZoneWithCarOrRide = subtour.getTripsWithoutSubSubtours().stream()
+					.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null && //if the attribute was never set, the trip is neither with car nor ride
+							!trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
+					.findAny().isPresent();
 
-				//if we find any trip that touches the prohibition zone within the exclusive trips of this subtour, we need to take action
-				boolean subtourTouchesProhibitionZoneWithCarOrRide = subtour.getTripsWithoutSubSubtours().stream()
-						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null && //if the attribute was never set, the trip is neither with car nor ride
-								!trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
-						.findAny().isPresent();
-
-				if(subtourTouchesProhibitionZoneWithCarOrRide){
-					if(!hasWarnedHardcodedChainMode){
-						log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
-						log.warn(Gbl.ONLYONCE);
-						hasWarnedHardcodedChainMode = true;
-					}
-					//if car is used, change all trips to pt
-					if(subtour.getTripsWithoutSubSubtours().stream()
-							.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
-							.findAny().isPresent()){
-						replaceTripsWithPtTrips(subtour.getTripsWithoutSubSubtours(), fac, planCopy);
-					} else {
-						//replace only the ride trips that touch the prohibition zone - with pt trips
-						List<TripStructureUtils.Trip> tripsToReplace = subtour.getTripsWithoutSubSubtours().stream()
-								.filter(trip -> (mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.ride) &&
-												! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
-										)
-								.collect(Collectors.toList());
-						replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
-					}
+			if(subtourTouchesProhibitionZoneWithCarOrRide){
+				if(!hasWarnedHardcodedChainMode){
+					log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+					log.warn(Gbl.ONLYONCE);
+					hasWarnedHardcodedChainMode = true;
+				}
+				//if car is used, change all trips to pt
+				if(subtour.getTripsWithoutSubSubtours().stream()
+						.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
+						.findAny().isPresent()){
+					replaceTripsWithPtTrips(subtour.getTripsWithoutSubSubtours(), fac, planCopy);
+				} else {
+					//replace only the ride trips that touch the prohibition zone - with pt trips
+					List<TripStructureUtils.Trip> tripsToReplace = subtour.getTripsWithoutSubSubtours().stream()
+							.filter(trip -> (mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.ride) &&
+											! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
+									)
+							.collect(Collectors.toList());
+					replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
 				}
 			}
-		} else {
-			//we can just replace any trip that touches the prohibition zone with pt and do not have to take care of outer subtours
-			List<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(planCopy).stream()
-					.filter(trip -> (trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null) &&
-							(! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip)) )
-					.collect(Collectors.toList());
-			replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
 		}
 
 		return planCopy;

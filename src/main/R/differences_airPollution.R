@@ -8,16 +8,20 @@ library(ggalluvial)
 #####################################
 # Preparation
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/analysis/airPollution/"
-base_filename <- "berlin-v5.5-10pct.emissionsPerLink.csv"
-#input_path_base <- commandArgs(trailingOnly = TRUE)
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/airPollution/"
-policy_filename <- "roadtypesAllowed-motorway.emissionsPerLink.csv"
-base_inputfile <- file.path(baseCaseDirectory, base_filename)
-policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
+#HPC Cluster
+args <- commandArgs(trailingOnly = TRUE)
+policyCaseDirectory <- args[1]
+policy_runId <- args[2]
+baseCaseDirectory <- args[3]
+base_runId <- args[4]
 
-baseAirPollution <- read.table(file = base_inputfile, sep = ";", header = TRUE)
-policyAirPollution <- read.table(file = policy_inputfile, sep = ";", header = TRUE)
+# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/analysis/airPollution/"
+# base_runId <- "berlin-v5.5-10pct"
+# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/airPollution/"
+# policy_runId <- "noDRT"
+
+baseAirPollution <- read.table(file = file.path(baseCaseDirectory, paste0("analysis/airPollution/", base_runId,".emissionsPerLink.csv")), sep = ";", header = TRUE)
+policyAirPollution <- read.table(file = file.path(policyCaseDirectory, paste0("analysis/airPollution/", policy_runId,".emissionsPerLink.csv")), sep = ";", header = TRUE)
 
 #####################################
 # CO2 - Emissions & Costs (wait for Tilmanns answer to do it for the rest)
@@ -88,7 +92,7 @@ NH3_euro <- (sum(policyAirPollution$NH3) - sum(baseAirPollution$NH3)) / (1000 * 
 overallCost <- CO2_euro + NOx_euro + PM2_5_euro + PM_non_exhaust_euro + SO2_euro + NH3_euro
 
 #####################################
-# Preparation - Emissions & Costs
+# Table - Emissions & Costs
 
 results_airPollution <- data.frame(key = character(), CO2_TOTAL = numeric(), NOx = numeric(), PM2_5 = numeric(),
                                     PM_non_exhaust = numeric(), SO2 = numeric(), NH3 = numeric()) %>%
@@ -96,4 +100,4 @@ results_airPollution <- data.frame(key = character(), CO2_TOTAL = numeric(), NOx
   add_row(key = "Δ rel. pro Tag [%]",CO2_TOTAL = CO2_rel,NOx = NOx_rel,PM2_5 = PM2_5_rel,PM_non_exhaust = PM_non_exhaust_rel,SO2 = SO2_rel,NH3 = NH3_rel) %>%
   add_row(key = "Δ abs. pro Tag [€]",CO2_TOTAL = CO2_euro,NOx = NOx_euro,PM2_5 = PM2_5_euro,PM_non_exhaust = PM_non_exhaust_euro,SO2 = SO2_euro,NH3 = NH3_euro)
 
-write.table(results_airPollution,file.path(policyCaseDirectory,"results_airPollution.tsv"),row.names = FALSE, sep = "\t")
+write.table(results_airPollution,file.path(policyCaseDirectory,"analysis/airPollution/results_airPollution.tsv"),row.names = FALSE, sep = "\t")

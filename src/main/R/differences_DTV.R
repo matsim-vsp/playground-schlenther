@@ -5,27 +5,26 @@ library(tidyverse)
 library(lubridate)
 library(ggalluvial)
 
-baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-base_filename <- "berlin-v5.5-10pct.output_events_dailyTrafficVolume_vehicles.tsv"
-base_mileage_filename <- "berlin-v5.5-10pct.output_events_dailyMileage_vehicles.tsv"
+#HPC Cluster
+args <- commandArgs(trailingOnly = TRUE)
+policyCaseDirectory <- args[1]
+policy_runId <- args[2]
+baseCaseDirectory <- args[3]
+base_runId <- args[4]
+shp <- args[5]
 
-policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
-policy_filename <- "noDRT.output_events_dailyTrafficVolume_vehicles.tsv"
-policy_mileage_filename <- "noDRT.output_events_dailyMileage_vehicles.tsv"
+# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
+# base_runId <- "berlin-v5.5-10pct"
+# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
+# policy_runId <- "noDRT"
+# shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
-base_inputfile <- file.path(baseCaseDirectory, base_filename)
-policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
-
-baseDTV <- read.table(file = base_inputfile, sep = '\t', header = TRUE)
-policyDTV <- read.table(file = policy_inputfile, sep = '\t', header = TRUE)
-
-baseMileage <- read.table(file = file.path(baseCaseDirectory, base_mileage_filename), sep = '\t', header = TRUE)
-policyMileage <- read.table(file = file.path(policyCaseDirectory, policy_mileage_filename), sep = '\t', header = TRUE)
-
-shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+baseDTV <- read.table(file = file.path(baseCaseDirectory, paste0(base_runId,".output_events_dailyTrafficVolume_vehicles.tsv")), sep = '\t', header = TRUE)
+policyDTV <- read.table(file = file.path(policyCaseDirectory, paste0(policy_runId,".output_events_dailyTrafficVolume_vehicles.tsv")), sep = '\t', header = TRUE)
+baseMileage <- read.table(file = file.path(baseCaseDirectory, paste0(base_runId,".output_events_dailyMileage_vehicles.tsv")), sep = '\t', header = TRUE)
+policyMileage <- read.table(file = file.path(policyCaseDirectory, paste0(policy_runId,".output_events_dailyMileage_vehicles.tsv")), sep = '\t', header = TRUE)
 
 dir.create(paste0(policyCaseDirectory,"/analysis/dailyTrafficVolume"))
-
 
 #######################################################################
 # Verkehrsaufkommen
@@ -38,8 +37,6 @@ baseDTV_rberlin <- baseDTV %>% filter(zone == "BerlinButNotInnerCity")
 policyDTV_rberlin <- policyDTV %>% filter(zone == "BerlinButNotInnerCity")
 baseDTV_brandenburg <- baseDTV %>% filter(zone == "Brandenburg")
 policyDTV_brandenburg <- policyDTV %>% filter(zone == "Brandenburg")
-baseDTV_boundaryZone <- baseDTV %>% filter(isInBoundaryZone == "true")
-policyDTV_boundaryZone <- policyDTV %>% filter(isInBoundaryZone == "true")
 
 # By roadtype & region
 baseDTV_zone_mprimary <- baseDTV_zone %>% filter(roadtype == "motorway" | roadtype == "motorway_link" | roadtype == "primary" | roadtype == "primary_link" |
@@ -66,7 +63,6 @@ results_DTV <- data.frame(key = character(), value = numeric()) %>%
   add_row(key = "Veränderung DTV (Verbotszone) [%]", value = (sum(policyDTV_zone$agents) - sum(baseDTV_zone$agents)) / sum(baseDTV_zone$agents) * 100) %>%
   add_row(key = "Veränderung DTV (restl. Berlin) [%]", value = (sum(policyDTV_rberlin$agents) - sum(baseDTV_rberlin$agents)) / sum(baseDTV_rberlin$agents) * 100) %>%
   add_row(key = "Veränderung DTV (Brandenburg) [%]", value = (sum(policyDTV_brandenburg$agents) - sum(baseDTV_brandenburg$agents)) / sum(baseDTV_brandenburg$agents) * 100) %>%
-  add_row(key = "Veränderung DTV (500m um Verbotszone) [%]", value = (sum(policyDTV_boundaryZone$agents) - sum(baseDTV_boundaryZone$agents)) / sum(baseDTV_boundaryZone$agents) * 100) %>%
   add_row(key = "Anteil DRT an DTV (Verbotszone, policy) [%]", value = sum(policyDTV_zone$DRT) / sum(policyDTV_zone$agents) * 100) %>%
   add_row(key = "Veränderung DTV Autos (Verbotszone) [%]", value = (sum(policyDTV_zone$nonDRT) - sum(baseDTV_zone$nonDRT)) / sum(baseDTV_zone$nonDRT) * 100) %>%
   add_row(key = "Veränderung DTV (Verbotszone, Autobahnen & Bundesstraßen) [%]", value = (sum(policyDTV_zone_mprimary$agents) - sum(baseDTV_zone_mprimary$agents)) / sum(baseDTV_zone_mprimary$agents) * 100) %>%
@@ -96,12 +92,3 @@ results_mileage <- data.frame(key = character(), value = numeric()) %>%
 
 write.table(results_DTV,file.path(policyCaseDirectory,"analysis/dailyTrafficVolume/metrics_DTV.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_mileage,file.path(policyCaseDirectory,"analysis/dailyTrafficVolume/metrics_mileage.tsv"),row.names = FALSE, sep = "\t")
-
-#######################################################################
-# Backup
-
-# #Other stuff
-# differenceDTV <- baseDTV
-# differenceDTV$agents <- policyDTV$agents - baseDTV$agents
-# sum(differenceDTV$agents) / sum(baseDTV$agents)
-# write.table(differenceDTV,file.path(policyCaseDirectory,"differences_dailyTrafficVolume_vehicles_toClosestToInside.tsv"),row.names = FALSE, sep = "\t")

@@ -2,17 +2,17 @@ library(tidyverse)
 library(dplyr)
 
 #HPC Cluster
-# args <- commandArgs(trailingOnly = TRUE)
-# drtTableDirectory <- args[1]
-# runId <- args[2]
+args <- commandArgs(trailingOnly = TRUE)
+drtTableDirectory <- args[1]
+runId <- args[2]
 
 #1pct
 # drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-noDRT/"
 # runId <- "optimum-noDRT"
 
 #10pct
-drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
-runId <- "noDRT"
+# drtTableDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
+# runId <- "noDRT"
 
 outputDirectory <- paste0(drtTableDirectory,"/analysis")
 

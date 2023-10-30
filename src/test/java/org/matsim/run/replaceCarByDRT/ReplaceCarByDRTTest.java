@@ -60,7 +60,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
-				true,
 				1,
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
@@ -78,7 +77,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				true,
 				1,
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
@@ -96,7 +94,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-								true,
 				1,
 				ReplaceCarByDRT.PRStationChoice.closestToInsideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
@@ -113,7 +110,6 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
-				true,
 				1,
 				ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"));

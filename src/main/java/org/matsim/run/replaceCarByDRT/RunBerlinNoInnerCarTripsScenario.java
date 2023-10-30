@@ -71,7 +71,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 	private static ReplaceCarByDRT.PRStationChoice PR_STATION_CHOICE;
-	private static boolean EXTRA_PT_PLAN = false;
 	private static boolean DRT_STOP_BASED = false;
 	private static int K_PRSTATIONS;
 	private static ReplaceCarByDRT.PRStationChoice EXTRA_PR_STATION_CHOICE;
@@ -87,7 +86,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
 			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
 			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			EXTRA_PT_PLAN = false;
 			DRT_STOP_BASED = false;
 			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
 			K_PRSTATIONS = 1;
@@ -132,12 +130,13 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 	public static String[] prepareConfigArguments(String[] args){
 		String[] configArgs;
 
+		//TODO!! See that args fit again
+
 		URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
 		ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
 		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
 		PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.valueOf(args[3]);
 		REPLACING_MODES = Set.of(args[4].split(","));
-		EXTRA_PT_PLAN = Boolean.parseBoolean(args[6]);
 		DRT_STOP_BASED = Boolean.parseBoolean(args[7]);
 		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[8]);
 		K_PRSTATIONS = Integer.parseInt(args[9]);
@@ -337,7 +336,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				URL_2_PR_STATIONS,
 				mainModeIdentifier,
 				PR_STATION_CHOICE,
-				EXTRA_PT_PLAN,
 				K_PRSTATIONS,
 				EXTRA_PR_STATION_CHOICE,
 				URL_2_PR_STATIONS_OUTSIDE

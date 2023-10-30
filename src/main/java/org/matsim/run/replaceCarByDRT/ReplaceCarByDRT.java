@@ -111,7 +111,6 @@ class ReplaceCarByDRT {
 	 * @param url2PRStations
 	 * @param mainModeIdentifier
 	 * @param prStationChoice
-	 * @param extraPTPlan
 	 * @param kPrStations
 	 */
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
@@ -121,7 +120,6 @@ class ReplaceCarByDRT {
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
 															  PRStationChoice prStationChoice,
-															  boolean extraPTPlan,
 															  int kPrStations,
 															  PRStationChoice extraPRStationChoice,
 															  URL url2PRStationsOutside){
@@ -504,13 +502,12 @@ class ReplaceCarByDRT {
 					continue; //this agent is not affected by the prohibition zone.
 				}
 
-				if(extraPTPlan){
-//					if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
-					if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
-							nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
-						//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
-						plansToAdd.add(createPTOnlyPlan(plan, mainModeIdentifier, fac));
-					}
+
+//				ExtraPtPlan: If we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+				if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
+						nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
+					//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
+					plansToAdd.add(createPTOnlyPlan(plan, mainModeIdentifier, fac));
 				}
 
 				plan.setType(replacingMode);

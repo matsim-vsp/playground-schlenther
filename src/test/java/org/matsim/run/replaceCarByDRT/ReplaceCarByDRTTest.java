@@ -38,42 +38,11 @@ public class ReplaceCarByDRTTest {
 	private static Logger log = LogManager.getLogger(ReplaceCarByDRTTest.class);
 	private static Map<String, PRStation> PR_STATIONS = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"))
 			.stream().collect(Collectors.toMap(station -> station.getName(), station -> station));
-	private static Map<String, PRStation> PR_STATIONS_OUTSIDE = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-08-11-pr-stations-outside.tsv"))
-			.stream().collect(Collectors.toMap(station -> station.getName(), station -> station));
-	private static Scenario SCENARIO_CLOSEST_INSIDE;
-	private static Scenario SCENARIO_CLOSEST_OUTSIDE;
 	private static Scenario SCENARIO_BOTH;
-	private static Scenario SCENARIO_EXTRA_PRSTATIONS;
 	private static List<Scenario> SCENARIOS_TO_TEST = new ArrayList<>();
 
 	@BeforeClass
 	public static void main() {
-
-		SCENARIO_CLOSEST_INSIDE = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		PopulationUtils.readPopulation(SCENARIO_CLOSEST_INSIDE.getPopulation(), "scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
-		NetworkUtils.readNetwork(SCENARIO_CLOSEST_INSIDE.getNetwork(),
-				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_CLOSEST_INSIDE,
-				Set.of(TransportMode.car, TransportMode.ride),
-				Set.of(TransportMode.drt, TransportMode.pt),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
-				new OpenBerlinIntermodalPtDrtRouterModeIdentifier());
-		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_INSIDE);
-
-		SCENARIO_CLOSEST_OUTSIDE = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		PopulationUtils.readPopulation(SCENARIO_CLOSEST_OUTSIDE.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
-		NetworkUtils.readNetwork(SCENARIO_CLOSEST_OUTSIDE.getNetwork(),
-				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-
-		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_CLOSEST_OUTSIDE,
-				Set.of(TransportMode.car, TransportMode.ride),
-				Set.of(TransportMode.drt, TransportMode.pt),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
-				new OpenBerlinIntermodalPtDrtRouterModeIdentifier());
-		SCENARIOS_TO_TEST.add(SCENARIO_CLOSEST_OUTSIDE);
-
 		SCENARIO_BOTH = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		PopulationUtils.readPopulation(SCENARIO_BOTH.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
 		NetworkUtils.readNetwork(SCENARIO_BOTH.getNetwork(),
@@ -85,95 +54,17 @@ public class ReplaceCarByDRTTest {
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier());
-
-		SCENARIO_EXTRA_PRSTATIONS = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		PopulationUtils.readPopulation(SCENARIO_EXTRA_PRSTATIONS.getPopulation(),"scenarios/berlin/replaceCarByDRT/noModeChoice/replaceCarByDRT.testPlans.xml.gz");
-		NetworkUtils.readNetwork(SCENARIO_EXTRA_PRSTATIONS.getNetwork(),
-				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
-
-		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO_EXTRA_PRSTATIONS,
-				Set.of(TransportMode.car, TransportMode.ride),
-				Set.of(TransportMode.drt, TransportMode.pt),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
-				new OpenBerlinIntermodalPtDrtRouterModeIdentifier());
-	}
-
-	@Test
-	public void testBothPRStationChoices(){
-		// testing if plans for both PRStationChoices get created correctly
-		// this agent lives in Brandenburg, enters the prohibition zone once -> has 2 PRActivities at the same PRStation
-
-			Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(38250801));
-
-			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [drt,pt,ptOnly, Extra drt, Extra pt])", 5, person.getPlans().size());
-
-			for (Plan plan : person.getPlans()) {
-				List<Activity> prActs = getPRActivities(plan);
-				if(!plan.getType().equals("ptOnly")){
-					Assert.assertEquals(2, prActs.size()); //nr of PR acts
-
-					if(plan.getType().contains("Extra")) {
-						// in this case: Extra == closestToInside
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(1).getCoord());
-					} else {
-						// normal: closestToOutside
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
-						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(1).getCoord());
-					}
-				} else {
-					Assert.assertEquals(0, prActs.size()); //nr of PR acts
-				}
-			}
-	}
-
-	@Test
-	public void testExtraPRStationPlan(){
-		// for the specific case: testing if PrStation further outside gets used
-
-		Person person = SCENARIO_EXTRA_PRSTATIONS.getPopulation().getPersons().get(Id.createPersonId(38250801));
-		Assert.assertEquals("person " + person.getId() + " should have 4 plans (with types [drt,pt,ptOnly,prOutside])", 4, person.getPlans().size());
-
-		for (Plan plan : person.getPlans()) {
-			List<Activity> prActs = getPRActivities(plan);
-			if(!plan.getType().equals("ptOnly")){
-				Assert.assertEquals(2, prActs.size()); //nr of PR acts
-
-				if(plan.getType().equals("prOutside")) {
-					// in this case: PRStation further outside the zone gets used
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getLinkId(),prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getCoord(),prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getLinkId(),prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS_OUTSIDE.get("S Teltow Stadt").getCoord(),prActs.get(1).getCoord());
-
-				} else {
-					// otherwise: closestToOutside
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
-					Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(1).getCoord());
-				}
-			} else {
-				Assert.assertEquals(0, prActs.size()); //nr of PR acts
-			}
-		}
-
 	}
 
 	@Test
 	public void testBanCarAndRideFromNetworkArea(){
-		ReplaceCarByDRT.banCarAndRideFromNetworkArea(SCENARIO_CLOSEST_INSIDE,
+		ReplaceCarByDRT.banCarAndRideFromNetworkArea(SCENARIO_BOTH,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				Set.of("motorway"));
 
 		//checks 1 car route that did not touch one forbidden link and still has its route
 		// && checks 1 car route that touched one forbidden link and now the route is null - Agent: 33963001, Car-Leg: 3 (between leisure_3000 & leisure_3600)
-		Person person = SCENARIO_CLOSEST_INSIDE.getPopulation().getPersons().get(Id.createPersonId(33963001));
+		Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(33963001));
 		Plan plan = person.getSelectedPlan();
 		int i = 0;
 		for (Leg leg : TripStructureUtils.getLegs(plan)) {
@@ -189,13 +80,13 @@ public class ReplaceCarByDRTTest {
 		}
 
 		//motorway links inside ban area still allow cars
-		Assert.assertTrue(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("47278")).getAllowedModes().contains(TransportMode.car));
+		Assert.assertTrue(SCENARIO_BOTH.getNetwork().getLinks().get(Id.createLinkId("47278")).getAllowedModes().contains(TransportMode.car));
 
 		//secondary links inside ban area do not allow cars anymore
-		Assert.assertFalse(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("145687")).getAllowedModes().contains(TransportMode.car));
+		Assert.assertFalse(SCENARIO_BOTH.getNetwork().getLinks().get(Id.createLinkId("145687")).getAllowedModes().contains(TransportMode.car));
 
 		//secondary links outside ban area still allow cars
-		Assert.assertTrue(SCENARIO_CLOSEST_INSIDE.getNetwork().getLinks().get(Id.createLinkId("66263")).getAllowedModes().contains(TransportMode.car));
+		Assert.assertTrue(SCENARIO_BOTH.getNetwork().getLinks().get(Id.createLinkId("66263")).getAllowedModes().contains(TransportMode.car));
 
 	}
 
@@ -256,19 +147,21 @@ public class ReplaceCarByDRTTest {
 			Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
 			//test all plans
-			Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 			for (Plan plan : person.getPlans()) {
 				List<Activity> prActs = getPRActivities(plan);
 				if(!plan.getType().equals("ptOnly")){
 					Assert.assertEquals(2, prActs.size()); //nr of PR acts
 
-					if(scenario.equals(SCENARIO_CLOSEST_INSIDE)) {
+					if(plan.getType().contains("Extra")) {
+						// extra = closestToInside
 						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(0).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(0).getCoord());
 						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getLinkId(),prActs.get(1).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Innsbrucker").getCoord(),prActs.get(1).getCoord());
-					} else if(scenario.equals(SCENARIO_CLOSEST_OUTSIDE)) {
+					} else {
+						// normal = closestToOutside
 						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(0).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getCoord(),prActs.get(0).getCoord());
 						Assert.assertEquals(PR_STATIONS.get("Bundesplatz").getLinkId(),prActs.get(1).getLinkId());
@@ -329,7 +222,7 @@ public class ReplaceCarByDRTTest {
 			Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
 			//test all plans
-			Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 			for (Plan plan : person.getPlans()) {
 				List<Activity> prActs = getPRActivities(plan);
@@ -365,7 +258,7 @@ public class ReplaceCarByDRTTest {
 			Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
 			//test all plans
-			Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 			for (Plan plan : person.getPlans()) {
 				List<Activity> prActs = getPRActivities(plan);
@@ -385,13 +278,13 @@ public class ReplaceCarByDRTTest {
 		//this agent lives in berlin outside the prohibiton zone
 		//.. has one outside subtour and one border-crossing subtour, both start+end @ home
 
-		Person person = SCENARIO_CLOSEST_INSIDE.getPopulation().getPersons().get(Id.createPersonId(446367901));
+		Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(446367901));
 
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
 		//test all plans
-		Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 		for (Plan plan : person.getPlans()) {
 			List<Activity> prActs = getPRActivities(plan);
@@ -424,13 +317,13 @@ public class ReplaceCarByDRTTest {
 	@Test
 	public void testBerlinerWithInnerTripsOnly(){
 
-		Person person = SCENARIO_CLOSEST_INSIDE.getPopulation().getPersons().get(Id.createPersonId(272337601));
+		Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(272337601));
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
 		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
 
 		//test all plans
 		//agent has only inner trips
-		Assert.assertEquals("person " + person.getId() + " should have 2 plans (with types [drt,pt])", 2, person.getPlans().size());
+		Assert.assertEquals("person " + person.getId() + " should have 4 plans (with types [2x drt,2x pt])", 4, person.getPlans().size());
 
 		for (Plan plan : person.getPlans()) {
 			List<Activity> prActs = getPRActivities(plan);
@@ -448,20 +341,22 @@ public class ReplaceCarByDRTTest {
 			Person person = scenario.getPopulation().getPersons().get(Id.createPersonId(116317401));
 
 			//test all plans
-			Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+			Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 			for (Plan plan : person.getPlans()) {
 				List<Activity> prActs = getPRActivities(plan);
 				if(!plan.getType().equals("ptOnly")){
 					Assert.assertEquals(2, prActs.size()); //nr of PR acts
 
-					if(scenario.equals(SCENARIO_CLOSEST_INSIDE)) {
+					if(plan.getType().contains("Extra")) {
+						// extra = closestToInside
 						// here it´s actually same PRStation
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(0).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(0).getCoord());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(1).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(1).getCoord());
-					} else if(scenario.equals(SCENARIO_CLOSEST_OUTSIDE)) {
+					} else {
+						// normal = closestToOutside
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getLinkId(),prActs.get(0).getLinkId());
 						Assert.assertEquals(PR_STATIONS.get("Westkreuz/ZOB").getCoord(),prActs.get(0).getCoord());
 						Assert.assertEquals(PR_STATIONS.get("Gesundbrunnen").getLinkId(),prActs.get(1).getLinkId());
@@ -482,10 +377,10 @@ public class ReplaceCarByDRTTest {
 	public void testRiderWith2BorderCrossingTripsANDDifferentModes(){
 		// this agent is a rider and has two border crossing trips. The one is mode "ride", the other mode "pt" -> should contain 1 PRActivity
 
-		Person person = SCENARIO_CLOSEST_INSIDE.getPopulation().getPersons().get(Id.createPersonId(100370701));
+		Person person = SCENARIO_BOTH.getPopulation().getPersons().get(Id.createPersonId(100370701));
 
 		//test all plans
-		Assert.assertEquals("person " + person.getId() + " should have 3 plans (with types [drt,pt,ptOnly])", 3, person.getPlans().size());
+		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
 
 		//test all plans
 		for (Plan plan : person.getPlans()) {

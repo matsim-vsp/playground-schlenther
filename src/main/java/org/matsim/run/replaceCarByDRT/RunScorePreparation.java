@@ -88,7 +88,9 @@ public class RunScorePreparation {
                     "FirstPRStation",
                     "LastPRStation",
                     "livesInsideBoundaryZone",
-                    "isCarUser"});
+                    "isCarUser",
+                    "home_x",
+                    "home_y"});
             for (Person person : population.getPersons().values()) {
 
                 // regional division
@@ -116,6 +118,9 @@ public class RunScorePreparation {
                 String firstPRStation = getFirstPRStation(person.getSelectedPlan(),prStations);
                 String lastPRStation = getLastPRStation(person.getSelectedPlan(),prStations);
 
+                // get coordinates of home activity
+                String homeX = String.valueOf(home.getCoord().getX());
+                String homeY = String.valueOf(home.getCoord().getY());
 
                 writer.writeNext(new String[]{person.getId().toString(),
                         String.valueOf(person.getSelectedPlan().getScore()),
@@ -128,7 +133,9 @@ public class RunScorePreparation {
                         firstPRStation,
                         lastPRStation,
                         String.valueOf(livesInsideBoundaryZone),
-                        String.valueOf(isCarUser)}
+                        String.valueOf(isCarUser),
+                        homeX,
+                        homeY}
                 );
             }
             writer.close();

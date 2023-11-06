@@ -1,0 +1,62 @@
+# Topsheet Test
+title: Emission Costs per day
+title_en: Total emission costs per day
+title_de: Emissionskosten pro Tag
+description: '(...)'
+
+# Input files -------------------------
+files:
+  base: 
+    file: "scenarios/output/baseCaseContinued-10pct/analysis/airPollution/berlin-v5.5-10pct.emissionsPerLink.csv"
+  roadtypesAllowed_all: 
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv"
+  roadtypesAllowed_motorway:
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/airPollution/roadtypesAllowed-motorway.emissionsPerLink.csv"
+  noDRT:
+    file: "scenarios/output/runs-2023-09-01/10pct/noDRT/analysis/airPollution/noDRT.emissionsPerLink.csv"
+
+# These are text entry boxes in the UI
+userEntries:
+  CO2_cost_rate:
+    title_en: CO2 cost rate [€/t]
+    title_de: CO2 Kosten [€/t]
+    value: 139.0
+  NOx_cost_rate:
+    title_en: NOx cost rate [€/t]
+    title_de: NOx Kosten [€/t]
+    value: 15400.0
+  PM2_5_cost_rate:
+    title_en: PM2.5 exhaust cost rate [€/t]
+    title_de: PM2.5 Auspuff Kosten [€/t]
+    value: 364100.0
+  PM_n_exhaust_cost_rate:
+    title_en: PM non-exhaust cost rate [€/t]
+    title_de: PM Abrieb etc Kosten [€/t]
+    value: 33700.0
+  SO2_cost_rate:
+    title_en: SO2 cost rate [€/t]
+    title_de: SO2 Kosten [€/t]
+    value: 13200.0
+  NH3_cost_rate:
+    title_en: NH3 cost rate [€/t]
+    title_de: NH3 Kosten [€/t]
+    value: 26800.0
+    
+# Calculations ------------------------
+# these are evaluated top down!
+calculations: 
+  base_costs: '({base.CO2_TOTAL}*CO2_cost_rate + {base.NOx}*NOx_cost_rate + {base.PM2_5}*PM2_5_cost_rate + {base.PM_non_exhaust}*PM_n_exhaust_cost_rate + {base.SO2}*SO2_cost_rate + {base.NH3}*NH3_cost_rate) / (1000 * 1000)'
+  roadtypesAllowed_all_costs: '({roadtypesAllowed_all.CO2_TOTAL}*CO2_cost_rate + {roadtypesAllowed_all.NOx}*NOx_cost_rate + {roadtypesAllowed_all.PM2_5}*PM2_5_cost_rate + {roadtypesAllowed_all.PM_non_exhaust}*PM_n_exhaust_cost_rate + {roadtypesAllowed_all.SO2}*SO2_cost_rate + {roadtypesAllowed_all.NH3}*NH3_cost_rate) /(1000 * 1000)'
+  roadtypesAllowed_motorway_costs: '({roadtypesAllowed_motorway.CO2_TOTAL}*CO2_cost_rate + {roadtypesAllowed_motorway.NOx}*NOx_cost_rate + {roadtypesAllowed_motorway.PM2_5}*PM2_5_cost_rate + {roadtypesAllowed_motorway.PM_non_exhaust}*PM_n_exhaust_cost_rate + {roadtypesAllowed_motorway.SO2}*SO2_cost_rate + {roadtypesAllowed_motorway.NH3}*NH3_cost_rate) /(1000 * 1000)'
+  noDRT_costs: '({noDRT.CO2_TOTAL}*CO2_cost_rate + {noDRT.NOx}*NOx_cost_rate + {noDRT.PM2_5}*PM2_5_cost_rate + {noDRT.PM_non_exhaust}*PM_n_exhaust_cost_rate + {noDRT.SO2}*SO2_cost_rate + {noDRT.NH3}*NH3_cost_rate) /(1000 * 1000)'
+
+# Table rows
+outputs:
+  - title: Base Case [€]
+    value: base_costs
+  - title: Roadtypes allowed - all [€]
+    value: roadtypesAllowed_all_costs
+  - title: Roadtypes allowed - motorway [€]
+    value: roadtypesAllowed_motorway_costs
+  - title: No DRT [€]
+    value: noDRT_costs

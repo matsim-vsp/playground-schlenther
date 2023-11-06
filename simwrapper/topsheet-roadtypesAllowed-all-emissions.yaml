@@ -1,0 +1,45 @@
+# Topsheet Test
+title: roadtypesAllowed-all emissions
+title_en: roadtypesAllowed-all emissions
+title_de: roadtypesAllowed-all Emissionen
+description: 'description'
+
+# Input files -------------------------
+files:
+  costTable:
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv"
+
+# These are text entry boxes in the UI
+    
+# Calculations ------------------------
+# these are evaluated top down!
+calculations: 
+  total_CO2: '{costTable.CO2_TOTAL} / (1000 * 1000)'
+  total_NOx: '{costTable.NOx} / (1000 * 1000)' 
+  total_PM2_5: '({costTable.PM2_5}) / (1000 * 1000)'
+  total_PM_n_exhaust: '({costTable.PM_non_exhaust}) / (1000 * 1000)'
+  total_SO2: '{costTable.SO2} / (1000 * 1000)' 
+  total_NH3: '{costTable.NH3} / (1000 * 1000)' 
+
+
+
+# Table rows
+outputs:
+  - title_en: Total CO2 emissions [t]
+    title_de: Summe CO2 Emissionen [t]
+    value: total_CO2
+  - title_en: Total PM exhaust emissions [t]
+    title_de: Summe PM Emissionen Auspuff [t]
+    value: total_PM2_5
+  - title_en: Total PM non exhaust emissions [t]
+    title_de: Summe PM Emissionen Abrieb etc [t]
+    value: total_PM_n_exhaust
+  - title_en: Total NOX emissions [t]
+    title_de: Summe NOX Emissionen [t]
+    value: total_NOx  
+  - title_en: Total SO2 emissions [t]
+    title_de: Summe SO2 Emissionen [t]
+    value: total_SO2  
+  - title_en: Total NH3 emissions [t]
+    title_de: Summe NH3 Emissionen [t]
+    value: total_NH3  

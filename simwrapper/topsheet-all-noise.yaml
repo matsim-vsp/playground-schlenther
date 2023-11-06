@@ -1,0 +1,37 @@
+# Topsheet Test
+title: Noise Costs per day
+title_en: Total noise costs per day
+title_de: Lärmkosten pro Tag
+description: '(...)'
+
+# Input files -------------------------
+files:
+  base: 
+    file: "scenarios/output/baseCaseContinued-10pct/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"
+  roadtypesAllowed_all: 
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"
+  roadtypesAllowed_motorway:
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"
+  noDRT:
+    file: "scenarios/output/runs-2023-09-01/10pct/noDRT/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"
+
+# These are text entry boxes in the UI
+    
+# Calculations ------------------------
+# these are evaluated top down!
+calculations: 
+  base_costs: "{base.damages_receiverPoint} * 1"
+  roadtypesAllowed_all_costs: "{roadtypesAllowed_all.damages_receiverPoint} * 1"
+  roadtypesAllowed_motorway_costs: "{roadtypesAllowed_motorway.damages_receiverPoint} * 1"
+  noDRT_costs: "{noDRT.damages_receiverPoint} * 1"
+
+# Table rows
+outputs:
+  - title: Base Case [€]
+    value: base_costs
+  - title: Roadtypes allowed - all [€]
+    value: roadtypesAllowed_all_costs
+  - title: Roadtypes allowed - motorway [€]
+    value: roadtypesAllowed_motorway_costs
+  - title: No DRT [€]
+    value: noDRT_costs

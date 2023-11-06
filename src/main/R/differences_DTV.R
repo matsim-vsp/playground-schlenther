@@ -5,6 +5,8 @@ library(tidyverse)
 library(lubridate)
 library(ggalluvial)
 
+"This script writes the most important metrics for the daily traffic volume and mileage into a tsv-file."
+
 #HPC Cluster
 args <- commandArgs(trailingOnly = TRUE)
 policyCaseDirectory <- args[1]

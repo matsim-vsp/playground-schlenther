@@ -5,6 +5,9 @@ library(tidyverse)
 library(lubridate)
 library(ggalluvial)
 
+"This script writes the most important metrics for noise costs and emissions into a tsv-file."
+
+
 #####################################
 # Preparation
 

@@ -4,6 +4,8 @@
 ## -> Transform to needed EPSG
 ## -> Write .tsv-file out of it
 
+"This script prepares GTFS data for the extra P+R stations outside the zone."
+
 ## TODO: fink closest link to each coordinate (and not by hand)
 
 library(sf)

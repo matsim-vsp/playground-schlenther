@@ -3,6 +3,8 @@ library(lubridate)
 library(readr)
 library(dplyr)
 
+"This script prepares the output_trips table for the policy case. Mostly, it combines trips previously split into two trips at a P+R station."
+
 #load relevant MATSim R functions (change when MATSim R works on cluster, devtools not working)
 readTripsTable <- function (input_path = ".", n_max = Inf) 
 {

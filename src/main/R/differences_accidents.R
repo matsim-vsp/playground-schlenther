@@ -5,6 +5,8 @@ library(tidyverse)
 library(lubridate)
 library(ggalluvial)
 
+"This script writes the most important metrics for accident costs into a tsv-file."
+
 ####################################
 # Preparation
 

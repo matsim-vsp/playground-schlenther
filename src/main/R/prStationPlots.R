@@ -9,6 +9,8 @@ library(dplyr)
 library(matsim)
 library(scales)
 
+"This script writes the most important metrics for P+R stations into a tsv-file & creates a graph for P+R station usage."
+
 #HPC Cluster
 args <- commandArgs(trailingOnly = TRUE)
 policyCaseDirectory <- args[1]
@@ -38,17 +40,17 @@ results_pr <- data.frame(key = character(), value = numeric()) %>%
   add_row(key = "maximale Auslastung", value = max(onlyNumbers))
 
 # Facet-Plot: Tagesverläufe bei allen P+R-Stationen
-ggplot(df_long, aes(x = datetime, y = Value, group = PRStation, color = PRStation)) +
-  geom_line() +
-  labs(x = "P+R Station", y = "Auslastung") +
-  ggtitle("Auslastung Tagesganglinien P+R Stationen") +
-  facet_wrap(~ PRStation, scales = "fixed") +
-  scale_x_datetime(labels = date_format("%H:%M")) +
-  theme(
-    legend.position = "none",
-    # text = element_text(size = 20) # Adjust the size to your preference
-  )
-ggsave(file.path(policyCaseDirectory,"/analysis/prStations/prStations_auslastung.png"))
+ ggplot(df_long, aes(x = datetime, y = Value, group = PRStation, color = PRStation)) +
+   geom_line() +
+   labs(x = "P+R Station", y = "Auslastung [Fahrzeuge pro Minute]") +
+   ggtitle("Auslastung Tagesganglinien P+R Stationen") +
+   facet_wrap(~ PRStation, scales = "fixed") +
+   scale_x_datetime(labels = date_format("%H:%M")) +
+   theme(
+     legend.position = "none",
+     text = element_text(size = 20) # Adjust the size to your preference
+   )
+ ggsave(file.path(policyCaseDirectory,"/analysis/prStations/prStations_auslastung.png"))
 
 write.table(results_pr,file.path(policyCaseDirectory,"/analysis/prStations/metrics_PR.tsv"),row.names = FALSE, sep = "\t")
 

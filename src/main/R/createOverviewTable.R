@@ -1,6 +1,8 @@
 library(tidyverse)
 library(dplyr)
 
+"This script creates an overview table for the most important metrics from score and trips."
+
 #HPC Cluster
 args <- commandArgs(trailingOnly = TRUE)
 drtTableDirectory <- args[1]

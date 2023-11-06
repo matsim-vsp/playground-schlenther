@@ -13,7 +13,9 @@ import java.net.URL;
  *
  * Note: This class runs only for policyCases. The baseCase can be fully postprocessed except for the accident analysis.
  *       The airPollution analysis requires command line arguments & an encryptions key for the HBEFA tables.
- *
+ *       The RScripts scoreComparison & tripsComparison might not work on the HPC cluster. Two errors:
+ *          - sf library not working (units package) on HPC cluster
+ *          - matsim R library can´t be installed on HPC cluster
  */
 
 public class RunPostprocessingAfterSim {
@@ -50,10 +52,10 @@ public class RunPostprocessingAfterSim {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            String runDirectory = "scenarios/output/runs-2023-08-11/finalRun/";
-            String runId = "finalRun";
-            String base_runDirectory = "scenarios/output/baseCaseContinued/";
-            String base_runId = "berlin-v5.5-1pct";
+            String runDirectory = "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/";
+            String runId = "roadtypesAllowed-all";
+            String base_runDirectory = "scenarios/output/baseCaseContinued-10pct/";
+            String base_runId = "berlin-v5.5-10pct";
             String rScriptCommand = "C:/Program Files/R/R-4.2.2/bin/Rscript.exe";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp";

@@ -51,6 +51,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * This method is just a copy of the BerlinOfflineAirPollutionAnalysisByEngineInformation.java from the Open Berlin Scenario.
+ *
  * processes MATSim output leveraging the emission contrib.<br>
  * needs input tables from/according to HBEFA.<br>
  * produces output tables (csv files) that contain emission values per link (per meter) as well as emission events.

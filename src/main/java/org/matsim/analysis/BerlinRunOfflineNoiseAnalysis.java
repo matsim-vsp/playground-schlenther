@@ -10,6 +10,11 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 
+/**
+ * This method is mostly a copy from the Open Berlin Scenario.
+ *
+ */
+
 public class BerlinRunOfflineNoiseAnalysis {
     private static final Logger log = Logger.getLogger(RunOfflineNoiseAnalysis.class);
     private static String runDirectory;

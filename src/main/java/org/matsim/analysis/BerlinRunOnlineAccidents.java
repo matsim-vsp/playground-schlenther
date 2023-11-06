@@ -16,6 +16,9 @@ import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 import javax.management.RuntimeErrorException;
 
 /**
+ *
+ * This method is mostly a copy from the Open Berlin Scenario.
+ *
  * @author Hugo
  */
 
@@ -27,6 +30,7 @@ public class BerlinRunOnlineAccidents {
     private final String analysisOutputDirectory;
     private final String runType;
 
+    // all these are only necessary for the policy run.
     private final String shapeFile;
     private final String roadTypesCarAllowed;
     private final String stationsFile;

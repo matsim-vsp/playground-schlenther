@@ -8,25 +8,27 @@ library(sf)
 library(dplyr)
 library(matsim)
 
+"In this script, the score of base and policy case gets compared. Several tsv-files & graphs are written as output results."
+
 ########################################
 # Preparation
 
 #HPC Cluster
-args <- commandArgs(trailingOnly = TRUE)
-policyCaseDirectory <- args[1]
-baseCaseDirectory <- args[3]
-shp <- st_read(args[5])
+ args <- commandArgs(trailingOnly = TRUE)
+ policyCaseDirectory <- args[1]
+ baseCaseDirectory <- args[3]
+ shp <- st_read(args[5])
 
 #10pct
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+#baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
+#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
 
 #1pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
 # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
 
-# shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+#shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
@@ -162,7 +164,7 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = 1, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
@@ -207,7 +209,7 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = hasPRActivity_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
@@ -251,7 +253,7 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = livesInsideBoundaryZone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
@@ -295,7 +297,7 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = isCarUser_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
@@ -337,7 +339,7 @@ for (case in cases){
   "Boxplot"
   ggplot(casePersons, aes(x = home.activity.zone_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
       title = paste0("Verteilung der Score-Differenzen (",case,")"),
@@ -541,7 +543,7 @@ mean(bestPR$score_diff)
 
 ggplot(betroffenePersonen_noCarUser, aes(x = home.activity.zone_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
-  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   labs(
     title = paste0("Verteilung der Score-Differenzen (Betroffene Nicht-Autonutzer)"),
@@ -564,7 +566,7 @@ ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_no
 
 ggplot(betroffenePersonen_carUser, aes(x = home.activity.zone_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
-  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   labs(
     title = paste0("Verteilung der Score-Differenzen (Betroffene Autonutzer)"),
@@ -588,10 +590,37 @@ ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_ca
 ########################################
 # Looking at other metrics (total economic loss, percentage of impacted agents)
 
+(sum(policyPersons$executed_score) - sum(basePersons$executed_score)) / sum(basePersons$executed_score) * 100
+
 results_otherScoreMetrics <- data.frame(key = character(), value = numeric()) %>%
   add_row(key = "Anteil betroffener Agenten (%)", value = nrow(betroffenePersonen) / nrow(allePersonen) * 100) %>%
-  add_row(key = "Ökonomischer Nutzen [€]", value =mean(personsJoined$score_diff) * 1 / 0.6 * nrow(personsJoined) * 10)
+  add_row(key = "Ökonomischer Nutzen [€]", value = mean(personsJoined$score_diff) * 1 / 0.6 * nrow(personsJoined) * 10) %>%
+  add_row(key = "Veränderung ökonomischer Nutzen [%]", value = (sum(policyPersons$executed_score) - sum(basePersons$executed_score)) / sum(basePersons$executed_score) * 100)
 
+
+policyCaseOutputDir <- paste0(policyCaseDirectory,"/analysis/score/")
+ggplot(betroffenePersonen, aes(x = home.activity.zone_policy, y = score_diff)) +
+  geom_boxplot(fill = "#0099f8") +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
+  labs(
+    title = paste0("Verteilung der Score-Differenzen (betroffene Personen)"),
+    subtitle = "nach Wohnort (Maßnahmenfall vs Basisfall)",
+    caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+    y = "Score Δ"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.caption = element_text(face = "italic", size = 20),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = 20),
+    axis.title.x = element_blank(),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 20)
+  )
+ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"))
 
 ########################################
 # Dump tables

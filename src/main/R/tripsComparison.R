@@ -8,27 +8,31 @@ library(matsim)
 library(tidyverse)
 library(ggalluvial)
 
+"In this script, the trips of base and policy case gets compared. Several tsv-files & graphs are written as output results."
+
+
 ########################################
 # Preparation
 
 # #HPC Cluster
-args <- commandArgs(trailingOnly = TRUE)
-policyCaseDirectory <- args[1]
-baseCaseDirectory <- args[3]
-shp <- st_read(args[5])
-shp_berlin <- st_read(args[6])
+ args <- commandArgs(trailingOnly = TRUE)
+ policyCaseDirectory <- args[1]
+ baseCaseDirectory <- args[3]
+ shp <- st_read(args[5])
+ shp_berlin <- st_read(args[6])
 
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
+# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+#shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+#shp_berlin <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
+
 
 # #1pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
 # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
 
-# shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
-# shp_berlin <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
 
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
@@ -115,7 +119,7 @@ impacted_trips <- impacted_trips %>%
 # Filter bedingt durch teilweise falsch erkannte Trips durch filterByRegion, siehe trips_falselyClassified.tsv
 
 "Grenztrips"
-prep_grenz_policy <- impGrenz_trips_policy %>% 
+prep_grenz_policy <- impGrenz_trips_policy %>%
   filter(!main_mode == "ride") %>%
   filter(!main_mode == "car") %>%
   filter(!main_mode == "drt") %>%
@@ -127,7 +131,7 @@ plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 
 "Binnentrips"
-prep_binnen_policy <- impBinnen_trips_policy %>% 
+prep_binnen_policy <- impBinnen_trips_policy %>%
   filter(!grepl("+", main_mode, fixed = TRUE)) %>%
   filter(!main_mode == "car") %>%
   filter(!main_mode == "ride") %>%
@@ -224,7 +228,7 @@ boxplot_helper$travTime_diff <- as.numeric(boxplot_helper$travTime_diff)
 "Boxplot"
 ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   geom_boxplot(fill = "#0099f8") +
-  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   labs(
     title = "Verteilung der Reisezeit-Differenzen",
@@ -270,7 +274,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
     y = "Reiseweite Δ [m]"
   ) +
-  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
   theme(
@@ -318,7 +322,7 @@ for (case in tripCases){
       y = "Reisezeit Δ [s]",
       x = "Verkehrsmittel"
     ) +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     theme_classic() +
     theme(
@@ -343,7 +347,7 @@ for (case in tripCases){
       y = "Reiseweite Δ [m]",
       x = "Verkehrsmittel"
     ) +
-    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+    stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     theme_classic() +
     theme(
@@ -433,7 +437,7 @@ boxplot_helper2 <- rbind(impGrenzPR_trips, impGrenzOther_trips)
 #    caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
 #    y = "Reisezeit Δ [s]"
 #  ) +
-#  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+#  stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
 #  stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
 #  theme_classic() +
 #  theme(
@@ -460,7 +464,7 @@ boxplot_helper2 <- rbind(impGrenzPR_trips, impGrenzOther_trips)
 #     caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
 #     y = "Reiseweite Δ [m]"
 #   ) +
-#   stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = 0.3, hjust = 1.1) +
+#   stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
 #   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
 #   theme_classic() +
 #   theme(

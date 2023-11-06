@@ -120,7 +120,7 @@ class ReplaceCarByDRT {
 			//Experimental: Introducing a second iterator for the 2.PRStationChoice
 			Iterator<String> replacingModeIterator2 = replacingModes.iterator();
 
-			// 1. Adding plans with one of the two PrStationChoice strategies for each replacing mode
+			// 1. Adding plans with one of the two PrStationChoice strategies for each replacing mode ("Extra PrStation Choice") -> in this case: closestToInsideActivity
 			if(!prStationChoice.equals(extraPRStationChoice)){
 				for (Plan plan : person.getPlans()) {
 

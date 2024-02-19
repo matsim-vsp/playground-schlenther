@@ -23,6 +23,7 @@ package org.matsim.run.replaceCarByDRT;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import org.apache.log4j.Logger;
+import org.matsim.analysis.PrActivityEventHandler;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;

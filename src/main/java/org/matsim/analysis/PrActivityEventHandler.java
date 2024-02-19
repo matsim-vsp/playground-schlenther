@@ -1,4 +1,4 @@
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.ShutdownListener;
+import org.matsim.run.replaceCarByDRT.PRStation;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.*;
  * vehicles are assumed to be parked or picked up at P+R stations depending on whether the routing mode before/after
  * the P+R activity was TransportMode.car or not.
  */
-class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler, ShutdownListener {
+public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler, ShutdownListener {
 
     private HashMap<PRStation, MutableInt> activitiesPerPRStation = new HashMap<>();
 

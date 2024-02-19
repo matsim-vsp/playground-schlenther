@@ -17,7 +17,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.preparation;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Pair;
@@ -46,6 +46,7 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.prepare.drt.DrtVehicleCreator;
 import org.matsim.run.drt.BerlinShpUtils;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
+import org.matsim.run.replaceCarByDRT.PRStation;
 
 import java.io.IOException;
 import java.net.URL;

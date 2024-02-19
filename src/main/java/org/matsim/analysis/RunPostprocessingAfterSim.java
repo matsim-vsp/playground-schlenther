@@ -1,9 +1,6 @@
 package org.matsim.analysis;
 
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.run.replaceCarByDRT.RunPRActivityEventHandler;
-import org.matsim.run.replaceCarByDRT.RunScorePreparation;
-import org.matsim.run.replaceCarByDRT.RunTrafficVolumeEventHandler;
 
 import java.io.IOException;
 import java.net.URL;

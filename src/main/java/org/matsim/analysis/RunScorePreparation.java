@@ -1,4 +1,4 @@
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -8,6 +8,7 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
+import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.IOException;

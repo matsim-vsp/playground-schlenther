@@ -1,32 +1,23 @@
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
-import org.matsim.analysis.RunTripsPreparation;
-import org.matsim.analysis.VolumesAnalyzer;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
-import org.matsim.vehicles.Vehicles;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
 public class RunTrafficVolumeEventHandler {
 

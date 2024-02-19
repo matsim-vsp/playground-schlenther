@@ -1,4 +1,4 @@
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -7,12 +7,16 @@ import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.run.replaceCarByDRT.PRStation;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class RunPRActivityEventHandler {
 

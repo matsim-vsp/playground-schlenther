@@ -34,14 +34,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-class PRStation {
+public final class PRStation {
 
 	private final String name;
 	private Id<Link> linkId;
 	private final Coord coord;
 	private static final Logger LOG = Logger.getLogger(PRStation.class);
 
-	PRStation(String name, Id<Link> linkId, Coord coord) {
+	private PRStation(String name, Id<Link> linkId, Coord coord) {
 		this.name = name;
 		this.linkId = linkId;
 		this.coord = coord;
@@ -52,7 +52,7 @@ class PRStation {
 	 * @param url2PRStations a .tsv input file with the following columns (and a header row): 'name', 'x', 'y' and 'linkId'. The order should not matter.
 	 * @return
 	 */
-	static Set<PRStation> readPRStationFile(URL url2PRStations) {
+	public static Set<PRStation> readPRStationFile(URL url2PRStations) {
 		LOG.info("read input file for P+R stations");
 		Set<PRStation> prStations = new HashSet<>();
 		//assume tsv with a header and linkId in the last column
@@ -71,11 +71,11 @@ class PRStation {
 		return prStations;
 	}
 
-	protected Coord getCoord() {
+	public Coord getCoord() {
 		return coord;
 	}
 
-	protected String getName() {
+	public String getName() {
 		return name;
 	}
 

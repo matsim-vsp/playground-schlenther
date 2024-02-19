@@ -18,7 +18,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.preparation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +30,7 @@ import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.MatsimXmlWriter;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.FileWriter;

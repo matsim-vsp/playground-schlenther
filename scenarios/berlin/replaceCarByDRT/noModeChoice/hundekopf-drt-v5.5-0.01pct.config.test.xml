@@ -2,6 +2,7 @@
 <!DOCTYPE config SYSTEM "http://www.matsim.org/files/dtd/config_v2.dtd">
 <config>
 	<module name="TimeAllocationMutator" >
+		<param name="mutationAffectsDuration" value="false" />
 		<param name="mutationRange" value="7200.0" />
 	</module>
 	<module name="controler" >

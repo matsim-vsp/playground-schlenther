@@ -18,7 +18,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.preparation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +30,7 @@ import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.MatsimXmlWriter;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
 import java.io.FileWriter;
@@ -55,8 +56,8 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 		network = NetworkUtils.readNetwork("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		new DrtStopsWriter(network,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
-				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2023-03-29-pr-stations.tsv"))
-			.write("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
+				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"))
+			.write("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-07-27-prStations.xml");
 	}
 
 	DrtStopsWriter(Network network, URL url2Shp, URL url2PRStations) {
@@ -108,12 +109,22 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 		try {
 			//write a stop for each filtered link (with to node in area)
 			for (Link link : linksInArea) {
-				writeStop(csvWriter, link);
+				if(!link.getId().toString().contains("pt")){
+					writeStop(csvWriter, link);
+				}
 			}
 			//write a stop for each P+R link
 			Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
+
 			for (PRStation prStation : prStations) {
-				writeStop(csvWriter, network.getLinks().get(prStation.getLinkId()));
+
+				boolean linkIdExists = linksInArea.stream()
+						.map(Link::getId)
+						.anyMatch(id -> id.equals(prStation.getLinkId()));
+
+				if (!linkIdExists) {
+					writeStop(csvWriter, network.getLinks().get(prStation.getLinkId()));
+				}
 			}
 		} catch (IOException e){
 			e.printStackTrace();

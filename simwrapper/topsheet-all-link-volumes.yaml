@@ -1,0 +1,35 @@
+# Topsheet Test
+title: Relative change of daily traffic volume compared to the base case [in %] 
+title_en: Relative change of daily traffic volume compared to the base case [in %]
+title_de: Relative Änderung des täglichen Verkehrsaufkommens gegenüber dem Basisfall [in %]
+description: ''
+
+# Input files -------------------------
+files:
+  base: 
+    file: "scenarios/output/baseCaseContinued-10pct/berlin-v5.5-10pct.output_events_dailyTrafficVolume_vehicles.tsv"
+  roadtypesAllowed_all: 
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/roadtypesAllowed-all.output_events_dailyTrafficVolume_vehicles.tsv"
+  roadtypesAllowed_motorway:
+    file: "scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/roadtypesAllowed-motorway.output_events_dailyTrafficVolume_vehicles.tsv"
+  noDRT:
+    file: "scenarios/output/runs-2023-09-01/10pct/noDRT/noDRT.output_events_dailyTrafficVolume_vehicles.tsv"
+
+# These are text entry boxes in the UI
+    
+# Calculations ------------------------
+# these are evaluated top down!
+calculations: 
+  base_DTV: "{base.agents} * 1"
+  roadtypesAllowed_all_DTV: "({roadtypesAllowed_all.agents} - {base.agents}) / {base.agents} * 100"
+  roadtypesAllowed_motorway_DTV: "({roadtypesAllowed_motorway.agents} - {base.agents}) / {base.agents} * 100"
+  noDRT_DTV: "({noDRT.agents} - {base.agents}) / {base.agents} * 100"
+
+# Table rows
+outputs:
+  - title: Roadtypes allowed - all [%]
+    value: roadtypesAllowed_all_DTV
+  - title: Roadtypes allowed - motorway [%]
+    value: roadtypesAllowed_motorway_DTV
+  - title: No DRT [%]
+    value: noDRT_DTV

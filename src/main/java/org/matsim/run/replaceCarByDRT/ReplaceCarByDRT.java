@@ -46,13 +46,12 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class ReplaceCarByDRT {
+final class ReplaceCarByDRT {
 
 	private static Logger log = Logger.getLogger(ReplaceCarByDRT.class);
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
 	static final String PR_ACTIVITY_TYPE = "P+R";
-
 	private static boolean hasWarnedHardcodedChainMode = false;
 
 	/**
@@ -98,30 +97,38 @@ class ReplaceCarByDRT {
 	/**
 	 * Multiple side effects!! <br>
 	 * Sets a plan type for all plans. <br>
-	 * Plans that use car and touch the prohibitoin zone provided by {@code url2CarFreeSingleGeomShapeFile} are mutated and copied. <br>
+	 * Plans that use car and touch the prohibition zone provided by {@code url2CarFreeSingleGeomShapeFile} are mutated and copied. <br>
 	 * Those plans are mutated such that agents use a P+R logic instead, meaning they drive to/from P+R stations provided in {@code url2PRStations} with car and choose one of {@code replacingModes} inside the prohibition area. <br>
-	 * Makes a copy of each P+R plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
-	 * So if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 2 plans, one of type 'drt' and one of type 'pt'. That means, the original plan is thrown away.
+	 * Creates two copies of each P+R plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
+	 * Each of these copies represents another choice logic for the PR stations (1x PRStationChoice.closestToInside + 1x PRStationChoice.closestToInside), <br>
+	 * meaning that in one plan the agent chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>inside</i> the prohibition zone and <br>
+	 * in the other plan it chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>outside</i> the prohibition zone.<br>
+	 * Additionally, another plan is added where the agent does not use P+R logic but just uses pt for all trips in all subtours that touched the prohibition zone with car, <br>
+	 * or for all trips that used ride inside the prohibition zone (possible in combination with other modes in the same subtour).<br>
+	 * So if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 4-5 plans:
+	 * <ul>
+	 *    <li>two where the type contains 'drt'</li>
+	 *    <li>two where the type contains 'pt'</li>
+	 *    <li>one where the type is 'ptOnly', <i>if</i> the original plan has bordercrossing trips</li>
+	 * </ul>
 	 *
-	 * Additionally, if {@code extraPTPlan} is true, another plan is added where the agent does not use P+R logic but just uses pt for all trips in all subtours that touched the prohibition zone with car, <br>
-	 * or for all trips that used ride inside the prohibition zone (possible in combination with other modes in the same subtour).
+	 *
+	 *
 	 * @param scenario
+	 * @param modesToBeReplaced modes that forbidden in {@code url2CarFreeSingleGeomShapeFile}
 	 * @param replacingModes
 	 * @param url2CarFreeSingleGeomShapeFile
 	 * @param url2PRStations
 	 * @param mainModeIdentifier
-	 * @param prStationChoice
-	 * @param extraPTPlan
-	 * @param kPrStations
+	 * @param kPrStations defines the choice set size for P+R station selection. Will always consider the closest stations.
 	 */
+
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
+															  Set<String> modesToBeReplaced,
 															  Set<String> replacingModes,
 															  URL url2CarFreeSingleGeomShapeFile,
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
-															  PRStationChoice prStationChoice,
-															  boolean enforceMassConservation,
-															  boolean extraPTPlan,
 															  int kPrStations){
 
 		// First check whether we can properly interpret the shape file.
@@ -129,45 +136,39 @@ class ReplaceCarByDRT {
 		log.info("read input file for car ban area");
 		List<PreparedGeometry> carFreeGeoms = ShpGeometryUtils.loadPreparedGeometries(url2CarFreeSingleGeomShapeFile);
 		Preconditions.checkArgument(carFreeGeoms.size() == 1, "you have to provide a shape file that features exactly one geometry.");
-		Preconditions.checkArgument(prStationChoice.equals(PRStationChoice.closestToOutSideActivity) || prStationChoice.equals(PRStationChoice.closestToInsideActivity), "do not know what to do with " + prStationChoice);
 		Preconditions.checkArgument(replacingModes.size() > 0);
 		Set<PRStation> prStations = PRStation.readPRStationFile(url2PRStations);
-
-		log.info("start modifying input plans....");
-		PopulationFactory fac = scenario.getPopulation().getFactory();
-		MutableInt replacedTrips = new MutableInt();
-
 		Random rnd = new Random(4711);
 
-		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
+		log.info("start modifying input plans....");
+
+		log.info("currently PR Station Choice is hardcoded to 'both' ! ");
+		// in Lorenz' thesis we saw that this significantly increases scores by improving border-crossing trips (making them shorter)
+		// but it slightly worsens inner trips
+		PRStationChoice prStationChoice = PRStationChoice.both;
+
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 
-			//person attribute
-			Activity homeAct = (Activity) person.getSelectedPlan().getPlanElements().get(0); //in Berlin, the first activity of each person is the home activity. Careful: this might not be the case in other scenarios!!
-			if (PopulationUtils.getSubpopulation(person).equals("person") && !homeAct.getType().startsWith("home")){
-				throw new IllegalArgumentException("first act of agent " + person.getId() + " is not home");
-			}
-			Boolean livesInProhibitionZone = ShpGeometryUtils.isCoordInPreparedGeometries(homeAct.getCoord(), carFreeGeoms) ? true : false;
-			PopulationUtils.putPersonAttribute(person, "livesInProhibitionZone", livesInProhibitionZone);
+			Boolean livesInProhibitionZone = putAttrIsLivingInProhibitionZone(person, carFreeGeoms);
 
-
-			//original plan will be thrown away if agent crosses border with forbidden mode
-			Iterator<String> replacingModeIterator = replacingModes.iterator();
-			String replacingMode = replacingModeIterator.next();
 			Set<Plan> plansToAdd = new HashSet<>();
+			Set<Plan> originalPlansToRemove = new HashSet<>();
 
+			//first iterate over all plans and make copies. For each plan, several copies are made: 1 for each replacingMode. If prStationChoice is set to both, then the nr of plans is again doubled up!
 			for (Plan plan : person.getPlans()) {
+					//original plan will be thrown away if agent crosses border with forbidden mode
 
-				//we (sometimes) make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
-				plan.setScore(null);
+					//we make plan copies. remove all scores values, thus ensure that all plans are executed at least once.
+					plan.setScore(null);
+
 
 				//will in fact put an attribute into the origin activity
-				List<TripStructureUtils.Trip> tripsToReplace = collectAndAttributeTripsToReplace(scenario, plan, mainModeIdentifier, Set.of(TransportMode.car, TransportMode.ride), carFreeGeoms);
+				List<TripStructureUtils.Trip> tripsToReplace = collectAndAttributeTripsToReplace(scenario, plan, mainModeIdentifier, modesToBeReplaced, carFreeGeoms);
 				if (tripsToReplace.isEmpty()){
 					plan.setType("not-affected");
-					continue; //nothing to do; skip the plan
+					continue;
 				}
 
 				//for consistency checking
@@ -183,151 +184,33 @@ class ReplaceCarByDRT {
 						.count();
 				if(nrOfOutsideTripsWithModesToReplace == tripsToReplace.size()){
 					plan.setType("not-affected");
-					continue; //this agent is not affected by the prohibition zone.
+					continue;
 				}
 
-				if(extraPTPlan){
-//					if we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
-					if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
-							nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
-						//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
-						plansToAdd.add(createPTOnlyPlan(plan, enforceMassConservation, mainModeIdentifier, fac));
-					}
+				//mark plan for removal
+				originalPlansToRemove.add(plan);
+
+//				If we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
+				if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&
+						nrOfOutsideTripsWithModesToReplace != tripsToReplace.size()){ //normally we have skipped plans with only outer trips above
+					//create and add a plan, where all the trips to replace are NOT split up with P+R logic but are just replaced by a pt trip
+					plansToAdd.add(createPTOnlyPlan(plan, mainModeIdentifier, scenario.getPopulation().getFactory()));
 				}
 
-				plan.setType(replacingMode);
-
-				PRStation firstCarPRStation = null;
-				//we use this as 'iteration variable'
-				PRStation currentCarPRStation = null;
-
-				for (TripStructureUtils.Trip trip : tripsToReplace) {
-					TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
-					String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
-					if (tripType.equals(TripType.outsideTrip)){
-						if(mainMode.equals(TransportMode.car) && currentCarPRStation != null) throw new IllegalStateException("agent " + person + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
-								"\n but vehicle is still parked at link=" + currentCarPRStation);
-						continue;
-					}
-
-					List<PlanElement> newTrip;
-					PRStation prStation = null;
-
-					if(tripType.equals(TripType.innerTrip)) {
-						Leg l1 = fac.createLeg(replacingMode);
-						TripStructureUtils.setRoutingMode(l1, replacingMode);
-						l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-						newTrip = List.of(l1);
-					} else if(tripType.equals(TripType.originatingTrip)) {
-						if(mainMode.equals(TransportMode.car)){
-							nrOfBorderCrossingCarTrips --;
-							//some consistency (mass conservation) checks
-							if(nrOfBorderCrossingCarTrips == 0 && livesInProhibitionZone){
-								throw new IllegalStateException("agent " + person.getId() + "lives inside but travels outside the border with car without returning with a prohibited mode.\n" +
-										"trip = " + trip);
-							}
-							//car has to be picked up where it was left the last time
-							if (currentCarPRStation != null && enforceMassConservation){
-								prStation = currentCarPRStation;
-							}
-						}
-					 	if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
-							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
-							List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
-							List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
-							Collections.shuffle(mutableListCandidates);
-							int rndr = rnd.nextInt(mutableListCandidates.size());
-							prStation = mutableListCandidates.get(rndr);
-						}
-
-						 //change value of firstCarPRStation only one time
-						firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
-						currentCarPRStation = null;
-
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.getLinkId());
-
-						newTrip = new ArrayList<>();
-						Leg l1 = fac.createLeg(replacingMode);
-						TripStructureUtils.setRoutingMode(l1, replacingMode);
-						l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-						Leg l2 = fac.createLeg(mainMode);
-						TripStructureUtils.setRoutingMode(l2, mainMode);
-
-						newTrip.add(l1); //new mode
-						newTrip.add(parkAndRideAct);
-						newTrip.add(l2); //old main mode
-
-					} else if (tripType.equals(TripType.endingTrip)) {
-						if(mainMode.equals(TransportMode.car)){
-							nrOfBorderCrossingCarTrips --;
-							if(nrOfBorderCrossingCarTrips == 0){
-								//some consistency (mass conservation) checks
-								if(!livesInProhibitionZone){
-									throw new IllegalStateException("agent " + person.getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
-											"trip = " + trip);
-								}
-								//agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-								if(enforceMassConservation){
-									prStation = firstCarPRStation;
-								}
-							}
-						}
-					 	if(prStation == null) { //if not the last border-crossing car or a ride trip
-							Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
-							List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
-							List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
-							Collections.shuffle(mutableListCandidates);
-							int rndr = rnd.nextInt(mutableListCandidates.size());
-							prStation = mutableListCandidates.get(rndr);
-							if(mainMode.equals(TransportMode.car)){
-								currentCarPRStation = prStation;
-							}
-						}
-
-//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
-						Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-						parkAndRideAct.setMaximumDuration(5 * 60);
-						parkAndRideAct.setLinkId(prStation.getLinkId());
-
-						newTrip = new ArrayList<>();
-
-						Leg l1 = fac.createLeg(mainMode);
-						TripStructureUtils.setRoutingMode(l1, mainMode);
-						Leg l2 = fac.createLeg(replacingMode);
-						TripStructureUtils.setRoutingMode(l2, replacingMode);
-						l2.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
-
-						newTrip.add(l1); //old main mode
-						newTrip.add(parkAndRideAct);
-						newTrip.add(l2); //new mode
-
+					if(prStationChoice.equals(PRStationChoice.both)){
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToInsideActivity, prStations, rnd, kPrStations));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToOutSideActivity, prStations, rnd, kPrStations));
 					} else {
-						throw new IllegalArgumentException("unknown trip type: " + tripType);
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, prStationChoice, prStations, rnd, kPrStations));
 					}
-
-					//insert new trip into plan
-					TripRouter.insertTrip(plan.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
-					replacedTrips.increment();
-				}
-
-				//for all other replacing modes, we want to apply the same logic. so we can basically copy the plan and just override the leg modes.
-				while (replacingModeIterator.hasNext()){
-					String otherReplacingMode = replacingModeIterator.next();
-					Plan planCopy = fac.createPlan();
-					planCopy.setPerson(person);
-					PopulationUtils.copyFromTo(plan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
-					planCopy.setType(otherReplacingMode);
-
-					//override leg modes
-					TripStructureUtils.getLegs(planCopy).stream()
-							.filter(leg -> leg.getAttributes().getAttribute("replacing") != null) //we have marked replacing legs. not the best solution but works. otherwise we would have to apply the entire logic of this method to all plan copies separately.
-							.forEach(leg -> leg.setMode(otherReplacingMode));
-					plansToAdd.add(planCopy);
-				}
 
 			}
+
+			//then remove all existing plans
+			for (Plan plan : originalPlansToRemove) {
+				person.getPlans().remove(plan);
+			}
+
 			//after we've iterated over existing plans, add all the plan copies
 			plansToAdd.forEach(plan -> person.addPlan(plan));
 
@@ -335,60 +218,229 @@ class ReplaceCarByDRT {
 			person.setSelectedPlan(person.getPlans().get(rnd.nextInt(person.getPlans().size())));
 		}
 
-		log.info("overall nr of trips replaced = " + replacedTrips);
 		log.info("finished modifying input plans....");
 	}
 
-	private static Plan createPTOnlyPlan(Plan originalPlan, boolean enforceMassConservation, MainModeIdentifier mainModeIdentifier, PopulationFactory fac) {
+	private static Set<Plan> getPlanCopiesWithPRLogic(Plan originalPlan,
+													  Scenario scenario,
+													  long nrOfBorderCrossingCarTrips,
+													  Set<String> replacingModes,
+													  MainModeIdentifier mainModeIdentifier,
+													  Boolean livesInProhibitionZone,
+													  PRStationChoice prStationChoice,
+													  Set<PRStation> prStations,
+													  Random rnd, int kPrStations) {
+
+		long countBordingCrossingCarTrips = nrOfBorderCrossingCarTrips;
+		Set<Plan> planCopies = new HashSet<>();
+		PopulationFactory fac = scenario.getPopulation().getFactory();
+		MutableInt replacedTrips = new MutableInt();
+
+		Iterator<String> replacingModeIterator = replacingModes.iterator();
+		String replacingMode = replacingModeIterator.next();
+
+		//first make a copy of the original plan
+		Plan plan = fac.createPlan();
+		plan.setPerson(originalPlan.getPerson());
+		PopulationUtils.copyFromTo(originalPlan, plan); //important to copy first and then set the type, because in the copy method the type is included for copying...
+		planCopies.add(plan);
+
+
+		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
+
+
+		plan.setType(replacingMode + "-" + prStationChoice);
+
+		PRStation firstCarPRStation = null;
+		//we use this as 'iteration variable'
+		PRStation currentCarPRStation = null;
+
+		List<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(plan).stream()
+				.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null)
+				.collect(Collectors.toList());
+
+		for (TripStructureUtils.Trip trip : tripsToReplace) {
+			TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
+			String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
+			if (tripType.equals(TripType.outsideTrip)){
+				if(mainMode.equals(TransportMode.car) && currentCarPRStation != null) throw new IllegalStateException("agent " + plan.getPerson() + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
+						"\n but vehicle is still parked at link=" + currentCarPRStation);
+				continue;
+			}
+
+			List<PlanElement> newTrip;
+			PRStation prStation = null;
+
+			if(tripType.equals(TripType.innerTrip)) {
+				Leg l1 = fac.createLeg(replacingMode);
+				TripStructureUtils.setRoutingMode(l1, replacingMode);
+				l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
+				newTrip = List.of(l1);
+			} else if(tripType.equals(TripType.originatingTrip)) {
+				if(mainMode.equals(TransportMode.car)){
+					countBordingCrossingCarTrips --;
+					//some consistency (mass conservation) checks
+					if(countBordingCrossingCarTrips == 0 && livesInProhibitionZone){
+						throw new IllegalStateException("agent " + plan.getPerson().getId() + "lives inside but travels outside the border with car without returning with a prohibited mode.\n" +
+								"trip = " + trip);
+					}
+					//car has to be picked up where it was left the last time
+					if (currentCarPRStation != null){
+						prStation = currentCarPRStation;
+					}
+				}
+				 if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
+					Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
+					prStation = choosePRStation(straightLineKnnFinder, act, prStations, rnd);
+				}
+
+				//change value of firstCarPRStation only one time
+				firstCarPRStation = firstCarPRStation == null ? prStation : firstCarPRStation;
+				currentCarPRStation = null;
+
+				Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
+				parkAndRideAct.setMaximumDuration(5 * 60);
+				parkAndRideAct.setLinkId(prStation.getLinkId());
+
+				newTrip = new ArrayList<>();
+				Leg l1 = fac.createLeg(replacingMode);
+				TripStructureUtils.setRoutingMode(l1, replacingMode);
+				l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
+				Leg l2 = fac.createLeg(mainMode);
+				TripStructureUtils.setRoutingMode(l2, mainMode);
+
+				newTrip.add(l1); //new mode
+				newTrip.add(parkAndRideAct);
+				newTrip.add(l2); //old main mode
+
+			} else if (tripType.equals(TripType.endingTrip)) {
+				if(mainMode.equals(TransportMode.car)){
+					countBordingCrossingCarTrips --;
+					if(countBordingCrossingCarTrips == 0){
+						//some consistency (mass conservation) checks
+						if(!livesInProhibitionZone){
+							throw new IllegalStateException("agent " + plan.getPerson().getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
+									"trip = " + trip);
+						}
+						//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
+						prStation = firstCarPRStation;
+
+					}
+				}
+				 if(prStation == null) { //if not the last border-crossing car or a ride trip
+					Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
+					prStation = choosePRStation(straightLineKnnFinder, act, prStations, rnd);
+					if(mainMode.equals(TransportMode.car)){
+						currentCarPRStation = prStation;
+					}
+				}
+
+//						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
+				Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
+				parkAndRideAct.setMaximumDuration(5 * 60);
+				parkAndRideAct.setLinkId(prStation.getLinkId());
+
+				newTrip = new ArrayList<>();
+
+				Leg l1 = fac.createLeg(mainMode);
+				TripStructureUtils.setRoutingMode(l1, mainMode);
+				Leg l2 = fac.createLeg(replacingMode);
+				TripStructureUtils.setRoutingMode(l2, replacingMode);
+				l2.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
+
+				newTrip.add(l1); //old main mode
+				newTrip.add(parkAndRideAct);
+				newTrip.add(l2); //new mode
+
+			} else {
+				throw new IllegalArgumentException("unknown trip type: " + tripType);
+			}
+
+			//insert new trip into plan
+			TripRouter.insertTrip(plan.getPlanElements(), trip.getOriginActivity(), newTrip, trip.getDestinationActivity());
+			replacedTrips.increment();
+		}
+
+		//for all other replacing modes, we want to apply the same logic. so we can basically copy the plan and just override the leg modes.
+		while (replacingModeIterator.hasNext()){
+			String otherReplacingMode = replacingModeIterator.next();
+			Plan planCopy = fac.createPlan();
+			planCopy.setPerson(plan.getPerson());
+			PopulationUtils.copyFromTo(plan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
+			planCopy.setType(otherReplacingMode + "-" + prStationChoice);
+
+			//override leg modes
+			TripStructureUtils.getLegs(planCopy).stream()
+					.filter(leg -> leg.getAttributes().getAttribute("replacing") != null) //we have marked replacing legs. not the best solution but works. otherwise we would have to apply the entire logic of this method to all plan copies separately.
+					.forEach(leg -> leg.setMode(otherReplacingMode));
+			planCopies.add(planCopy);
+		}
+
+		return planCopies;
+	}
+
+	private static PRStation choosePRStation(StraightLineKnnFinder<Activity, PRStation> straightLineKnnFinder, Activity act, Set<PRStation> prStations, Random rnd) {
+		PRStation prStation;
+		List<PRStation> prStationCandidates = straightLineKnnFinder.findNearest(act, prStations.stream());
+		List<PRStation> mutableListCandidates = new ArrayList<>(prStationCandidates);
+		Collections.shuffle(mutableListCandidates);
+		int rndr = rnd.nextInt(mutableListCandidates.size());
+		prStation = mutableListCandidates.get(rndr);
+		return prStation;
+	}
+
+	private static Boolean putAttrIsLivingInProhibitionZone(Person person, List<PreparedGeometry> carFreeGeoms) {
+		//person attribute
+		Activity homeAct = (Activity) person.getSelectedPlan().getPlanElements().get(0); //in Berlin, the first activity of each person is the home activity. Careful: this might not be the case in other scenarios!!
+		if (PopulationUtils.getSubpopulation(person).equals("person") && !homeAct.getType().startsWith("home")){
+			throw new IllegalArgumentException("first act of agent " + person.getId() + " is not home");
+		}
+		Boolean livesInProhibitionZone = ShpGeometryUtils.isCoordInPreparedGeometries(homeAct.getCoord(), carFreeGeoms) ? true : false;
+		PopulationUtils.putPersonAttribute(person, "livesInProhibitionZone", livesInProhibitionZone);
+		return livesInProhibitionZone;
+	}
+
+	private static Plan createPTOnlyPlan(Plan originalPlan, MainModeIdentifier mainModeIdentifier, PopulationFactory fac) {
 		Plan planCopy = fac.createPlan();
 		planCopy.setPerson(originalPlan.getPerson());
 		PopulationUtils.copyFromTo(originalPlan, planCopy); //important to copy first and than set the type, because in the copy method the type is included for copying...
 		planCopy.setType("ptOnly");
 
+		//beware: it might be that the person has multiple subtours and we only need to replace some of them.
+		// for example (home -> (work -> leisure -> work) -> home). with home being inside the prohibition zone and every other activity being outside
+		//even a bit more complicated: an agent might have (home -> (work -> leisure -> work) - other -> home)
+		//where, again, only home is inside the prohibition zone.
+		// In both cases, we can keep car for the work-leisure (so the inner) subtour, but not for the other part of the outer subtour (containing the inner one)
+		for(TripStructureUtils.Subtour subtour : TripStructureUtils.getSubtours(planCopy)){
 
-		if(enforceMassConservation){
-			//beware: it might be that the person has multiple subtours and we only need to replace some of them.
-			// for example (home -> (work -> leisure -> work) -> home). with home being inside the prohibition zone and every other activity being outside
-			//even a bit more complicated: an agent might have (home -> (work -> leisure -> work) - other -> home)
-			//where, again, only home is inside the prohibition zone.
-			// In both cases, we can keep car for the work-leisure (so the inner) subtour, but not for the other part of the outer subtour (containing the inner one)
-			for(TripStructureUtils.Subtour subtour : TripStructureUtils.getSubtours(planCopy)){
+			//if we find any trip that touches the prohibition zone within the exclusive trips of this subtour, we need to take action
+			boolean subtourTouchesProhibitionZoneWithCarOrRide = subtour.getTripsWithoutSubSubtours().stream()
+					//if the attribute was never set, the trip is neither with car nor ride
+					.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null &&
+							!trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
+					.findAny().isPresent();
 
-				//if we find any trip that touches the prohibition zone within the exclusive trips of this subtour, we need to take action
-				boolean subtourTouchesProhibitionZoneWithCarOrRide = subtour.getTripsWithoutSubSubtours().stream()
-						.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null && //if the attribute was never set, the trip is neither with car nor ride
-								!trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
-						.findAny().isPresent();
-
-				if(subtourTouchesProhibitionZoneWithCarOrRide){
-					if(!hasWarnedHardcodedChainMode){
-						log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
-						log.warn(Gbl.ONLYONCE);
-						hasWarnedHardcodedChainMode = true;
-					}
-					//if car is used, change all trips to pt
-					if(subtour.getTripsWithoutSubSubtours().stream()
-							.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
-							.findAny().isPresent()){
-						replaceTripsWithPtTrips(subtour.getTripsWithoutSubSubtours(), fac, planCopy);
-					} else {
-						//replace only the ride trips that touch the prohibition zone - with pt trips
-						List<TripStructureUtils.Trip> tripsToReplace = subtour.getTripsWithoutSubSubtours().stream()
-								.filter(trip -> (mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.ride) &&
-												! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
-										)
-								.collect(Collectors.toList());
-						replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
-					}
+			if(subtourTouchesProhibitionZoneWithCarOrRide){
+				if(!hasWarnedHardcodedChainMode){
+					log.warn("assuming (with hardcoding) that ride is considered as non-chain-based and car is chain-based");
+					log.warn(Gbl.ONLYONCE);
+					hasWarnedHardcodedChainMode = true;
+				}
+				//if car is used, change all trips to pt
+				if(subtour.getTripsWithoutSubSubtours().stream()
+						.filter(trip -> mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.car))
+						.findAny().isPresent()){
+					replaceTripsWithPtTrips(subtour.getTripsWithoutSubSubtours(), fac, planCopy);
+				} else {
+					//replace only the ride trips that touch the prohibition zone - with pt trips
+					List<TripStructureUtils.Trip> tripsToReplace = subtour.getTripsWithoutSubSubtours().stream()
+							.filter(trip -> (mainModeIdentifier.identifyMainMode(trip.getTripElements()).equals(TransportMode.ride) &&
+											! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
+									)
+							.collect(Collectors.toList());
+					replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
 				}
 			}
-		} else {
-			//we can just replace any trip that touches the prohibition zone with pt and do not have to take care of outer subtours
-			List<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(planCopy).stream()
-					.filter(trip -> (trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null) &&
-							(! trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip)) )
-					.collect(Collectors.toList());
-			replaceTripsWithPtTrips(tripsToReplace, fac, planCopy);
 		}
 
 		return planCopy;
@@ -531,9 +583,7 @@ class ReplaceCarByDRT {
 	}
 
 	enum PRStationChoice{
-		closestToOutSideActivity, closestToInsideActivity
+		closestToOutSideActivity, closestToInsideActivity, both
 	}
 
 }
-
-

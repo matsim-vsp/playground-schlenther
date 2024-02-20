@@ -1,0 +1,5 @@
+hideLeftBar: true
+fullWidth: true
+footer_en: footer.md
+footer_de: footer.md
+css: custom.css

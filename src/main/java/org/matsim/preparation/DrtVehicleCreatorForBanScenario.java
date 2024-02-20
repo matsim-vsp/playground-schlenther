@@ -17,7 +17,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.preparation;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Pair;
@@ -46,6 +46,7 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.prepare.drt.DrtVehicleCreator;
 import org.matsim.run.drt.BerlinShpUtils;
 import org.matsim.run.drt.RunDrtOpenBerlinScenario;
+import org.matsim.run.replaceCarByDRT.PRStation;
 
 import java.io.IOException;
 import java.net.URL;
@@ -60,7 +61,7 @@ import java.util.stream.Collectors;
  * @author  gleich
  *
  */
-public class DrtVehicleCreatorForBanScenario {
+class DrtVehicleCreatorForBanScenario {
 	private static final Logger log = Logger.getLogger(DrtVehicleCreator.class);
 
 	private final CoordinateTransformation ct;
@@ -78,17 +79,17 @@ public class DrtVehicleCreatorForBanScenario {
 
 		//in our case it the ban area and in the simulation the service area will actually differ (be bigger)
 		String drtServiceAreaShapeFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/2022-11-17-pr-stations.tsv");
+		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv");
 		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:31468");
 
-		float shareOfVehiclesAssignedToStations = 0.33f;
-		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
+		float shareOfVehiclesAssignedToStations = 1.0f;
+		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/vehicles-2023-08-11/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
 
 
 		Set<Integer> numbersOfVehicles = new HashSet<>();
-		numbersOfVehicles.add(500);
-		numbersOfVehicles.add(750);
-		numbersOfVehicles.add(1000);
+//		numbersOfVehicles.add(500);
+//		numbersOfVehicles.add(750);
+//		numbersOfVehicles.add(1000);
 		numbersOfVehicles.add(1500);
 		int seats = 8;
 
@@ -159,10 +160,10 @@ public class DrtVehicleCreatorForBanScenario {
 //	public final void setLinkWeightsByActivities(String populationFile, String facilitiesFile) {
 //		links2weights.clear(); // initial reset if already set before
 //		PopulationReader popReader = new PopulationReader(scenario);
-//		popReader.readFile(populationFile); //TODO: coord transformations
+//		popReader.readFile(populationFile); //coord transformations to do
 //		if (facilitiesFile != null && !facilitiesFile.equals("")) {
 //			MatsimFacilitiesReader facilitiesReader = new MatsimFacilitiesReader(scenario);
-//			facilitiesReader.readFile(facilitiesFile); //TODO: coord transformations
+//			facilitiesReader.readFile(facilitiesFile); // coord transformations to do
 //		}
 //
 //		Map<Id<Link>, Long> link2Occurences = scenario.getPopulation().getPersons().values().stream().

@@ -1,0 +1,89 @@
+header:
+  tab: "Noise"
+  title_en: "Spatial distribution of noise emissions"
+  title_de: "Räumliche Verteilung von Lärmemissionen"
+  description: "Lärmemissionen und -kosten"
+
+layout:
+  costs:
+    - type: 'topsheet'
+      props:
+        configFile: "topsheet-all-noise.yaml"
+
+  roadtypesAllowed-all:
+    - type: "links"
+      title: "roadtypesAllowed-all"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/roadtypesAllowed-all.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                scaleFactor: 0.1
+
+  roadtypesAllowed-motorway:
+    - type: "links"
+      title: "roadtypesAllowed-motorway"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/roadtypesAllowed-motorway.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                scaleFactor: 0.1
+  
+  noDRT:
+    - type: "links"
+      title: "noDRT"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/noDRT/noDRT.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/noDRT/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "damages_receiverPoint"
+                scaleFactor: 0.1

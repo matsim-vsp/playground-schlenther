@@ -1,4 +1,4 @@
-package org.matsim.run.replaceCarByDRT;
+package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.ShutdownListener;
+import org.matsim.run.replaceCarByDRT.PRStation;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -25,7 +26,7 @@ import java.util.*;
  * vehicles are assumed to be parked or picked up at P+R stations depending on whether the routing mode before/after
  * the P+R activity was TransportMode.car or not.
  */
-class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler, ShutdownListener {
+public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDepartureEventHandler, ShutdownListener {
 
     private HashMap<PRStation, MutableInt> activitiesPerPRStation = new HashMap<>();
 
@@ -54,82 +55,82 @@ class PrActivityEventHandler implements ActivityEndEventHandler, PersonDeparture
 
         this.person2LastRoutingMode.put(event.getPersonId(), event.getRoutingMode());
 
-            //checks if person could be a rider after a station
-            if(this.possibleRiders.containsKey(event.getPersonId())){
+        //checks if person could be a rider after a station
+        if(this.possibleRiders.containsKey(event.getPersonId())){
 
-                if(event.getRoutingMode().equals(TransportMode.ride)){
-                    //person uses ride after the station. All changes need to be undone.
-                    this.activitiesPerPRStation.get(possibleRiders.get(event.getPersonId()).getKey()).decrement();
-                    this.station2Users.remove(event.getPersonId());
-                    for (int i = possibleRiders.get(event.getPersonId()).getValue() - 1; i >= 0; i--) {
-                        carsInPrStationPerMinute.get(possibleRiders.get(event.getPersonId()).getKey())[i] --;
-                    }
-
-                    this.possibleRiders.remove(event.getPersonId());
-
-                } else {
-                    //person does not use ride after the station
-                    this.possibleRiders.remove(event.getPersonId());
+            if(event.getRoutingMode().equals(TransportMode.ride)){
+                //person uses ride after the station. All changes need to be undone.
+                this.activitiesPerPRStation.get(possibleRiders.get(event.getPersonId()).getKey()).decrement();
+                this.station2Users.remove(event.getPersonId());
+                for (int i = possibleRiders.get(event.getPersonId()).getValue() - 1; i >= 0; i--) {
+                    carsInPrStationPerMinute.get(possibleRiders.get(event.getPersonId()).getKey())[i] --;
                 }
+
+                this.possibleRiders.remove(event.getPersonId());
+
+            } else {
+                //person does not use ride after the station
+                this.possibleRiders.remove(event.getPersonId());
             }
+        }
     }
 
     @Override
     public void handleEvent(ActivityEndEvent event) {
-           if(event.getActType().equals("P+R")){
+        if(event.getActType().equals("P+R")){
 
-               this.prActivityEndEvents.add(event);
+            this.prActivityEndEvents.add(event);
 
-                int endMinute = (int) Math.floor(event.getTime() / 60);
+            int endMinute = (int) Math.floor(event.getTime() / 60);
 
-                //determine which station
-                PRStation prStation = getPRStationWithCoord(event.getCoord());
-                if(prStation == null){
-                    throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
-                }
+            //determine which station
+            PRStation prStation = getPRStationWithCoord(event.getCoord());
+            if(prStation == null){
+                throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
+            }
 
-                // agents who ride to the station get skipped
-               String lastRoutingMode = person2LastRoutingMode.get(event.getPersonId());
-                if(!lastRoutingMode.equals(TransportMode.ride)){
+            // agents who ride to the station get skipped
+            String lastRoutingMode = person2LastRoutingMode.get(event.getPersonId());
+            if(!lastRoutingMode.equals(TransportMode.ride)){
 
-                    //determine whether vehicle is about to be parked or to be picked up
-                    if(lastRoutingMode.equals(TransportMode.car)){
-                        //person arrives with a car, thus car is now about to get parked
-                        for (int i = endMinute; i < 36*60; i++) {
+                //determine whether vehicle is about to be parked or to be picked up
+                if(lastRoutingMode.equals(TransportMode.car)){
+                    //person arrives with a car, thus car is now about to get parked
+                    for (int i = endMinute; i < 36*60; i++) {
+                        carsInPrStationPerMinute.get(prStation)[i] ++;
+                    }
+
+                    //person now gets tracked that car is at this station
+                    this.station2Users.get(prStation).add(event.getPersonId());
+
+                } else {
+
+                    //vehicle is picked up
+                    if(this.station2Users.get(prStation).contains(event.getPersonId())) {
+                        for (int i = endMinute; i < 36 * 60; i++) {
+                            carsInPrStationPerMinute.get(prStation)[i]--;
+                        }
+
+                        //person now gets removed that car is not at this station anymore
+                        this.station2Users.get(prStation).remove(event.getPersonId());
+
+                    } else {
+                        // Case 1: person was not tracked at this station before (even though we pick up the car)
+                        // -> we are tracking a resident of the ban area and have to add the car for all previous time bins
+                        for (int i = endMinute - 1; i >= 0; i--) {
                             carsInPrStationPerMinute.get(prStation)[i] ++;
                         }
 
                         //person now gets tracked that car is at this station
                         this.station2Users.get(prStation).add(event.getPersonId());
 
-                    } else {
-
-                        //vehicle is picked up
-                        if(this.station2Users.get(prStation).contains(event.getPersonId())) {
-                            for (int i = endMinute; i < 36 * 60; i++) {
-                                carsInPrStationPerMinute.get(prStation)[i]--;
-                            }
-
-                            //person now gets removed that car is not at this station anymore
-                            this.station2Users.get(prStation).remove(event.getPersonId());
-
-                        } else {
-                            // Case 1: person was not tracked at this station before (even though we pick up the car)
-                            // -> we are tracking a resident of the ban area and have to add the car for all previous time bins
-                            for (int i = endMinute - 1; i >= 0; i--) {
-                                carsInPrStationPerMinute.get(prStation)[i] ++;
-                            }
-
-                            //person now gets tracked that car is at this station
-                            this.station2Users.get(prStation).add(event.getPersonId());
-
-                            // Case 2: person uses mode ride after the station. Gets handled in first personDepartureEvent of the person after the station
-                            this.possibleRiders.put(event.getPersonId(), Map.entry(prStation,endMinute));
-                        }
+                        // Case 2: person uses mode ride after the station. Gets handled in first personDepartureEvent of the person after the station
+                        this.possibleRiders.put(event.getPersonId(), Map.entry(prStation,endMinute));
                     }
-                    this.activitiesPerPRStation.get(prStation).increment();
                 }
-           }
+                this.activitiesPerPRStation.get(prStation).increment();
+            }
+        }
     }
 
     @Nullable

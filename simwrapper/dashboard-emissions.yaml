@@ -1,0 +1,104 @@
+header:
+  tab: "Emissions"
+  title_en: "Spatial distribution of air pollutants"
+  title_de: "Räumliche Verteilung von Luftschadstoffen"
+  description: "Emissionen und Kosten ausgewählter Luftschadstoffe"
+
+layout:
+  costs:
+    - type: 'topsheet'
+      props:
+        configFile: "topsheet-all-emissions.yaml"
+
+  roadtypesAllowed-all:
+    - type: "links"
+      title: "roadtypesAllowed-all"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/roadtypesAllowed-all.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/airPollution/berlin-v5.5-10pct.emissionsPerLink.csv'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                scaleFactor: 20000
+    - title: "Emission cost"
+      description: ""
+      type: 'topsheet'
+      props:
+        configFile: "topsheet-roadtypesAllowed-all-emissions.yaml"
+
+  roadtypesAllowed-motorway:
+    - type: "links"
+      title: "roadtypesAllowed-motorway"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/roadtypesAllowed-motorway.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/airPollution/roadtypesAllowed-motorway.emissionsPerLink.csv'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/airPollution/berlin-v5.5-10pct.emissionsPerLink.csv'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                scaleFactor: 20000
+    - title: "Emission cost"
+      description: ""
+      type: 'topsheet'
+      props:
+        configFile: "topsheet-roadtypesAllowed-motorway-emissions.yaml"
+
+  noDRT:
+    - type: "links"
+      title: "noDRT"
+      description: ""
+      width: 2
+      height: 8
+      props:
+        network: 'scenarios/output/runs-2023-09-01/10pct/noDRT/noDRT.output_network.xml.gz'
+        projection: EPSG:31468
+        showDifferences: true
+        sampleRate: 10
+        datasets:
+            csvFile: 'scenarios/output/runs-2023-09-01/10pct/noDRT/analysis/airPollution/noDRT.emissionsPerLink.csv'
+            csvBase: 'scenarios/output/baseCaseContinued-10pct/analysis/airPollution/berlin-v5.5-10pct.emissionsPerLink.csv'
+        display:
+            color:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                colorRamp:
+                    ramp: Viridis
+                    steps: 9
+            width:
+                dataset: csvFile
+                columnName: "CO2_TOTAL"
+                scaleFactor: 20000
+    - title: "Emission cost"
+      description: ""
+      type: 'topsheet'
+      props:
+        configFile: "topsheet-noDRT-emissions.yaml"

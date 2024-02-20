@@ -97,18 +97,30 @@ final class ReplaceCarByDRT {
 	/**
 	 * Multiple side effects!! <br>
 	 * Sets a plan type for all plans. <br>
-	 * Plans that use car and touch the prohibitoin zone provided by {@code url2CarFreeSingleGeomShapeFile} are mutated and copied. <br>
+	 * Plans that use car and touch the prohibition zone provided by {@code url2CarFreeSingleGeomShapeFile} are mutated and copied. <br>
 	 * Those plans are mutated such that agents use a P+R logic instead, meaning they drive to/from P+R stations provided in {@code url2PRStations} with car and choose one of {@code replacingModes} inside the prohibition area. <br>
-	 * Creates one copy of each P+R plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
-	 * So if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 2 plans, one of type 'drt' and one of type 'pt'. That means, the original plan is thrown away.
-	 *
+	 * Creates two copies of each P+R plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
+	 * Each of these copies represents another choice logic for the PR stations (1x PRStationChoice.closestToInside + 1x PRStationChoice.closestToInside), <br>
+	 * meaning that in one plan the agent chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>inside</i> the prohibition zone and <br>
+	 * in the other plan it chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>outside</i> the prohibition zone.<br>
 	 * Additionally, another plan is added where the agent does not use P+R logic but just uses pt for all trips in all subtours that touched the prohibition zone with car, <br>
-	 * or for all trips that used ride inside the prohibition zone (possible in combination with other modes in the same subtour).
+	 * or for all trips that used ride inside the prohibition zone (possible in combination with other modes in the same subtour).<br>
+	 * So if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 4-5 plans:
+	 * <ul>
+	 *    <li>two where the type contains 'drt'</li>
+	 *    <li>two where the type contains 'pt'</li>
+	 *    <li>one where the type is 'ptOnly', <i>if</i> the original plan has bordercrossing trips</li>
+	 * </ul>
+	 *
+	 *
+	 *
 	 * @param scenario
+	 * @param modesToBeReplaced modes that forbidden in {@code url2CarFreeSingleGeomShapeFile}
 	 * @param replacingModes
 	 * @param url2CarFreeSingleGeomShapeFile
 	 * @param url2PRStations
 	 * @param mainModeIdentifier
+	 * @param kPrStations defines the choice set size for P+R station selection. Will always consider the closest stations.
 	 */
 
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
@@ -116,7 +128,8 @@ final class ReplaceCarByDRT {
 															  Set<String> replacingModes,
 															  URL url2CarFreeSingleGeomShapeFile,
 															  URL url2PRStations,
-															  MainModeIdentifier mainModeIdentifier){
+															  MainModeIdentifier mainModeIdentifier,
+															  int kPrStations){
 
 		// First check whether we can properly interpret the shape file.
 		// If it contained more than one geom, we would have to make other queries on order to alter only inner trips (i.e. not use ShpGeometryUtils)
@@ -129,9 +142,10 @@ final class ReplaceCarByDRT {
 
 		log.info("start modifying input plans....");
 
-		log.info("currently PR Station Choice is hardcoded to 'both' !");
+		log.info("currently PR Station Choice is hardcoded to 'both' ! ");
+		// in Lorenz' thesis we saw that this significantly increases scores by improving border-crossing trips (making them shorter)
+		// but it slightly worsens inner trips
 		PRStationChoice prStationChoice = PRStationChoice.both;
-
 
 		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
 
@@ -184,10 +198,10 @@ final class ReplaceCarByDRT {
 				}
 
 					if(prStationChoice.equals(PRStationChoice.both)){
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToInsideActivity, prStations, rnd));
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToOutSideActivity, prStations, rnd));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToInsideActivity, prStations, rnd, kPrStations));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToOutSideActivity, prStations, rnd, kPrStations));
 					} else {
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, prStationChoice, prStations, rnd));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, prStationChoice, prStations, rnd, kPrStations));
 					}
 
 			}
@@ -215,9 +229,9 @@ final class ReplaceCarByDRT {
 													  Boolean livesInProhibitionZone,
 													  PRStationChoice prStationChoice,
 													  Set<PRStation> prStations,
-													  Random rnd) {
+													  Random rnd, int kPrStations) {
 
-
+		long countBordingCrossingCarTrips = nrOfBorderCrossingCarTrips;
 		Set<Plan> planCopies = new HashSet<>();
 		PopulationFactory fac = scenario.getPopulation().getFactory();
 		MutableInt replacedTrips = new MutableInt();
@@ -231,8 +245,7 @@ final class ReplaceCarByDRT {
 		PopulationUtils.copyFromTo(originalPlan, plan); //important to copy first and then set the type, because in the copy method the type is included for copying...
 		planCopies.add(plan);
 
-		// Assuming that agents will choose a random PrStation out of the closest 3 PrStations (depending on the prStationChoice strategy)
-		int kPrStations = 3;
+
 		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
 
 
@@ -242,10 +255,9 @@ final class ReplaceCarByDRT {
 		//we use this as 'iteration variable'
 		PRStation currentCarPRStation = null;
 
-		//collect all trips to replace
-		Set<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(plan).stream()
+		List<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(plan).stream()
 				.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null)
-				.collect(Collectors.toSet());
+				.collect(Collectors.toList());
 
 		for (TripStructureUtils.Trip trip : tripsToReplace) {
 			TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
@@ -266,9 +278,9 @@ final class ReplaceCarByDRT {
 				newTrip = List.of(l1);
 			} else if(tripType.equals(TripType.originatingTrip)) {
 				if(mainMode.equals(TransportMode.car)){
-					nrOfBorderCrossingCarTrips --;
+					countBordingCrossingCarTrips --;
 					//some consistency (mass conservation) checks
-					if(nrOfBorderCrossingCarTrips == 0 && livesInProhibitionZone){
+					if(countBordingCrossingCarTrips == 0 && livesInProhibitionZone){
 						throw new IllegalStateException("agent " + plan.getPerson().getId() + "lives inside but travels outside the border with car without returning with a prohibited mode.\n" +
 								"trip = " + trip);
 					}
@@ -303,8 +315,8 @@ final class ReplaceCarByDRT {
 
 			} else if (tripType.equals(TripType.endingTrip)) {
 				if(mainMode.equals(TransportMode.car)){
-					nrOfBorderCrossingCarTrips --;
-					if(nrOfBorderCrossingCarTrips == 0){
+					countBordingCrossingCarTrips --;
+					if(countBordingCrossingCarTrips == 0){
 						//some consistency (mass conservation) checks
 						if(!livesInProhibitionZone){
 							throw new IllegalStateException("agent " + plan.getPerson().getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
@@ -403,7 +415,8 @@ final class ReplaceCarByDRT {
 
 			//if we find any trip that touches the prohibition zone within the exclusive trips of this subtour, we need to take action
 			boolean subtourTouchesProhibitionZoneWithCarOrRide = subtour.getTripsWithoutSubSubtours().stream()
-					.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null && //if the attribute was never set, the trip is neither with car nor ride
+					//if the attribute was never set, the trip is neither with car nor ride
+					.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null &&
 							!trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY).equals(TripType.outsideTrip))
 					.findAny().isPresent();
 

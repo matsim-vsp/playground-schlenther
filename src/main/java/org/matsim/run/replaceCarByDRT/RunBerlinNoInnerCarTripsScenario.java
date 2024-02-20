@@ -289,12 +289,17 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
 
 		// replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
+
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
 				REPLACING_MODES,
 				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
 				URL_2_PR_STATIONS,
-				mainModeIdentifier
+				mainModeIdentifier,
+				//choose among the 3 closest P+R stations
+				//in Lorenz' thesis we saw that this significantly reduces overloading single stations
+				//more specifically, the maximum of all peak demands per stations reduced by 30%
+				3
 		);
 
 		return scenario;

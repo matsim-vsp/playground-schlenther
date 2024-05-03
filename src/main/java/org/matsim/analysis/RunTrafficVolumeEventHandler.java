@@ -1,7 +1,6 @@
 package org.matsim.analysis;
 
 import com.opencsv.CSVWriter;
-import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -25,8 +24,6 @@ public class RunTrafficVolumeEventHandler {
     private final String runId;
     private final String inner_city_shp;
     private final String berlin_shp;
-
-    private static final Logger log = Logger.getLogger(RunTripsPreparation.class);
 
     public RunTrafficVolumeEventHandler(String runDirectory, String runId, String inner_city_shp, String berlin_shp, String boundary_shp){
         this.runDirectory = runDirectory;

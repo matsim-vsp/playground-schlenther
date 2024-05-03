@@ -21,8 +21,8 @@
 package org.matsim.run.replaceCarByDRT;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.analysis.PrActivityEventHandler;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
@@ -33,18 +33,18 @@ import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.StrategyConfigGroup;
+import org.matsim.core.config.groups.ReplanningConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
-import org.matsim.run.BerlinExperimentalConfigGroup;
-import org.matsim.run.RunBerlinScenario;
-import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
-import org.matsim.run.drt.RunDrtOpenBerlinScenario;
+import org.matsim.legacy.run.BerlinExperimentalConfigGroup;
+import org.matsim.legacy.run.RunBerlinScenario;
+import org.matsim.legacy.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
+import org.matsim.legacy.run.drt.RunDrtOpenBerlinScenario;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -62,7 +62,7 @@ import java.util.*;
 //@CommandLine.Command( header = ":: MyScenario ::", version = "1.0")
 public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
-	private static final Logger log = Logger.getLogger(RunBerlinNoInnerCarTripsScenario.class);
+	private static final Logger log = LogManager.getLogger(RunBerlinNoInnerCarTripsScenario.class);
 	private static Set<String> REPLACING_MODES;
 
 	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
@@ -71,6 +71,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 
+	//TODO this still calls the berlin v5.x methods
 	public static void main(String[] args) throws MalformedURLException {
 
 		String[] configArgs;
@@ -134,17 +135,17 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Config config = RunDrtOpenBerlinScenario.prepareConfig(args, customModules);
 		disableModeChoiceAndDistributeStrategyWeights(config);
 
-		PlanCalcScoreConfigGroup.ActivityParams actParams = new PlanCalcScoreConfigGroup.ActivityParams(ReplaceCarByDRT.PR_ACTIVITY_TYPE);
+		ScoringConfigGroup.ActivityParams actParams = new ScoringConfigGroup.ActivityParams(ReplaceCarByDRT.PR_ACTIVITY_TYPE);
 		actParams.setScoringThisActivityAtAll(false);
-		config.planCalcScore().addActivityParams(actParams);
+		config.scoring().addActivityParams(actParams);
 
 		//for the time being, assume one drt mode only
 		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
 		DvrpConfigGroup dvrpConfigGroup = DvrpConfigGroup.get(config);
 		IntermodalTripFareCompensatorsConfigGroup compensatorsConfig = ConfigUtils.addOrGetModule(config, IntermodalTripFareCompensatorsConfigGroup.class);
 
-		PlanCalcScoreConfigGroup.ModeParams ptParams = config.planCalcScore().getModes().get(TransportMode.pt);
-		PlanCalcScoreConfigGroup.ModeParams drtParams = config.planCalcScore().getModes().get(drtCfg.getMode());
+		ScoringConfigGroup.ModeParams ptParams = config.scoring().getModes().get(TransportMode.pt);
+		ScoringConfigGroup.ModeParams drtParams = config.scoring().getModes().get(drtCfg.getMode());
 		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
 				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
 
@@ -164,12 +165,12 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	private static void disableModeChoiceAndDistributeStrategyWeights(Config config) {
 		//disable mode choice strategies
-		Collection<StrategyConfigGroup.StrategySettings> strategySettings = config.strategy().getStrategySettings();
-		List<StrategyConfigGroup.StrategySettings> rerouteSettings = new ArrayList<>();
-		StrategyConfigGroup.StrategySettings selector = null;
+		Collection<ReplanningConfigGroup.StrategySettings> strategySettings = config.replanning().getStrategySettings();
+		List<ReplanningConfigGroup.StrategySettings> rerouteSettings = new ArrayList<>();
+		ReplanningConfigGroup.StrategySettings selector = null;
 
 		double totalOldWeightModeChoiceStrategies = 0;
-		for (StrategyConfigGroup.StrategySettings strategySetting : strategySettings) {
+		for (ReplanningConfigGroup.StrategySettings strategySetting : strategySettings) {
 			if(strategySetting.getSubpopulation().equals("person")){
 				switch (strategySetting.getStrategyName()){
 					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleTripMode :
@@ -203,45 +204,42 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 					"Please consider to decrease the number of iterations! Probably, you will not require as many iterations now, as mode choice gets disabled...");
 			if(rerouteSettings.isEmpty()) throw new IllegalArgumentException("you have not configured any reroute strategy");
 			selector.setWeight(selector.getWeight() + 0.5 * totalOldWeightModeChoiceStrategies );
-			for (StrategyConfigGroup.StrategySettings rerouteSetting : rerouteSettings) {
+			for (ReplanningConfigGroup.StrategySettings rerouteSetting : rerouteSettings) {
 				rerouteSetting.setWeight(rerouteSetting.getWeight() + 0.5/rerouteSettings.size()*totalOldWeightModeChoiceStrategies);
 			}
 		}
 	}
 
 	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig) {
-		if(! dvrpConfigGroup.getNetworkModes().contains(drtConfigGroup.getMode()) ){
+		if(! dvrpConfigGroup.networkModes.contains(drtConfigGroup.getMode()) ){
 			log.warn("the drt mode " + drtConfigGroup.getMode() + " is not registered as network mode for dvrp - which is necessary in a bannedCarInDRTServiceArea scenario");
 			log.warn("adding mode " + drtConfigGroup.getMode() + " as network mode for dvrp... ");
-			dvrpConfigGroup.setNetworkModes(ImmutableSet.<String>builder()
-					.addAll(dvrpConfigGroup.getNetworkModes())
-					.add(drtConfigGroup.getMode())
-					.build());
+			dvrpConfigGroup.networkModes.add(drtConfigGroup.getMode());
 		}
 
 		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
 				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
 
 		// Setting operational scheme to stop based
-		drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.stopbased);
-		drtConfigGroup.setTransitStopFile(String.valueOf(URL_2_DRT_STOPS));
+		drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;
+		drtConfigGroup.transitStopFile = String.valueOf(URL_2_DRT_STOPS);
 		log.warn("you are now using a stop based operational scheme for drt! This is still under development.");
-		Preconditions.checkNotNull(drtConfigGroup.getTransitStopFile(),
+		Preconditions.checkNotNull(drtConfigGroup.transitStopFile,
 				"this scenario currently only works with a specified stopFile for drt!");
 
-		if(! drtConfigGroup.isUseModeFilteredSubnetwork()){
+		if(! drtConfigGroup.useModeFilteredSubnetwork){
 			log.warn("setting drtConfigGroup.isUseModeFilteredSubnetwork() to true! Was false before......");
-			drtConfigGroup.setUseModeFilteredSubnetwork(true);
+			drtConfigGroup.useModeFilteredSubnetwork = true;
 		}
 
 		if( drtConfigGroup.getDrtFareParams().isPresent()){
 			log.warn("you are using " + DrtFareParams.SET_NAME + "params. Will now override all fare values therein to 0, because we assume pt and drt fare integration. In Berlin, this is modeled via dailyMonetaryConstant.");
 			DrtFareParams fares = drtConfigGroup.getDrtFareParams().get();
-			fares.setBaseFare(0);
-			fares.setTimeFare_h(0);
-			fares.setDailySubscriptionFee(0);
-			fares.setDistanceFare_m(0);
-			fares.setMinFarePerTrip(0);
+			fares.baseFare = 0;
+			fares.timeFare_h = 0;
+			fares.dailySubscriptionFee = 0;
+			fares.distanceFare_m = 0;
+			fares.minFarePerTrip = 0;
 		}
 
 		if(compensatorsConfig.getIntermodalTripFareCompensatorConfigGroups().size() > 0){

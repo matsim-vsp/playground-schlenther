@@ -1,6 +1,7 @@
 package org.matsim.analysis;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.noise.MergeNoiseCSVFile;
 import org.matsim.contrib.noise.NoiseConfigGroup;
@@ -9,6 +10,8 @@ import org.matsim.contrib.noise.ProcessNoiseImmissions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.legacy.analysis.RunOfflineNoiseAnalysis;
+
 
 /**
  * This method is mostly a copy from the Open Berlin Scenario.
@@ -16,7 +19,7 @@ import org.matsim.core.scenario.ScenarioUtils;
  */
 
 public class BerlinRunOfflineNoiseAnalysis {
-    private static final Logger log = Logger.getLogger(RunOfflineNoiseAnalysis.class);
+    private static final Logger log = LogManager.getLogger(RunOfflineNoiseAnalysis.class);
     private static String runDirectory;
     private static String runId;
     private static String analysisOutputDirectory;
@@ -55,8 +58,8 @@ public class BerlinRunOfflineNoiseAnalysis {
         config.global().setCoordinateSystem("EPSG:31468");
         config.network().setInputFile(runDirectory + runId + ".output_network.xml.gz");
         config.plans().setInputFile(runDirectory + runId + ".output_plans.xml.gz");
-        config.controler().setOutputDirectory(runDirectory);
-        config.controler().setRunId(runId);
+        config.controller().setOutputDirectory(runDirectory);
+        config.controller().setRunId(runId);
         NoiseConfigGroup noiseParameters = (NoiseConfigGroup)config.getModules().get("noise");
         noiseParameters.setReceiverPointGap(receiverPointGap);
         double xMin = 4573258.0D;

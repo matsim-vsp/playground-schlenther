@@ -22,7 +22,8 @@ package org.matsim.run.replaceCarByDRT;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -39,7 +40,7 @@ public final class PRStation {
 	private final String name;
 	private Id<Link> linkId;
 	private final Coord coord;
-	private static final Logger LOG = Logger.getLogger(PRStation.class);
+	private static final Logger LOG = LogManager.getLogger(PRStation.class);
 
 	private PRStation(String name, Id<Link> linkId, Coord coord) {
 		this.name = name;

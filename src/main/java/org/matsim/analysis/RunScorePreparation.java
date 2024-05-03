@@ -7,7 +7,7 @@ import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
+import org.matsim.legacy.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 

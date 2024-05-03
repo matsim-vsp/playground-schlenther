@@ -1,6 +1,5 @@
 package org.matsim.analysis;
 
-import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
@@ -13,8 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TrafficVolumeEventHandler implements LinkEnterEventHandler, VehicleEntersTrafficEventHandler {
-
-    private static final Logger log = Logger.getLogger(TrafficVolumeEventHandler.class);
 
     private Map<Id<Link>, Integer> DTVPerLink_Total = new HashMap<>();
     private Map<Id<Link>, Integer> DTVPerLink_DRT = new HashMap<>();

@@ -29,7 +29,6 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.MatsimXmlWriter;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
@@ -69,7 +68,7 @@ public final class DrtStopsWriter extends MatsimXmlWriter {
 	/**
 	 * Write content to specified folder.
 	 */
-	public void write(String outputFile) throws UncheckedIOException, IOException {
+	public void write(String outputFile) throws IOException {
 		this.openFile(outputFile);
 		this.writeXmlHead();
 		this.writeDoctype("transitSchedule", "http://www.matsim.org/files/dtd/transitSchedule_v1.dtd");

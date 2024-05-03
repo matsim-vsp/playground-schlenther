@@ -21,7 +21,8 @@ package org.matsim.preparation;
 
 import com.opencsv.CSVWriter;
 import org.apache.commons.math3.util.Pair;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -43,9 +44,9 @@ import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.prepare.drt.DrtVehicleCreator;
-import org.matsim.run.drt.BerlinShpUtils;
-import org.matsim.run.drt.RunDrtOpenBerlinScenario;
+import org.matsim.legacy.prepare.drt.DrtVehicleCreator;
+import org.matsim.legacy.run.drt.BerlinShpUtils;
+import org.matsim.legacy.run.drt.RunDrtOpenBerlinScenario;
 import org.matsim.run.replaceCarByDRT.PRStation;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ import java.util.stream.Collectors;
  *
  */
 class DrtVehicleCreatorForBanScenario {
-	private static final Logger log = Logger.getLogger(DrtVehicleCreator.class);
+	private static final Logger log = LogManager.getLogger(DrtVehicleCreator.class);
 
 	private final CoordinateTransformation ct;
 

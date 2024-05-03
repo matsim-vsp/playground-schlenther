@@ -1,19 +1,15 @@
 package org.matsim.analysis;
 
-import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.accidents.AccidentsConfigGroup;
 import org.matsim.contrib.accidents.AccidentsModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.ControlerUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
-import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.run.RunBerlinScenario;
+import org.matsim.legacy.run.RunBerlinScenario;
 import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 
-import javax.management.RuntimeErrorException;
 
 /**
  *
@@ -131,14 +127,15 @@ public class BerlinRunOnlineAccidents {
             configArgs = RunBerlinNoInnerCarTripsScenario.prepareConfigArguments(preparationArgs);
             config = RunBerlinNoInnerCarTripsScenario.prepareConfig(configArgs);
         } else if (runType.equals("base")) {
+            //TODO this still calls the berlin v5.x methods
             config = RunBerlinScenario.prepareConfig(new String[]{outputConfigName});
         } else {
             config = RunBerlinScenario.prepareConfig(new String[]{outputConfigName});
         }
 
-        config.controler().setOutputDirectory(analysisOutputDirectory);
-        config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controler().setLastIteration(0);
+        config.controller().setOutputDirectory(analysisOutputDirectory);
+        config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+        config.controller().setLastIteration(0);
         config.plans().setInputFile(plans);
 
         AccidentsConfigGroup accidentsSettings = ConfigUtils.addOrGetModule(config, AccidentsConfigGroup.class);

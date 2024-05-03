@@ -22,12 +22,13 @@ package org.matsim.analysis;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.analysis.emissions.EmissionsOnLinkHandler;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.application.MATSimAppCommand;
-import org.matsim.contrib.emissions.*;
+import org.matsim.contrib.emissions.EmissionModule;
+import org.matsim.contrib.emissions.HbefaVehicleCategory;
+import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -39,7 +40,11 @@ import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.vehicles.*;
+import org.matsim.legacy.analysis.emissions.EmissionsOnLinkHandler;
+import org.matsim.vehicles.EngineInformation;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 import picocli.CommandLine;
 
 import java.io.BufferedWriter;
@@ -47,7 +52,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -175,8 +183,8 @@ class BerlinOfflineAirPollutionAnalysisByEngineInformation implements MATSimAppC
         config.transit().setVehiclesFile( runDirectory + runId + ".output_transitVehicles.xml.gz");
         config.global().setCoordinateSystem("EPSG:31468");
         config.plans().setInputFile(null);
-        config.parallelEventHandling().setNumberOfThreads(null);
-        config.parallelEventHandling().setEstimatedNumberOfEvents(null);
+        config.eventsManager().setNumberOfThreads(null);
+        config.eventsManager().setEstimatedNumberOfEvents(null);
         config.global().setNumberOfThreads(1);
 
         EmissionsConfigGroup eConfig = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);

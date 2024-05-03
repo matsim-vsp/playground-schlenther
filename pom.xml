@@ -11,7 +11,8 @@
 
 	<properties>
 		<!-- release -->
-		<matsim.version>14.0</matsim.version>
+		<matsim.version>16.0-PR3172</matsim.version>
+		<berlin.version>6.1</berlin.version> <!--matsim-berlin. this version uses MATSim 16.0-PR3172 -->
 
 		<!-- PR (= pull request) release -->
 		<!--		<matsim.version>13.1-PR1536</matsim.version> -->
@@ -108,7 +109,7 @@
 		<dependency>
 			<groupId>com.github.matsim-scenarios</groupId>
 			<artifactId>matsim-berlin</artifactId>
-			<version>ef46f45282</version> <!--matsim-berlin. this version uses also MATSim 14.0  it was built 2022-05-18 15:00:07 -->
+			<version>${berlin.version}</version>
 		</dependency>
 
 	</dependencies>

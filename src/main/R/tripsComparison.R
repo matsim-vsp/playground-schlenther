@@ -33,7 +33,7 @@ library(ggalluvial)
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
 # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
 
-
+# read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
 policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -59,7 +59,7 @@ dir.create(paste0(policyCaseDirectory,"/analysis/trips"))
 policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 
 ########################################
-# Filter out all agents with scoreDiff > -400
+# Filter out all agents with scoreDiff > -400 (those are 3 persons in the roadTypes_all case)
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)

@@ -40,10 +40,10 @@ readTripsTable <- function (input_path = ".", n_max = Inf)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-#input_path <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-05-26/extraPtPlan-false/drtStopBased-false/massConservation-true/"
-input_path <- args[1]
+input_path <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
+#input_path <- args[1]
 policyTripsPrep <- readTripsTable(input_path)
-output_filename <- "output_trips_prepared.tsv"
+output_filename <- "output_trips_prepared_debugged.tsv"
 output_path <- file.path(input_path, output_filename)
 prStations_path <- args[2]
 
@@ -53,8 +53,8 @@ print(prStations_path)
 
 policyTripsPrep$prStation <- ""
 
-#prStations <- read.table(file = "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
-prStations <- read.table(file = prStations_path, sep = "\t", header = TRUE)
+prStations <- read.table(file = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
+#prStations <- read.table(file = prStations_path, sep = "\t", header = TRUE)
 
 for(i in 1:nrow(prStations)) {
   print(prStations[i,"name"])
@@ -80,29 +80,32 @@ for(i in 1:nrow(policyTripsPrep)) {
         }
       }
     }
-    
+
+    ## das übernimmt die attribute vom nachfolgenden trip - vermeintlich zweite Hälfte des P+R (impacted) trips
     policyTripsPrep[i, "end_activity_type"] <- policyTripsPrep[i+1, "end_activity_type"]
     policyTripsPrep[i, "end_facility_id"] <- policyTripsPrep[i+1, "end_facility_id"]
     policyTripsPrep[i, "end_link"] <- policyTripsPrep[i+1, "end_link"]
     policyTripsPrep[i, "end_x"] <- policyTripsPrep[i+1, "end_x"]
     policyTripsPrep[i, "end_y"] <- policyTripsPrep[i+1, "end_y"]
     policyTripsPrep[i, "last_pt_egress_stop"] <- policyTripsPrep[i+1, "last_pt_egress_stop"]
-    
+
+    ### reduziere trip number der nachfolgenden einträge
     j <- i+2
-    
-    while(j < 1000000){
-      if(policyTripsPrep[j, "trip_number"] != 1){
+    #gehe alle Trips dieses Agenten durch
+    #und reduziere die trip_number um 1, da wir oben ja einen trip in einen anderen gemerged haben. (i und i+1)
+    while(policyTripsPrep[i,"person"] == policyTripsPrep[j,"person"]){
         policyTripsPrep[j, "trip_number"] <- policyTripsPrep[j,"trip_number"] - 1
         j <- j+1
-      } else {
-        j <- 1000000
-      }
     }
   }
   policyTripsPrep[i,"trip_id"] <- paste(as.character(policyTripsPrep[i,"person"]), as.character(policyTripsPrep[i,"trip_number"]), sep = "_")
-  print(i)
+  if(i %% 1000 == 0){
+    print(paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"), " aktuelle Zeile = ",i, sep = "   "))
+    
+  }
 }
 
+#merge main_mode fuer hin und rueckrichtung
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+car"] <- "car+pt"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt_w_drt_used+car"] <- "car+pt_w_drt_used"
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "walk+car"] <- "car+walk"

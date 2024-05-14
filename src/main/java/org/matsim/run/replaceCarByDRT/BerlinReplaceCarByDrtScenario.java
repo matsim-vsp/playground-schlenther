@@ -20,6 +20,8 @@
 
 package org.matsim.run.replaceCarByDRT;
 
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,9 +29,17 @@ import org.matsim.analysis.PrActivityEventHandler;
 import org.matsim.analysis.personMoney.PersonMoneyEventsAnalysisModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.drt.fare.DrtFareParams;
+import org.matsim.contrib.drt.routing.DrtRoute;
+import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.DrtConfigs;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
+import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
@@ -37,17 +47,26 @@ import org.matsim.core.config.groups.ReplanningConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.population.routes.RouteFactories;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.legacy.run.BerlinExperimentalConfigGroup;
-import org.matsim.legacy.run.RunBerlinScenario;
+import org.matsim.legacy.run.drt.BerlinShpUtils;
+import org.matsim.legacy.run.drt.OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier;
 import org.matsim.legacy.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.legacy.run.drt.RunDrtOpenBerlinScenario;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.run.OpenBerlinScenario;
+import picocli.CommandLine;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -60,79 +79,55 @@ import java.util.*;
  */
 //can not extend MATSimApplication because matsim-berlin is not designed for that (yet).
 //@CommandLine.Command( header = ":: MyScenario ::", version = "1.0")
-public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
+public class BerlinReplaceCarByDrtScenario extends OpenBerlinScenario {
 
-	private static final Logger log = LogManager.getLogger(RunBerlinNoInnerCarTripsScenario.class);
-	private static Set<String> REPLACING_MODES;
+	private static final Logger log = LogManager.getLogger(BerlinReplaceCarByDrtScenario.class);
 
-	private static URL URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
-	private static URL URL_2_DRT_STOPS;
-	protected static URL URL_2_PR_STATIONS;
+	@CommandLine.Option(names = "--replacing-modes",
+			defaultValue = "car,drt",
+			description = "Set of modes (other than pt) which might replace car and ride trips within the ban area. Use comma as separator! Note that pt is always considered as replacing mode.")
+	private static String REPLACING_MODES;
 
+	@CommandLine.Option(names = "--ban-area",
+			defaultValue = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp",
+			description = "Path to (single geom) shape file depicting the area where private cars are banned from. If you adjust, think about adjusting the drt area+stops file, as well!")
+	private static String URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
+
+	@CommandLine.Option(names = "--pr-stations",
+			defaultValue = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv",
+			description = "Path to the .tsv file containing the PR station specifications.")
+	protected static String URL_2_PR_STATIONS;
+
+	@CommandLine.Option(names = "--car-road-types",
+			defaultValue = "motorwayAndPrimaryAndTrunk",
+			description = "Can be one of [nowhere, motorway, motorwayAndPrimaryAndTrunk]. Determines the type of roads inside in the ban area, where cars are allowed to drive, but not to park.")
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
-
-	//TODO this still calls the berlin v5.x methods
-	public static void main(String[] args) throws MalformedURLException {
-
-		String[] configArgs;
-		if ( args.length==0 ) {
-			//careful if you change this: you would probably want to adjust the drt service area as well!
-			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp");
-//			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-hundekopf-minus-250m.shp");
-			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
-			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv");
-			REPLACING_MODES = Set.of(TransportMode.drt, TransportMode.pt);
-			URL_2_DRT_STOPS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/drtStops/drtStops-hundekopf-carBanArea-2023-03-29-prStations.xml");
-
-			String OUTPUT_DIRECTORY = "./scenarios/output/sample-test/";
-			int LAST_ITERATION = 0;
-			String RUN_ID = "sample-run";
-
-			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.xml",
-					"--config:controler.lastIteration", String.valueOf(LAST_ITERATION),
-					"--config:controler.outputDirectory", OUTPUT_DIRECTORY,
-					"--config:controler.runId", RUN_ID};
-
-
-//			URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-minus-500m-buffer.shp");
-//			ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.motorwayAndPrimaryAndTrunk;
-//			URL_2_PR_STATIONS = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2022-11-17-pr-stations-berlin.tsv");
-//			PR_STATION_CHOICE = ReplaceCarByDRT.PRStationChoice.closestToOutSideActivity;
-//			configArgs = new String[]{"scenarios/berlin/replaceCarByDRT/noModeChoice/hundekopf-drt-v5.5-1pct.config.test.xml",
-//					"--config:controler.lastIteration", "0" ,
-//					"--config:controler.outputDirectory", "./scenarios/output/berlin-v5.5-10pct/replaceCarByDRT-BERLIN-testLichtenrade",
-//					"--config:multiModeDrt.drt[mode=drt].vehiclesFile",  "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/berlin-drt-v5.5-10pct/input/drtVehicles/berlin-drt-v5.5.drt-by-rndLocations-10000vehicles-4seats.xml.gz",
-//					"--config:multiModeDrt.drt[mode=drt].drtServiceAreaShapeFile", "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/pave/shp-files/S5/berlin-plus-500m-buffer.shp"};
-
-
-		} else {
-			configArgs = prepareConfigArguments(args);
-		}
-
-		Config config = prepareConfig(configArgs);
-		Scenario scenario = prepareScenario(config);
-
-		Controler controler = prepareControler(scenario);
-		controler.run();
-		RunBerlinScenario.runAnalysis(controler);
+	public BerlinReplaceCarByDrtScenario() {
+		//TODO OpenBerlinScenario has no constructor with a config path string
+		super();
 	}
 
-	public static String[] prepareConfigArguments(String[] args){
-		String[] configArgs;
-
-		URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE = IOUtils.resolveFileOrResource(args[0]);
-		ROAD_TYPES_CAR_ALLOWED = CarsAllowedOnRoadTypesInsideBanArea.valueOf(args[1]);
-		URL_2_PR_STATIONS = IOUtils.resolveFileOrResource(args[2]);
-		REPLACING_MODES = Set.of(args[3].split(","));
-		URL_2_DRT_STOPS = IOUtils.resolveFileOrResource(args[4]);
-		configArgs = new String[args.length-5];
-		System.arraycopy(args, 5, configArgs, 0, args.length - 5);
-
-		return configArgs;
+	public static void main(String[] args) {
+		MATSimApplication.run(BerlinReplaceCarByDrtScenario.class, args);
 	}
 
-	public static Config prepareConfig(String[] args, ConfigGroup... customModules) {
-		Config config = RunDrtOpenBerlinScenario.prepareConfig(args, customModules);
+	@Override
+	protected List<ConfigGroup> getCustomModules() {
+		List<ConfigGroup> customModules = super.getCustomModules();
+		customModules.addAll(Lists.newArrayList(new DvrpConfigGroup(),
+				new MultiModeDrtConfigGroup(),
+				new SwissRailRaptorConfigGroup(),
+				new IntermodalTripFareCompensatorsConfigGroup(),
+				new PtIntermodalRoutingModesConfigGroup()));
+		return customModules;
+	}
+
+	@Override
+	public Config prepareConfig(Config config) {
+		super.prepareConfig(config); // side effects: mutates config
+
+		DrtConfigs.adjustMultiModeDrtConfig(MultiModeDrtConfigGroup.get(config), config.scoring(), config.routing());
+
 		disableModeChoiceAndDistributeStrategyWeights(config);
 
 		ScoringConfigGroup.ActivityParams actParams = new ScoringConfigGroup.ActivityParams(ReplaceCarByDRT.PR_ACTIVITY_TYPE);
@@ -149,7 +144,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
 				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
 
-		//sets the drt mode to be dvrp network mode. sets fare compensitions for agents using both pt and drt
+		//sets the drt mode to be dvrp network mode. sets fare compensations for agents using both pt and drt
 		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, compensatorsConfig);
 
 		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(config, BerlinExperimentalConfigGroup.class);
@@ -210,7 +205,7 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 		}
 	}
 
-	private static final void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig) {
+	private static void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig) {
 		if(! dvrpConfigGroup.networkModes.contains(drtConfigGroup.getMode()) ){
 			log.warn("the drt mode " + drtConfigGroup.getMode() + " is not registered as network mode for dvrp - which is necessary in a bannedCarInDRTServiceArea scenario");
 			log.warn("adding mode " + drtConfigGroup.getMode() + " as network mode for dvrp... ");
@@ -222,7 +217,6 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 		// Setting operational scheme to stop based
 		drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;
-		drtConfigGroup.transitStopFile = String.valueOf(URL_2_DRT_STOPS);
 		log.warn("you are now using a stop based operational scheme for drt! This is still under development.");
 		Preconditions.checkNotNull(drtConfigGroup.transitStopFile,
 				"this scenario currently only works with a specified stopFile for drt!");
@@ -264,9 +258,18 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 
 	}
 
-	public static Scenario prepareScenario(Config config) {
-		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(config);
-		Scenario scenario = RunDrtOpenBerlinScenario.prepareScenario(config);
+	@Override
+	public void prepareScenario(Scenario scenario) {
+		//runs AssignIncome
+		super.prepareScenario(scenario);
+
+		//if the input plans contain DrtRoutes, this will cause problems later in the DrtRouteFactory
+		//to avoid this, the DrtRouteFactory would have to get set before loading the scenario, just like in Open Berlin v5.x
+		RouteFactories routeFactories = scenario.getPopulation().getFactory().getRouteFactories();
+		routeFactories.setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+
+//		DrtConfigGroup drtCfg = DrtConfigGroup.getSingleModeDrtConfig(scenario.getConfig());
+		prepareNetworkAndTransitScheduleForDrt(scenario);
 
 		Set<String> roadTypesWithCarAllowed = new HashSet<>();
 		switch (ROAD_TYPES_CAR_ALLOWED) {
@@ -282,17 +285,19 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				break;
 		}
 
-		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario, URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,roadTypesWithCarAllowed);
+		//ban car and ride from the shp-provided area
+		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario,
+				IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
+				roadTypesWithCarAllowed);
 
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
 
 		// replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
-
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
-				REPLACING_MODES,
-				URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE,
-				URL_2_PR_STATIONS,
+				Set.of(REPLACING_MODES.split(",")),
+				IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
+				IOUtils.resolveFileOrResource(URL_2_PR_STATIONS),
 				mainModeIdentifier,
 				//choose among the 3 closest P+R stations
 				//in Lorenz' thesis we saw that this significantly reduces overloading single stations
@@ -300,23 +305,99 @@ public class RunBerlinNoInnerCarTripsScenario /*extends MATSimApplication*/ {
 				3
 		);
 
-		return scenario;
 	}
 
-	public static Controler prepareControler(Scenario scenario) {
-		Controler controler = RunDrtOpenBerlinScenario.prepareControler(scenario);
+	/**
+	 * this code is copied from matsim-berlin v5.x {@code RunDrtOpenBerlinScenario.prepareScenario()} and sub-methods.
+	 * @param scenario
+	 */
+	private static void prepareNetworkAndTransitScheduleForDrt(Scenario scenario) {
+		BerlinExperimentalConfigGroup berlinCfg = ConfigUtils.addOrGetModule(scenario.getConfig(), BerlinExperimentalConfigGroup.class);
+
+		for (DrtConfigGroup drtCfg : MultiModeDrtConfigGroup.get(scenario.getConfig()).getModalElements()) {
+
+			String drtServiceAreaShapeFile = drtCfg.drtServiceAreaShapeFile;
+			if (drtServiceAreaShapeFile != null && !drtServiceAreaShapeFile.equals("") && !drtServiceAreaShapeFile.equals("null")) {
+
+				// Michal says restricting drt to a drt network roughly the size of the service area helps to speed up.
+				// This is even more true since drt started to route on a freespeed TT matrix (Nov '20).
+				// A buffer of 10km to the service area Berlin includes the A10 on some useful stretches outside Berlin.
+				if(berlinCfg.getTagDrtLinksBufferAroundServiceAreaShp() >= 0.0) {
+					RunDrtOpenBerlinScenario.addDRTmode(scenario, drtCfg.getMode(), drtServiceAreaShapeFile, berlinCfg.getTagDrtLinksBufferAroundServiceAreaShp());
+				}
+
+				//TODO: check if the new transitSchedule has the 'stopFilter' attribute
+				tagTransitStopsInServiceArea(scenario.getTransitSchedule(),
+						"drtStopFilter", "station_S/U/RE/RB_drtServiceArea",
+						drtServiceAreaShapeFile,
+						"stopFilter", "station_S/U/RE/RB",
+						// some S+U stations are located slightly outside the shp File, e.g. U7 Neukoelln, U8
+						// Hermannstr., so allow buffer around the shape.
+						// This does not mean that a drt vehicle can pick the passenger up outside the service area,
+						// rather the passenger has to walk the last few meters from the drt drop off to the station.
+						200.0); //
+			}
+		}
+	}
+
+	/**
+	 * most stuff is copied from {@link RunDrtOpenBerlinScenario}.prepareControler() and sub-methods.
+	 * @param controler
+	 * @return
+	 */
+	@Override
+	public void prepareControler(Controler controler) {
+		super.prepareControler(controler);
+
+		// drt + dvrp modules
+		controler.addOverridingModule(new MultiModeDrtModule());
+		controler.addOverridingModule(new DvrpModule());
+		controler.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(controler.getConfig())));
+
+		controler.addOverridingModule(new AbstractModule() {
+
+			@Override
+			public void install() {
+				bind(AnalysisMainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterAnalysisModeIdentifier.class);
+				bind(MainModeIdentifier.class).to(OpenBerlinIntermodalPtDrtRouterModeIdentifier.class);
+
+			}
+		});
+
+		// yyyy there is fareSModule (with S) in config. ?!?!  kai, jul'19
+		controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
+		controler.addOverridingModule(new PtIntermodalRoutingModesModule());
+
+		//maybe not needed ?
 		controler.addOverridingModule(new PersonMoneyEventsAnalysisModule());
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
-				PrActivityEventHandler handler = new PrActivityEventHandler(URL_2_PR_STATIONS);
+				PrActivityEventHandler handler = new PrActivityEventHandler(IOUtils.resolveFileOrResource(URL_2_PR_STATIONS));
 				bind(PrActivityEventHandler.class).toInstance(handler);
 				addEventHandlerBinding().toInstance(handler);
 				addControlerListenerBinding().toInstance(handler);
 			}
 		});
 
-		return controler;
+	}
+
+	private static void tagTransitStopsInServiceArea(TransitSchedule transitSchedule,
+													 String newAttributeName, String newAttributeValue,
+													 String drtServiceAreaShapeFile,
+													 String oldFilterAttribute, String oldFilterValue,
+													 double bufferAroundServiceArea) {
+		log.info("Tagging pt stops marked for intermodal access/egress in the service area.");
+		BerlinShpUtils shpUtils = new BerlinShpUtils(drtServiceAreaShapeFile);
+		for (TransitStopFacility stop : transitSchedule.getFacilities().values()) {
+			if (stop.getAttributes().getAttribute(oldFilterAttribute) != null) {
+				if (stop.getAttributes().getAttribute(oldFilterAttribute).equals(oldFilterValue)) {
+					if (shpUtils.isCoordInDrtServiceAreaWithBuffer(stop.getCoord(), bufferAroundServiceArea)) {
+						stop.getAttributes().putAttribute(newAttributeName, newAttributeValue);
+					}
+				}
+			}
+		}
 	}
 
 	private enum CarsAllowedOnRoadTypesInsideBanArea {

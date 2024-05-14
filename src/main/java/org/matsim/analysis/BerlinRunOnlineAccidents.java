@@ -8,17 +8,20 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.legacy.run.RunBerlinScenario;
-import org.matsim.run.replaceCarByDRT.RunBerlinNoInnerCarTripsScenario;
 
 
 /**
  *
  * This method is mostly a copy from the Open Berlin Scenario.
  *
- * @author Hugo
+ * @author Hugo, lorenznitsch
  */
 
 
+/**
+ * needs adjustments to berlin v6.x (MATSim Application structure).
+ */
+@Deprecated
 public class BerlinRunOnlineAccidents {
 
     private final String runDirectory;
@@ -107,9 +110,9 @@ public class BerlinRunOnlineAccidents {
         String BVWPNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network-with-bvwp-accidents-attributes.xml.gz";
         String plans = runId + ".output_plans.xml.gz";
 
-        Config config;
+        Config config = null;
         Scenario scenario;
-        Controler controler;
+        Controler controler = null;
 
         if (runType.equals("policy")){
 
@@ -124,8 +127,9 @@ public class BerlinRunOnlineAccidents {
 
             String[] configArgs;
 
-            configArgs = RunBerlinNoInnerCarTripsScenario.prepareConfigArguments(preparationArgs);
-            config = RunBerlinNoInnerCarTripsScenario.prepareConfig(configArgs);
+            //TODO we need to instantiate BerlinReplaceCarByDrtScenario and pass the arguments
+//            configArgs = BerlinReplaceCarByDrtScenario.prepareConfigArguments(preparationArgs);
+//            config = BerlinReplaceCarByDrtScenario.prepareConfig(configArgs);
         } else if (runType.equals("base")) {
             //TODO this still calls the berlin v5.x methods
             config = RunBerlinScenario.prepareConfig(new String[]{outputConfigName});
@@ -145,8 +149,9 @@ public class BerlinRunOnlineAccidents {
         //config.planCalcScore().getModes().get("car").setMonetaryDistanceRate(-0.0004);
 
         if (runType.equals("policy")){
-            scenario = RunBerlinNoInnerCarTripsScenario.prepareScenario(config);
-            controler = RunBerlinNoInnerCarTripsScenario.prepareControler(scenario);
+            //TODO we need to instantiate BerlinReplaceCarByDrtScenario and pass the arguments
+//            scenario = BerlinReplaceCarByDrtScenario.prepareScenario(config);
+//            controler = BerlinReplaceCarByDrtScenario.prepareControler(scenario);
         } else if (runType.equals("base")){
             scenario = RunBerlinScenario.prepareScenario(config);
             controler = RunBerlinScenario.prepareControler(scenario);

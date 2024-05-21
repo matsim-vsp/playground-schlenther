@@ -47,6 +47,9 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Class providing static functions to change input plans and network in preparation of a car-ban scenario. See method documentation for more details.
+ */
 final class ReplaceCarByDRT {
 
 	private static Logger log = LogManager.getLogger(ReplaceCarByDRT.class);
@@ -148,11 +151,9 @@ final class ReplaceCarByDRT {
 		// but it slightly worsens inner trips
 		PRStationChoice prStationChoice = PRStationChoice.both;
 
-		log.warn("will assume that the first activity of each person is the home activity. This holds true for the open Berlin scenario. For other scenarios, please check !!");
-
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 
-			Boolean livesInProhibitionZone = putAttrIsLivingInProhibitionZone(person, carFreeGeoms);
+			Boolean firstActInProhibitionZone = putAttrIsFirstActInProhibitionZone(scenario, person, carFreeGeoms);
 
 			Set<Plan> plansToAdd = new HashSet<>();
 			Set<Plan> originalPlansToRemove = new HashSet<>();
@@ -199,10 +200,10 @@ final class ReplaceCarByDRT {
 				}
 
 					if(prStationChoice.equals(PRStationChoice.both)){
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToInsideActivity, prStations, rnd, kPrStations));
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, PRStationChoice.closestToOutSideActivity, prStations, rnd, kPrStations));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, firstActInProhibitionZone, PRStationChoice.closestToInsideActivity, prStations, rnd, kPrStations));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, firstActInProhibitionZone, PRStationChoice.closestToOutSideActivity, prStations, rnd, kPrStations));
 					} else {
-						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, livesInProhibitionZone, prStationChoice, prStations, rnd, kPrStations));
+						plansToAdd.addAll(getPlanCopiesWithPRLogic(plan, scenario, nrOfBorderCrossingCarTrips, replacingModes, mainModeIdentifier, firstActInProhibitionZone, prStationChoice, prStations, rnd, kPrStations));
 					}
 
 			}
@@ -227,7 +228,7 @@ final class ReplaceCarByDRT {
 													  long nrOfBorderCrossingCarTrips,
 													  Set<String> replacingModes,
 													  MainModeIdentifier mainModeIdentifier,
-													  Boolean livesInProhibitionZone,
+													  Boolean firstActInProhibitionZone,
 													  PRStationChoice prStationChoice,
 													  Set<PRStation> prStations,
 													  Random rnd, int kPrStations) {
@@ -281,8 +282,8 @@ final class ReplaceCarByDRT {
 				if(mainMode.equals(TransportMode.car)){
 					countBordingCrossingCarTrips --;
 					//some consistency (mass conservation) checks
-					if(countBordingCrossingCarTrips == 0 && livesInProhibitionZone){
-						throw new IllegalStateException("agent " + plan.getPerson().getId() + "lives inside but travels outside the border with car without returning with a prohibited mode.\n" +
+					if(countBordingCrossingCarTrips == 0 && firstActInProhibitionZone){
+						throw new IllegalStateException("agent " + plan.getPerson().getId() + "has its first activity inside the prohibition zone but travels outside the border with car without returning with a prohibited mode.\n" +
 								"trip = " + trip);
 					}
 					//car has to be picked up where it was left the last time
@@ -319,8 +320,8 @@ final class ReplaceCarByDRT {
 					countBordingCrossingCarTrips --;
 					if(countBordingCrossingCarTrips == 0){
 						//some consistency (mass conservation) checks
-						if(!livesInProhibitionZone){
-							throw new IllegalStateException("agent " + plan.getPerson().getId() + " lives outside but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
+						if(!firstActInProhibitionZone){
+							throw new IllegalStateException("agent " + plan.getPerson().getId() + " has its first activity outside the prohibition zone but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
 									"trip = " + trip);
 						}
 						//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
@@ -390,15 +391,15 @@ final class ReplaceCarByDRT {
 		return prStation;
 	}
 
-	private static Boolean putAttrIsLivingInProhibitionZone(Person person, List<PreparedGeometry> carFreeGeoms) {
+	private static Boolean putAttrIsFirstActInProhibitionZone(Scenario scenario, Person person, List<PreparedGeometry> carFreeGeoms) {
 		//person attribute
-		Activity homeAct = (Activity) person.getSelectedPlan().getPlanElements().get(0); //in Berlin, the first activity of each person is the home activity. Careful: this might not be the case in other scenarios!!
-		if (PopulationUtils.getSubpopulation(person).equals("person") && !homeAct.getType().startsWith("home")){
-			throw new IllegalArgumentException("first act of agent " + person.getId() + " is not home");
+		Activity firstAct = (Activity) person.getSelectedPlan().getPlanElements().get(0);
+		if (PopulationUtils.getSubpopulation(person).equals("person") && !firstAct.getType().startsWith("home")){
+			log.warn("first act of agent " + person.getId() + " is not home");
 		}
-		Boolean livesInProhibitionZone = ShpGeometryUtils.isCoordInPreparedGeometries(homeAct.getCoord(), carFreeGeoms) ? true : false;
-		PopulationUtils.putPersonAttribute(person, "livesInProhibitionZone", livesInProhibitionZone);
-		return livesInProhibitionZone;
+		Boolean firstActInProhibitionZone = isActivityInGeoms(scenario, firstAct, carFreeGeoms);
+		PopulationUtils.putPersonAttribute(person, "firstActInProhibitionZone", firstActInProhibitionZone);
+		return firstActInProhibitionZone;
 	}
 
 	private static Plan createPTOnlyPlan(Plan originalPlan, MainModeIdentifier mainModeIdentifier, PopulationFactory fac) {

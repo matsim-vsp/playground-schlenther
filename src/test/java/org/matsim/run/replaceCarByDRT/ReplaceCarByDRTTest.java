@@ -99,8 +99,8 @@ public class ReplaceCarByDRTTest {
 		for (Person person : SCENARIO.getPopulation().getPersons().values()) {
 			if (!PopulationUtils.getSubpopulation(person).equals("person")) continue;
 
-			if (person.getAttributes().getAttribute("livesInProhibitionZone") == null) {
-				violations.add("person " + person.getId() + "does not have livesInProhibitionZone attribute");
+			if (person.getAttributes().getAttribute("firstActInProhibitionZone") == null) {
+				violations.add("person " + person.getId() + "does not have firstActInProhibitionZone attribute");
 			}
 		}
 
@@ -140,7 +140,7 @@ public class ReplaceCarByDRTTest {
 
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(38250801));
 		Assert.assertEquals("brandenburg", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(false, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
@@ -179,7 +179,7 @@ public class ReplaceCarByDRTTest {
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(116685501));
 
 		Assert.assertEquals("brandenburg", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(false, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
@@ -211,7 +211,7 @@ public class ReplaceCarByDRTTest {
 
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(187328501));
 		Assert.assertEquals("expecting agent's home-activity-zone to be berlin", "berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(true, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
@@ -245,7 +245,7 @@ public class ReplaceCarByDRTTest {
 
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(259563501));
 		Assert.assertEquals("expecting agent's home-activity-zone to be berlin", "berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(true, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
@@ -270,7 +270,7 @@ public class ReplaceCarByDRTTest {
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(446367901));
 
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(false, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(false, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		Assert.assertEquals("person " + person.getId() + " should have 5 plans (with types [2x drt,2x pt,ptOnly])", 5, person.getPlans().size());
@@ -308,7 +308,7 @@ public class ReplaceCarByDRTTest {
 
 		Person person = SCENARIO.getPopulation().getPersons().get(Id.createPersonId(272337601));
 		Assert.assertEquals("berlin", PopulationUtils.getPersonAttribute(person, "home-activity-zone"));
-		Assert.assertEquals(true, person.getAttributes().getAttribute("livesInProhibitionZone"));
+		Assert.assertEquals(true, person.getAttributes().getAttribute("firstActInProhibitionZone"));
 
 		//test all plans
 		//agent has only inner trips

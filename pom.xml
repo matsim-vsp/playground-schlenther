@@ -12,7 +12,7 @@
 	<properties>
 		<!-- release -->
 		<matsim.version>16.0-PR3172</matsim.version>
-		<berlin.version>6.1</berlin.version> <!--matsim-berlin. this version uses MATSim 16.0-PR3172 -->
+		<berlin.version>0488d613de</berlin.version> <!--matsim-berlin. 0488d613de = merging commit of PR 123  (last commit 444e135b02). This version uses MATSim 16.0-PR3172 -->
 
 		<!-- PR (= pull request) release -->
 		<!--		<matsim.version>13.1-PR1536</matsim.version> -->

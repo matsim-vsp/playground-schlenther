@@ -228,7 +228,7 @@ final class ReplaceCarByDRT {
 													  long nrOfBorderCrossingCarTrips,
 													  Set<String> replacingModes,
 													  MainModeIdentifier mainModeIdentifier,
-													  Boolean firstActInProhibitionZone,
+													  Boolean hasFirstActInProhibitionZone,
 													  PRStationChoice prStationChoice,
 													  Set<PRStation> prStations,
 													  Random rnd, int kPrStations) {
@@ -244,19 +244,21 @@ final class ReplaceCarByDRT {
 		//first make a copy of the original plan
 		Plan plan = fac.createPlan();
 		plan.setPerson(originalPlan.getPerson());
-		PopulationUtils.copyFromTo(originalPlan, plan); //important to copy first and then set the type, because in the copy method the type is included for copying...
+		//important to copy first and then set the type, because in the copy method the type is included for copying...
+		PopulationUtils.copyFromTo(originalPlan, plan);
 		planCopies.add(plan);
-
-
-		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations, Activity::getCoord, PRStation::getCoord);
-
-
 		plan.setType(replacingMode + "-" + prStationChoice);
 
+
+		StraightLineKnnFinder<Activity,PRStation> straightLineKnnFinder = new StraightLineKnnFinder<>(kPrStations,
+				//berlin v6.1 has activities with no coord but facilities set instead
+				a -> getActivityCoord(scenario, a),
+				PRStation::getCoord);
 		PRStation firstCarPRStation = null;
 		//we use this as 'iteration variable'
 		PRStation currentCarPRStation = null;
 
+		//collect all trips which we need to mutate
 		List<TripStructureUtils.Trip> tripsToReplace = TripStructureUtils.getTrips(plan).stream()
 				.filter(trip -> trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY) != null)
 				.collect(Collectors.toList());
@@ -265,8 +267,10 @@ final class ReplaceCarByDRT {
 			TripType tripType = (TripType) trip.getTripAttributes().getAttribute(TRIP_TYPE_ATTR_KEY);
 			String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
 			if (tripType.equals(TripType.outsideTrip)){
-				if(mainMode.equals(TransportMode.car) && currentCarPRStation != null) throw new IllegalStateException("agent " + plan.getPerson() + "performs an outside trip from " + trip.getOriginActivity() + "to " + trip.getDestinationActivity() +
-						"\n but vehicle is still parked at link=" + currentCarPRStation);
+				if(mainMode.equals(TransportMode.car) && currentCarPRStation != null){
+					throw new IllegalStateException("agent " + plan.getPerson() + " performs an outside trip from " + trip.getOriginActivity() + " to " + trip.getDestinationActivity() +
+							"\n but vehicle is still parked at link=" + currentCarPRStation);
+				}
 				continue;
 			}
 
@@ -282,16 +286,18 @@ final class ReplaceCarByDRT {
 				if(mainMode.equals(TransportMode.car)){
 					countBordingCrossingCarTrips --;
 					//some consistency (mass conservation) checks
-					if(countBordingCrossingCarTrips == 0 && firstActInProhibitionZone){
-						throw new IllegalStateException("agent " + plan.getPerson().getId() + "has its first activity inside the prohibition zone but travels outside the border with car without returning with a prohibited mode.\n" +
+					if(countBordingCrossingCarTrips == 0 && hasFirstActInProhibitionZone){
+						log.warn("agent " + plan.getPerson().getId() + " has its first activity inside the prohibition zone but travels outside the border with car without returning with a prohibited mode.\n" +
 								"trip = " + trip);
+						log.warn("agent will just choose the PR station according the usual logic (pickup where it was before, otherwise prStationChoice=" + prStationChoice + ").");
 					}
 					//car has to be picked up where it was left the last time
 					if (currentCarPRStation != null){
 						prStation = currentCarPRStation;
 					}
 				}
-				 if(prStation == null){ //if no car trip into zone was observed before or if the mode is ride, we enter here
+				 if(prStation == null){
+					 //if no car trip into zone was observed before or if the mode is ride, we enter here
 					Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getOriginActivity() : trip.getDestinationActivity();
 					prStation = choosePRStation(straightLineKnnFinder, act, prStations, rnd);
 				}
@@ -307,7 +313,8 @@ final class ReplaceCarByDRT {
 				newTrip = new ArrayList<>();
 				Leg l1 = fac.createLeg(replacingMode);
 				TripStructureUtils.setRoutingMode(l1, replacingMode);
-				l1.getAttributes().putAttribute("replacing", mainMode); //is important to filter the leg later when replacing with other modes!
+				//is important to filter the leg later when replacing with other modes!
+				l1.getAttributes().putAttribute("replacing", mainMode);
 				Leg l2 = fac.createLeg(mainMode);
 				TripStructureUtils.setRoutingMode(l2, mainMode);
 
@@ -320,16 +327,19 @@ final class ReplaceCarByDRT {
 					countBordingCrossingCarTrips --;
 					if(countBordingCrossingCarTrips == 0){
 						//some consistency (mass conservation) checks
-						if(!firstActInProhibitionZone){
-							throw new IllegalStateException("agent " + plan.getPerson().getId() + " has its first activity outside the prohibition zone but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
+						if(hasFirstActInProhibitionZone){
+							//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
+							prStation = firstCarPRStation;
+						} else {
+							log.warn("agent " + plan.getPerson().getId() + " has its first activity outside the prohibition zone but travels into the prohibition zone with car without returning with a prohibited mode.\n" +
 									"trip = " + trip);
+							log.warn("agent will just choose the PR station normally according to prStationChoice=" + prStationChoice + ".");
 						}
-						//massConservation: agents needs to park the car where it will be picked up at the start of the next iteration, i.e. next day.
-						prStation = firstCarPRStation;
 
 					}
 				}
-				 if(prStation == null) { //if not the last border-crossing car or a ride trip
+				 if(prStation == null) {
+					 //if not the last border-crossing car or a ride trip
 					Activity act = prStationChoice.equals(PRStationChoice.closestToInsideActivity) ? trip.getDestinationActivity() : trip.getOriginActivity();
 					prStation = choosePRStation(straightLineKnnFinder, act, prStations, rnd);
 					if(mainMode.equals(TransportMode.car)){
@@ -492,12 +502,17 @@ final class ReplaceCarByDRT {
 
 
 	private static boolean isActivityInGeoms(Scenario scenario, Activity activity, List<PreparedGeometry> geoms){
+		Coord coord = getActivityCoord(scenario, activity);
+		return ShpGeometryUtils.isCoordInPreparedGeometries(coord,geoms);
+	}
+
+	private static Coord getActivityCoord(Scenario scenario, Activity activity) {
 		Coord coord = activity.getCoord();
 		if(coord == null){
 			coord = FacilitiesUtils.decideOnCoord(scenario.getActivityFacilities().getFacilities().get(activity.getFacilityId()),
 					scenario.getNetwork(), scenario.getConfig());
 		}
-		return ShpGeometryUtils.isCoordInPreparedGeometries(coord,geoms);
+		return coord;
 	}
 
 	private static TripType getTripType(Scenario scenario, TripStructureUtils.Trip trip, List<PreparedGeometry> geoms){

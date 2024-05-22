@@ -60,8 +60,10 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 	private static final Logger log = LogManager.getLogger(BerlinReplaceCarByDrtScenario.class);
 
 	@CommandLine.Option(names = "--replacing-modes",
-			defaultValue = "car,drt",
-			description = "Set of modes (other than pt) which might replace car and ride trips within the ban area. Use comma as separator! Note that pt is always considered as replacing mode.")
+			defaultValue = "pt,drt",
+			description = "Set of modes (other than pt) which might replace car and ride trips within the ban area. " +
+					"Use comma as separator! " +
+					"If the plan has border-crossing trips, a ptOnly plan that does not make use of P+R, is created automatically.")
 	private static String REPLACING_MODES;
 
 	@CommandLine.Option(names = "--ban-area",

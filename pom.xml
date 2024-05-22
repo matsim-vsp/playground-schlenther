@@ -12,7 +12,7 @@
 	<properties>
 		<!-- release -->
 		<matsim.version>16.0-PR3172</matsim.version>
-		<berlin.version>0488d613de</berlin.version> <!--matsim-berlin. 0488d613de = merging commit of PR 123  (last commit 444e135b02). This version uses MATSim 16.0-PR3172 -->
+		<berlin.version>c549ceb610</berlin.version> <!--matsim-berlin. c549ceb610 = merging commit of PR 124. This version uses MATSim 16.0-PR3172 -->
 
 		<!-- PR (= pull request) release -->
 		<!--		<matsim.version>13.1-PR1536</matsim.version> -->
@@ -106,10 +106,17 @@
 			<version>${matsim.version}</version>
 		</dependency>
 
+		<!--matsim-berlin-->
 		<dependency>
 			<groupId>com.github.matsim-scenarios</groupId>
 			<artifactId>matsim-berlin</artifactId>
 			<version>${berlin.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.github.matsim-vsp</groupId>
+					<artifactId>opt-drt</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 	</dependencies>

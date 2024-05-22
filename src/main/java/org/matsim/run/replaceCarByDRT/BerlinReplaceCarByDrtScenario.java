@@ -65,7 +65,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 	private static String REPLACING_MODES;
 
 	@CommandLine.Option(names = "--ban-area",
-			defaultValue = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp",
+			defaultValue = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp",
 			description = "Path to (single geom) shape file depicting the area where private cars are banned from. If you adjust, think about adjusting the drt area+stops file, as well!")
 	private static String URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 

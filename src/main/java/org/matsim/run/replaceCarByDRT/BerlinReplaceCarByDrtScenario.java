@@ -141,6 +141,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 					case DefaultPlanStrategiesModule.DefaultStrategy.ReRoute:
 					case DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator_ReRoute:
 						rerouteSettings.add(strategySetting);
+						break;
 					case DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta:
 						selector = strategySetting;
 						break;

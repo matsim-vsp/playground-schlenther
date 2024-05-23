@@ -126,7 +126,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 		List<ReplanningConfigGroup.StrategySettings> rerouteSettings = new ArrayList<>();
 		ReplanningConfigGroup.StrategySettings selector = null;
 
-		double totalOldWeightModeChoiceStrategies = 0;
+		double totalOldWeightModeAndTimeChoiceStrategies = 0;
 		for (ReplanningConfigGroup.StrategySettings strategySetting : strategySettings) {
 			if(strategySetting.getSubpopulation().equals("person")){
 				switch (strategySetting.getStrategyName()){
@@ -136,7 +136,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeLegMode:
 					case DefaultPlanStrategiesModule.DefaultStrategy.ChangeSingleLegMode:
 					case DefaultPlanStrategiesModule.DefaultStrategy.TripSubtourModeChoice:
-						totalOldWeightModeChoiceStrategies += strategySetting.getWeight();
+						totalOldWeightModeAndTimeChoiceStrategies += strategySetting.getWeight();
 						strategySetting.setWeight(0);
 						break;
 					case DefaultPlanStrategiesModule.DefaultStrategy.ReRoute:
@@ -146,6 +146,12 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 					case DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta:
 						selector = strategySetting;
 						break;
+					/*
+					 * in Lorenz' MA we saw that TimeAllocation leads ti mutated P+R activity times, which is something we need to avoid. Thus we disable time mutation
+					 */
+					case DefaultPlanStrategiesModule.DefaultStrategy.TimeAllocationMutator:
+						totalOldWeightModeAndTimeChoiceStrategies += strategySetting.getWeight();
+						strategySetting.setWeight(0);
 					default:
 						break;
 				}
@@ -156,16 +162,20 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 		 * 50% to the selector strategy
 		 * 50% to the reroute-strategies (equally distributed between them)
 		 */
-		if(totalOldWeightModeChoiceStrategies > 0){
+		if(totalOldWeightModeAndTimeChoiceStrategies > 0){
 			log.warn("you had mode choice enabled via config. this scenario is meant to work without mode choice. please make sure, you do not have custom mode choice strategies enabled.\n" +
 					"Following, all mode choice strategies will be disabled. Their strategy weights will be distributed to one selecotr (50%) and to all reroute strategies (the other 50%)." +
 					"Please consider to decrease the number of iterations! Probably, you will not require as many iterations now, as mode choice gets disabled...");
 			if(rerouteSettings.isEmpty()) throw new IllegalArgumentException("you have not configured any reroute strategy");
-			selector.setWeight(selector.getWeight() + 0.5 * totalOldWeightModeChoiceStrategies );
+			selector.setWeight(selector.getWeight() + 0.5 * totalOldWeightModeAndTimeChoiceStrategies );
 			for (ReplanningConfigGroup.StrategySettings rerouteSetting : rerouteSettings) {
-				rerouteSetting.setWeight(rerouteSetting.getWeight() + 0.5/rerouteSettings.size()*totalOldWeightModeChoiceStrategies);
+				rerouteSetting.setWeight(rerouteSetting.getWeight() + 0.5/rerouteSettings.size()*totalOldWeightModeAndTimeChoiceStrategies);
 			}
 		}
+
+
+
+
 	}
 
 	private static void configureDVRPAndDRT(DvrpConfigGroup dvrpConfigGroup, DrtConfigGroup drtConfigGroup, ScoringConfigGroup.ModeParams ptParams, IntermodalTripFareCompensatorsConfigGroup compensatorsConfig) {

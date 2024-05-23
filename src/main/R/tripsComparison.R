@@ -24,14 +24,17 @@ library(ggalluvial)
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
-#shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
-#shp_berlin <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
-
+ 
+shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
+shp_berlin <- st_read("D:/svn/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
 
 # #1pct
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
+ baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
+ policyCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt"
 # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
+ 
+ 
+
 
 
 policy_filename <- "output_trips_prepared.tsv"
@@ -77,8 +80,9 @@ policyTrips <- policyTrips %>% filter(person %in% personsJoined$person)
 
 "Impacted Grenztrips"
 autoBase <- baseTrips %>% filter(main_mode == "car" | main_mode == "ride")
-impQuell_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, FALSE)
-impZiel_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, FALSE, TRUE)
+
+impQuell_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = 25832, "originating")
+impZiel_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = 25832, "destinating")
 impGrenz_trips_base <- rbind(impQuell_trips_base, impZiel_trips_base)
 impGrenz_trips_policy <- policyTrips %>% filter(trip_id %in% impGrenz_trips_base$trip_id)
 
@@ -91,7 +95,7 @@ impGrenz_trips <- impGrenz_trips %>%
   filter(travTime_diff < 20000)
 
 "Impacted Binnentrips"
-impBinnen_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, TRUE)
+impBinnen_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = 25832, "inside")
 impBinnen_trips_policy <- policyTrips %>% filter(trip_id %in% impBinnen_trips_base$trip_id)
 
 impBinnen_trips <- merge(impBinnen_trips_policy, impBinnen_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
@@ -119,25 +123,30 @@ impacted_trips <- impacted_trips %>%
 # Filter bedingt durch teilweise falsch erkannte Trips durch filterByRegion, siehe trips_falselyClassified.tsv
 
 "Grenztrips"
-prep_grenz_policy <- impGrenz_trips_policy %>%
-  filter(!main_mode == "ride") %>%
-  filter(!main_mode == "car") %>%
-  filter(!main_mode == "drt") %>%
-  filter(!main_mode == "bicycle")
-prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+ride"] <- "ride+bicycle"
-prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+car"] <- "car+bicycle"
+
+##Tilmann: warum filtern wir hier die Modi raus??
+### -> auskommentiert
+prep_grenz_policy <- impGrenz_trips_policy #%>%
+  #filter(!main_mode == "ride") %>%
+  #filter(!main_mode == "car") %>%
+  #filter(!main_mode == "drt") %>%
+  #filter(!main_mode == "bike")
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+ride"] <- "ride+bike"
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+car"] <- "car+bike"
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
-plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
+#plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
+plot_compare_mainmode_sankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 
 "Binnentrips"
-prep_binnen_policy <- impBinnen_trips_policy %>%
-  filter(!grepl("+", main_mode, fixed = TRUE)) %>%
-  filter(!main_mode == "car") %>%
-  filter(!main_mode == "ride") %>%
-  filter(!main_mode == "bicycle")
+prep_binnen_policy <- impBinnen_trips_policy #%>%
+  #filter(!grepl("+", main_mode, fixed = TRUE)) %>%
+  #filter(!main_mode == "car") %>%
+  #filter(!main_mode == "ride") %>%
+  #filter(!main_mode == "bike")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
+plot_compare_mainmode_sankey(prep_binnen_base,prep_binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
 
 "All impacted trips"
@@ -160,15 +169,15 @@ results_modalSplitAffected <- data.frame(key = character(), value = numeric()) %
 ########################################
 "Modal Shift Sankeys - alle Trips"
 
-quell_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
-ziel_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+quell_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "originating")
+ziel_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "destinating")
 grenz_base <- rbind(quell_base, ziel_base)
-binnen_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+binnen_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "inside")
 
-quell_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
-ziel_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+quell_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "originating")
+ziel_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "destinating")
 grenz_policy <- rbind(quell_policy, ziel_policy)
-binnen_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+binnen_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = 25832, "inside")
 
 plotModalShiftSankey(grenz_base,grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_grenz.png"))

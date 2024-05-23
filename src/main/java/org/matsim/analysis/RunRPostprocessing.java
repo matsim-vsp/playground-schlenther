@@ -33,24 +33,28 @@ public class RunRPostprocessing {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if ( args.length==0 ){
-            String rScriptCommand = "C:/Program Files/R/R-4.2.2/bin/Rscript.exe";
-            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
-            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv";
-            String base_runDirectory = "";
-            String base_runId = "";
+            String rScriptCommand = "C:/Program Files/R/R-4.3.1/bin/Rscript.exe";
 
+            //shapes
+            String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
+            String berlin_shp = "D:/svn/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
+            String pr_stations = "scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv";
+
+            //base case
+            String base_runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/";
+            String base_runId = "berlin-v6.1";
+
+            //policy case(s)
             List<String> sensitivityRuns = new ArrayList<String>();
             sensitivityRuns.add("extraPtPlan-true");
 
-
-            for(String run : sensitivityRuns) {
-                String runId = run;
-                String runDirectory = "scenarios/output/runs-2023-09-01/1pct/" + run + "/";
+//            for(String run : sensitivityRuns) {
+            String runId = "berlin-v6.1-drt";
+            String runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt";
 
                 RunRPostprocessing postprocessor = new RunRPostprocessing(runDirectory, runId, inner_city_shp, berlin_shp, pr_stations, rScriptCommand, base_runDirectory, base_runId);
                 postprocessor.run();
-            }
+//            }
 
         } else {
             String runDirectory = args[0];

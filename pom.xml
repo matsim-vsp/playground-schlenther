@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.matsim</groupId>
 	<artifactId>playground-schlenther</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.2-SNAPSHOT</version>
 
 	<name>playground-schlenther</name>
 	<description>various code fragments by Tilmann Schlenther, no guarantee on functionality nor timeliness</description>

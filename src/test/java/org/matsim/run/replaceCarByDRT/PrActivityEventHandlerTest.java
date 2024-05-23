@@ -30,13 +30,14 @@ public class PrActivityEventHandlerTest {
     @Test
     public void testPrActivityEventHandler() {
 
-        Set<PRStation> prStations = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+        Set<PRStation> prStations = readPRStationFile(IOUtils.resolveFileOrResource("scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv"));
+
         Iterator<PRStation> iterator = prStations.iterator();
         PRStation prStation1 = iterator.next();
         PRStation prStation2 = iterator.next();
         PRStation prStation3 = iterator.next();
 
-        PrActivityEventHandler handler = new PrActivityEventHandler(IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"));
+        PrActivityEventHandler handler = new PrActivityEventHandler(IOUtils.resolveFileOrResource("scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv"));
         EventsManager events = EventsUtils.createEventsManager();
         events.addHandler(handler);
         events.initProcessing();

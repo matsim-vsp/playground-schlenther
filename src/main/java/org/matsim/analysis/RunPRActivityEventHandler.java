@@ -1,22 +1,12 @@
 package org.matsim.analysis;
 
-import com.opencsv.CSVWriter;
-import org.apache.commons.lang3.mutable.MutableInt;
-import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.run.replaceCarByDRT.PRStation;
 
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 public class RunPRActivityEventHandler {
 
@@ -72,71 +62,13 @@ public class RunPRActivityEventHandler {
         String prActivitiesFile = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_PR_activites.tsv";
 
         try {
-            writeAgentsPerPRStation(handler.getActivitiesPerPRStation(), pathTotalActivitiesPerStation);
-            writeCarsInPrStationPerMinute(handler.getCarsInPrStationPerMinute(), pathActivitiesPerMinute);
-            writePRActivitiesFile(handler, prActivitiesFile);
+            handler.writeAgentsPerPRStation(pathTotalActivitiesPerStation);
+            handler.writeCarsInPrStationPerMinute(pathActivitiesPerMinute);
+            handler.writePRActivitiesFile(prActivitiesFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-    }
-
-    private static void writePRActivitiesFile(PrActivityEventHandler handler, String prActivitiesFile) throws IOException {
-        CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(prActivitiesFile)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
-        writer.writeNext(new String[]{"time","person","linkId","x","y"});
-        for (ActivityEndEvent prActivityEndEvent : handler.getPrActivityEndEvents()) {
-            writer.writeNext(new String[]{
-                    "" + prActivityEndEvent.getTime(),
-                    prActivityEndEvent.getPersonId().toString(),
-                    prActivityEndEvent.getLinkId().toString(),
-                    "" + prActivityEndEvent.getCoord().getX(),
-                    "" + prActivityEndEvent.getCoord().getY()
-            });
-        }
-    }
-
-    private static void writeAgentsPerPRStation(Map<PRStation, MutableInt> prActivities, String outputFileName) throws IOException {
-            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
-            writer.writeNext(new String[]{"PRStation","Agents","x","y"});
-
-            for (Map.Entry<PRStation, MutableInt> entry : prActivities.entrySet()) {
-                PRStation station = entry.getKey();
-                MutableInt agentsPerPRStation = entry.getValue();
-
-
-                writer.writeNext(new String[]{station.getName(),String.valueOf(agentsPerPRStation),String.valueOf(station.getCoord().getX()),String.valueOf(station.getCoord().getY())});
-            }
-            writer.close();
-
-
-    }
-
-    private static void writeCarsInPrStationPerMinute(Map<PRStation, int[]> prActivities, String outputFileName) throws IOException {
-        try{
-            CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
-
-            List<String> header = new ArrayList<String>();
-            header.add("PRStation");
-            for (int i = 0; i < 36; i++){
-                for(int j = 0; j < 60; j++) {
-                    header.add(i + ":" + j);
-                }
-            }
-            writer.writeNext(header.toArray(new String[0]));
-
-            for (Map.Entry<PRStation, int[]> entry : prActivities.entrySet()) {
-                PRStation station = entry.getKey();
-                int[] agentsPerMinute = entry.getValue();
-                String[] agents = Arrays.toString(agentsPerMinute).split("[\\[\\]]")[1].split(", ");
-                List<String> agentsList = new ArrayList<String>(Arrays.asList(agents));
-                agentsList.add(0, station.getName());
-
-                writer.writeNext(agentsList.toArray(new String[0]));
-            }
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }

@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.ShutdownListener;
+import org.matsim.core.utils.collections.Tuple;
 import org.matsim.run.replaceCarByDRT.PRStation;
 
 import javax.annotation.Nullable;
@@ -38,7 +39,7 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
 
     private Map<Id<Person>, Map.Entry<PRStation,Integer>> possibleRiders = new HashMap<>();
 
-    private List<ActivityEndEvent> prActivityEndEvents = new LinkedList<>();
+    private List<Tuple<ActivityEndEvent, PRStation>> prActivityEndEvents = new LinkedList<Tuple<ActivityEndEvent, PRStation>>();
 
 
     public PrActivityEventHandler(URL url2PRStations) {
@@ -79,7 +80,6 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
     public void handleEvent(ActivityEndEvent event) {
         if(event.getActType().equals("P+R")){
 
-            this.prActivityEndEvents.add(event);
 
             int endMinute = (int) Math.floor(event.getTime() / 60);
 
@@ -88,6 +88,8 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
             if(prStation == null){
                 throw new IllegalArgumentException("could not find P+R station with coord = " + event.getCoord() + "!! \n The following event happens there: " + event);
             }
+
+            this.prActivityEndEvents.add(new Tuple<>(event, prStation));
 
             // agents who ride to the station get skipped
             String lastRoutingMode = person2LastRoutingMode.get(event.getPersonId());
@@ -164,7 +166,7 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
         return carsInPrStationPerMinute;
     }
 
-    public List<ActivityEndEvent> getPrActivityEndEvents() {
+    public List<Tuple<ActivityEndEvent, PRStation>> getPrActivityEndEvents() {
         return prActivityEndEvents;
     }
 
@@ -186,22 +188,23 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
 
     }
 
-    private void writePRActivitiesFile(String prActivitiesFile) throws IOException {
+    public void writePRActivitiesFile(String prActivitiesFile) throws IOException {
         CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(prActivitiesFile)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
-        writer.writeNext(new String[]{"time","person","linkId","x","y"});
-        for (ActivityEndEvent prActivityEndEvent : this.prActivityEndEvents) {
+        writer.writeNext(new String[]{"time","person","linkId","x","y","station"});
+        for (Tuple<ActivityEndEvent, PRStation> tuple : this.prActivityEndEvents) {
             writer.writeNext(new String[]{
-                    "" + prActivityEndEvent.getTime(),
-                    prActivityEndEvent.getPersonId().toString(),
-                    prActivityEndEvent.getLinkId().toString(),
-                    "" + prActivityEndEvent.getCoord().getX(),
-                    "" + prActivityEndEvent.getCoord().getY()
+                    "" + tuple.getFirst().getTime(),
+                    tuple.getFirst().getPersonId().toString(),
+                    tuple.getFirst().getLinkId().toString(),
+                    "" + tuple.getFirst().getCoord().getX(),
+                    "" + tuple.getFirst().getCoord().getY(),
+                    "" + tuple.getSecond().getName()
             });
         }
         writer.close();
     }
 
-    private void writeAgentsPerPRStation(String outputFileName) throws IOException {
+    public void writeAgentsPerPRStation(String outputFileName) throws IOException {
         CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
         writer.writeNext(new String[]{"PRStation","Agents","x","y"});
 
@@ -215,7 +218,7 @@ public class PrActivityEventHandler implements ActivityEndEventHandler, PersonDe
         writer.close();
     }
 
-    private void writeCarsInPrStationPerMinute(String outputFileName) throws IOException {
+    public void writeCarsInPrStationPerMinute(String outputFileName) throws IOException {
         CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
 
         List<String> header = new ArrayList<String>();

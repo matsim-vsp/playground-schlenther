@@ -21,11 +21,13 @@ library(ggalluvial)
  shp <- st_read(args[5])
  shp_berlin <- st_read(args[6])
 
+ 
+ 
 # 10pct
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
-#shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
-#shp_berlin <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
+baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/output/baseCaseContinued-10pct"
+policyCaseDirectory <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
+shp <- st_read("//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+shp_berlin <- st_read("//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
 
 
 # #1pct
@@ -50,6 +52,23 @@ policyTrips <- policyTrips %>%
          start_x = as.double(start_x), 
          start_y = as.double(start_y), end_x = as.double(end_x), 
          end_y = as.double(end_y))
+
+##read unprepared policy trips for de-bugging
+policyTrips_unprepped <- readTripsTable(policyCaseDirectory)
+
+policyTrips_debugged <- read.table(file = "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all/output_trips_prepared_debugged.tsv",
+                                   sep ='\t', header = TRUE)
+policyTrips <- policyTrips_debugged %>% 
+  mutate(trip_number = as.double(trip_number),
+         dep_time = parse_hms(dep_time),
+         trav_time = parse_hms(trav_time),
+         wait_time = parse_hms(wait_time),
+         traveled_distance = as.double(traveled_distance),
+         euclidean_distance = as.double(euclidean_distance),
+         start_x = as.double(start_x), 
+         start_y = as.double(start_y), end_x = as.double(end_x), 
+         end_y = as.double(end_y))
+
 
 ########################################
 # Prepare folders
@@ -248,6 +267,71 @@ ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
     axis.text.y = element_text(size = 20)
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime.png"))
+
+##### DEBUGGING
+#Tilmann: analysiere die negativen Reisezeit-Differenzen
+
+
+negativeTravTimeDiff <- impacted_trips %>%  
+  filter(travTime_diff < 0) %>% 
+  mutate(main_mode = main_mode_policy,
+         start_x = start_x_base,
+         start_y = start_y_base,
+         end_x = end_x_base,
+         end_y = end_y_base)
+
+matsim::plot_mainmode_barchart(negativeTravTimeDiff)
+
+negative_car <- negativeTravTimeDiff %>% 
+  filter(main_mode_policy == "car") %>% 
+  mutate(main_mode = main_mode_base)
+
+matsim::plot_mainmode_barchart(negative_car)
+matsim::plot_map_trips(negative_car, crs = 31468, optimized = TRUE)
+
+negative_drt <- negativeTravTimeDiff %>% 
+  filter(main_mode_policy == "drt") %>% 
+  mutate(main_mode = main_mode_base)
+
+matsim::plot_mainmode_barchart(negative_drt)
+matsim::plot_map_trips(negative_drt, crs = 31468, optimized = TRUE)
+hist(as.numeric(negative_drt$travTime_diff))
+hist(as.numeric(negative_drt$traveledDistance_diff))
+
+negative_walk <- negativeTravTimeDiff %>% 
+  filter(main_mode_policy == "walk") %>% 
+  mutate(main_mode = main_mode_base)
+
+matsim::plot_mainmode_barchart(negative_walk)
+matsim::plot_map_trips(negative_walk, crs = 31468, optimized = TRUE)
+hist(negative_walk$travTime_diff)
+hist(negative_walk$traveledDistance_diff)
+
+negative_pt_int <- negativeTravTimeDiff %>% 
+  filter(main_mode_policy == "pt_w_drt_used") %>% 
+  mutate(main_mode = main_mode_base)
+
+matsim::plot_mainmode_barchart(negative_pt_int)
+matsim::plot_map_trips(negative_pt_int, crs = 31468, optimized = TRUE)
+hist(as.numeric(negative_pt_int$travTime_diff))
+hist(negative_pt_int$traveledDistance_diff)
+
+
+###
+
+nonMatchingStartActs <- negativeTravTimeDiff %>% 
+  filter(start_activity_type_policy != start_activity_type_base)
+
+nonMatchingEndActs <- negativeTravTimeDiff %>% 
+  filter(end_activity_type_policy != end_activity_type_base)
+
+
+bb <- autoBase %>% 
+  filter(person == "412573301")
+
+pp <- impacted_trips_policy %>% 
+  filter(person == "412573301")
+
 
 ########################################
 # General results - traveledDistance of impacted_trips, impacted_binnen_trips, pr_trips
@@ -516,4 +600,5 @@ write.table(results_falselyClassified,file.path(policyTripsOutputDir,"trips_fals
 
 write.table(results_modalSplitAffected,file.path(policyTripsOutputDir,"modalSplit_affectedTrips.tsv"),row.names = FALSE, sep = "\t")
 write.table(results_modalSplitAll,file.path(policyTripsOutputDir,"modalSplit_all.tsv"),row.names = FALSE, sep = "\t")
+
 

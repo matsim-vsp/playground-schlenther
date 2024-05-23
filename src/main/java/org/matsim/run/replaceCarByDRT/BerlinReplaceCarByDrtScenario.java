@@ -63,7 +63,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 			defaultValue = "pt,drt",
 			description = "Set of modes (other than pt) which might replace car and ride trips within the ban area. " +
 					"Use comma as separator! " +
-					"If the plan has border-crossing trips, a ptOnly plan that does not make use of P+R, is created automatically.")
+					"If the plan has border-crossing trips, a ptOnly plan that does not make use of P+R is created automatically.")
 	private static String REPLACING_MODES;
 
 	@CommandLine.Option(names = "--ban-area",
@@ -71,9 +71,8 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 			description = "Path to (single geom) shape file depicting the area where private cars are banned from. If you adjust, think about adjusting the drt area+stops file, as well!")
 	private static String URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 
-	//TODO hier sind teils lange laufdistanzen von der station zum Netz zB Halensee. Checken ob wir das richtig modellieren, weil in Realität ja gar nicht gelaufen wurde. Ggf Koordinaten anpassen.
 	@CommandLine.Option(names = "--pr-stations",
-			defaultValue = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv",
+			defaultValue = "scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv",
 			description = "Path to the .tsv file containing the PR station specifications.")
 	protected static String URL_2_PR_STATIONS;
 

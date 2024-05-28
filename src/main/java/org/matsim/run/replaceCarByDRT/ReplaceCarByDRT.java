@@ -52,6 +52,8 @@ import java.util.stream.Collectors;
  */
 final class ReplaceCarByDRT {
 
+	//ts May 27, '24: after discussing with KN: set it to zero for easier analysis of the travel time impacts
+	private static final int PR_ACT_DURATION = 0 * 60;
 	private static Logger log = LogManager.getLogger(ReplaceCarByDRT.class);
 
 	static final String TRIP_TYPE_ATTR_KEY = "tripType";
@@ -307,7 +309,7 @@ final class ReplaceCarByDRT {
 				currentCarPRStation = null;
 
 				Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-				parkAndRideAct.setMaximumDuration(5 * 60);
+				parkAndRideAct.setMaximumDuration(PR_ACT_DURATION);
 				parkAndRideAct.setLinkId(prStation.getLinkId());
 
 				newTrip = new ArrayList<>();
@@ -349,7 +351,7 @@ final class ReplaceCarByDRT {
 
 //						Activity parkAndRideAct = fac.createActivityFromLinkId(PR_ACTIVITY_TYPE, prStation);
 				Activity parkAndRideAct = fac.createActivityFromCoord(PR_ACTIVITY_TYPE, prStation.getCoord());
-				parkAndRideAct.setMaximumDuration(5 * 60);
+				parkAndRideAct.setMaximumDuration(PR_ACT_DURATION);
 				parkAndRideAct.setLinkId(prStation.getLinkId());
 
 				newTrip = new ArrayList<>();

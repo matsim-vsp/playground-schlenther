@@ -61,7 +61,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 
 	@CommandLine.Option(names = "--replacing-modes",
 			defaultValue = "pt,drt",
-			description = "Set of modes (other than pt) which might replace car and ride trips within the ban area. " +
+			description = "Set of modes which might replace car and ride trips within the ban area. " +
 					"Use comma as separator! " +
 					"If the plan has border-crossing trips, a ptOnly plan that does not make use of P+R is created automatically.")
 	private static String REPLACING_MODES;

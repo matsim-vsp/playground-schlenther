@@ -42,8 +42,8 @@ public class RunScorePreparation {
 
     public static void main(String[] args) {
         if ( args.length==0 ){
-            String runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-pt/";
-            String runId = "berlin-v6.1-drt";
+            String runDirectory = "D:/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0/";
+            String runId = "berlin-v6.1";
 
 //            String population = runDirectory + "berlin-v6.1.output_plans.xml.gz";
             String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";

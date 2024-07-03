@@ -8,10 +8,9 @@ library(matsim)
 library(tidyverse)
 library(ggalluvial)
 library(plotly)
-#library(plotly)
-#library(htmlwidgets)
 
 "In this script, the trips of base and policy case gets compared. Several tsv-files & graphs are written as output results."
+
 
 ########################################
 # Preparation
@@ -31,11 +30,11 @@ library(plotly)
  # baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
  # policyCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt"
  # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
- 
+
  #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt"
  # kein wahrer bs cs cntd, da nur selective mode choice
- #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0" 
-  
+ #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0"
+
 ##### for berlin v5
  shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
  shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
@@ -43,14 +42,14 @@ library(plotly)
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
- 
+
 baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
 policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
- 
- 
 
 
 
+
+# read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
 policy_filename <- "output_trips_prepared_debugged.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
@@ -76,7 +75,7 @@ dir.create(paste0(policyCaseDirectory,"/analysis/trips"))
 policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 
 ########################################
-# Filter out all agents with scoreDiff > -400
+# Filter out all agents with scoreDiff > -400 (those are 3 persons in the roadTypes_all case)
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
@@ -132,8 +131,6 @@ impacted_trips <- impacted_trips %>%
   add_column(euclideanDistance_diff = impacted_trips$euclidean_distance_policy - impacted_trips$euclidean_distance_base)%>%
   filter(travTime_diff < 20000)
 
-
-
 ########################################
 "Modal Shift Sankeys - betroffene Trips"
 # Filter bedingt durch teilweise falsch erkannte Trips durch filterByRegion, siehe trips_falselyClassified.tsv
@@ -152,8 +149,8 @@ prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+car"] <- "car+b
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
 
 plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
-plot_compare_mainmode_sankey(trips_table1 = prep_grenz_base, trips_table2 = prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
+plot_compare_mainmode_sankey(trips_table1 = prep_grenz_base, trips_table2 = prep_grenz_policy)
 
 "Binnentrips"
 prep_binnen_policy <- impBinnen_trips_policy #%>%
@@ -163,16 +160,15 @@ prep_binnen_policy <- impBinnen_trips_policy #%>%
   #filter(!main_mode == "bike")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
-plot_compare_mainmode_sankey(prep_binnen_base,prep_binnen_policy)
-
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
+plot_compare_mainmode_sankey(prep_binnen_base,prep_binnen_policy)
 
 "All impacted trips"
 prep_policy <- rbind(prep_grenz_policy, prep_binnen_policy)
 prep_base <- rbind(prep_grenz_base, prep_binnen_base)
 plotModalShiftSankey(prep_base,prep_policy)
-plot_compare_mainmode_sankey(prep_base,prep_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
+plot_compare_mainmode_sankey(prep_base,prep_policy)
 
 # Zahlen Modal Split für betroffene Trips
 results_modalSplitAffected <- data.frame(key = character(), value = numeric()) %>%
@@ -199,11 +195,12 @@ grenz_policy <- rbind(quell_policy, ziel_policy)
 binnen_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "inside")
 
 plotModalShiftSankey(grenz_base,grenz_policy)
-plot_compare_mainmode_sankey(grenz_base,grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_grenz.png"))
+plot_compare_mainmode_sankey(grenz_base,grenz_policy)
+
 plotModalShiftSankey(binnen_base,binnen_policy)
-plot_compare_mainmode_sankey(binnen_base,binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_binnen.png"))
+plot_compare_mainmode_sankey(binnen_base,binnen_policy)
 
 pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
 pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
@@ -327,21 +324,23 @@ ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 #impacted_trips
 
 timeData <-
-  impacted_trips %>% 
+  impacted_trips %>%
   mutate(pure_tt_policy = trav_time_policy - wait_time_policy,
          waitTime_diff = wait_time_policy - wait_time_base,
-         pure_tt_diff = travTime_diff - waitTime_diff) %>% 
-  select(pure_tt_policy, wait_time_policy, main_mode_policy, waitTime_diff, pure_tt_diff) %>% 
-  gather(key = "time_type", value = "time", pure_tt_diff, waitTime_diff) %>% 
-  group_by(main_mode_policy, time_type) %>% 
+         pure_tt_diff = travTime_diff - waitTime_diff) %>%
+  select(pure_tt_policy, wait_time_policy, main_mode_policy, waitTime_diff, pure_tt_diff) %>%
+  gather(key = "time_type", value = "time", pure_tt_diff, waitTime_diff) %>%
+  group_by(main_mode_policy, time_type) %>%
   summarise(avg_time = mean(time) / 60)
 
 ggplot(timeData, aes(x = main_mode_policy, y = avg_time, fill = time_type)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(x = "Main Mode", y = "Time (minutes)", fill = "Time Type") +
-  ggtitle("Average Time Difference by Policy Main Mode - ALL IMPACTED TRIPS") + 
+  ggtitle("Average Time Difference by Policy Main Mode - ALL IMPACTED TRIPS") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+ggsave(file.path(policyTripsOutputDir,"travTimeDiff_by_mainMode.png"))
 
 plot_ly(timeData, x = ~main_mode_policy, y = ~avg_time, type = 'bar', color = ~time_type) %>%
   layout(

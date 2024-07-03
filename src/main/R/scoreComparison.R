@@ -19,16 +19,13 @@ library(matsim)
  baseCaseDirectory <- args[3]
  shp <- st_read(args[5])
 
-#10pct
-#baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-#policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/"
-
-#1pct
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-# #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
-
-#shp <- st_read("C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+##### for berlin v5
+ shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+ #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
+ crs = 31468
+ 
+ baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+ policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
@@ -47,8 +44,8 @@ dir.create(paste0(policyCaseDirectory,"/analysis/score"))
 ########################################
 # Prepare basic trips
 
-baseTrips <- readTripsTable(baseCaseDirectory)
-policy_trips_filename <- "output_trips_prepared.tsv"
+baseTrips <- read_output_trips(baseCaseDirectory)
+policy_trips_filename <- "output_trips_prepared_debugged.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_trips_filename)
 
 policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
@@ -82,18 +79,20 @@ autonutzerBaseBrandenburg <- autonutzerBase %>% filter(home.activity.zone_base =
 autonutzerPolicyBrandenburg <- autonutzerPolicy %>% filter(home.activity.zone_policy == "Brandenburg")
 
 results_carUsers <- data.frame(key = character(), value = numeric()) %>%
-  add_row(key = "Änderung Autonutzer (%)", value = (nrow(autonutzerBase) - nrow(autonutzerPolicy)) / nrow(autonutzerBase)) %>%
-  add_row(key = "Änderung Autonutzer Verbotszone (%)", value = (nrow(autonutzerBaseZone) - nrow(autonutzerPolicyZone)) / nrow(autonutzerBaseZone)) %>%
-  add_row(key = "Änderung Autonutzer restl. Berlin (%)", value = (nrow(autonutzerBaseOuterBerlin) - nrow(autonutzerPolicyOuterBerlin)) / nrow(autonutzerBaseOuterBerlin)) %>%
-  add_row(key = "Änderung Autonutzer Brandenburg (%)", value = (nrow(autonutzerBaseBrandenburg) - nrow(autonutzerPolicyBrandenburg)) / nrow(autonutzerBaseBrandenburg))
+  add_row(key = "Änderung Autonutzer (%)", value = (nrow(autonutzerPolicy) - nrow(autonutzerBase)) / nrow(autonutzerBase)) %>%
+  add_row(key = "Änderung Autonutzer Verbotszone (%)", value = (nrow(autonutzerPolicyZone) - nrow(autonutzerBaseZone)) / nrow(autonutzerBaseZone)) %>%
+  add_row(key = "Änderung Autonutzer restl. Berlin (%)", value = (nrow(autonutzerPolicyOuterBerlin) - nrow(autonutzerBaseOuterBerlin)) / nrow(autonutzerBaseOuterBerlin)) %>%
+  add_row(key = "Änderung Autonutzer Berlin (%)", value = (nrow(autonutzerPolicyOuterBerlin) + nrow(autonutzerPolicyZone)
+                                                           - (nrow(autonutzerBaseOuterBerlin) + nrow(autonutzerBaseZone) ) ) / (nrow(autonutzerBaseOuterBerlin) + nrow(autonutzerBaseZone) ) ) %>%
+  add_row(key = "Änderung Autonutzer Brandenburg (%)", value = (nrow(autonutzerPolicyBrandenburg) - nrow(autonutzerBaseBrandenburg)) / nrow(autonutzerBaseBrandenburg))
 
 ########################################
 # Prepare impacted trips (for the next cases)
 
 "Impacted Grenztrips"
 autoBase <- baseTrips %>% filter(main_mode == "car" | main_mode == "ride")
-impQuell_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, FALSE)
-impZiel_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, FALSE, TRUE)
+impQuell_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, spatial_type = "originating")
+impZiel_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, spatial_type = "destinating")
 impGrenz_trips_base <- rbind(impQuell_trips_base, impZiel_trips_base)
 impGrenz_trips_policy <- policyTrips %>% filter(trip_id %in% impGrenz_trips_base$trip_id)
 
@@ -105,7 +104,7 @@ impGrenz_trips <- impGrenz_trips %>%
   add_column(euclideanDistance_diff = impGrenz_trips$euclidean_distance_policy - impGrenz_trips$euclidean_distance_base)
 
 "Impacted Binnentrips"
-impBinnen_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, TRUE)
+impBinnen_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, spatial_type = "inside")
 impBinnen_trips_policy <- policyTrips %>% filter(trip_id %in% impBinnen_trips_base$trip_id)
 
 impBinnen_trips <- merge(impBinnen_trips_policy, impBinnen_trips_base, by = "trip_id", suffixes = c("_policy","_base"))

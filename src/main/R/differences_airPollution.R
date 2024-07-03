@@ -17,13 +17,16 @@ policy_runId <- args[2]
 baseCaseDirectory <- args[3]
 base_runId <- args[4]
 
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/analysis/airPollution/"
-# base_runId <- "berlin-v5.5-10pct"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/analysis/airPollution/"
-# policy_runId <- "noDRT"
+
+base_runId <- "berlin-v5.5-10pct"
+policy_runId <- "roadTypesAllowed_all"
+baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all"
 
 baseAirPollution <- read.table(file = file.path(baseCaseDirectory, paste0("analysis/airPollution/", base_runId,".emissionsPerLink.csv")), sep = ";", header = TRUE)
 policyAirPollution <- read.table(file = file.path(policyCaseDirectory, paste0("analysis/airPollution/", policy_runId,".emissionsPerLink.csv")), sep = ";", header = TRUE)
+policyAirPollution <- read.table(file = "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv", sep = ";", header = TRUE)
+
 
 #####################################
 # CO2 - Emissions & Costs (wait for Tilmanns answer to do it for the rest)
@@ -34,7 +37,7 @@ CO2_rel <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL))
 
 ## Veränderung Kosten absolut [€ / Tag] 
 # 139€/t (Werte für 2030)
-CO2_euro <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL)) / (1000 * 1000) * 139
+CO2_euro <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL)) / (1000 * 1000) * 6000
 
 #####################################
 # NOx - Emissions & Costs

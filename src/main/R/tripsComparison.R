@@ -10,7 +10,6 @@ library(ggalluvial)
 
 "In this script, the trips of base and policy case gets compared. Several tsv-files & graphs are written as output results."
 
-
 ########################################
 # Preparation
 
@@ -21,25 +20,38 @@ library(ggalluvial)
  shp <- st_read(args[5])
  shp_berlin <- st_read(args[6])
 
+#### for berlin v6
+ #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
+ #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
+ crs = 25832
+ # #1pct
+ # baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
+ # policyCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt"
+ # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
  
- 
+ #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt"
+ # kein wahrer bs cs cntd, da nur selective mode choice
+ #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0" 
+  
+##### for berlin v5
+ shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+ shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
+ crs = 31468
 # 10pct
-baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/output/baseCaseContinued-10pct"
-policyCaseDirectory <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
-shp <- st_read("//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
-shp_berlin <- st_read("//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/berlin.shp")
+# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
+# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+ 
+baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
 
-# #1pct
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/1pct/optimum-flowCapacity/"
-# #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
+
 
 # read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
-policy_filename <- "output_trips_prepared.tsv"
+policy_filename <- "output_trips_prepared_debugged.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
-baseTrips <- readTripsTable(baseCaseDirectory)
+baseTrips <- read_output_trips(baseCaseDirectory)
 
 policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
 policyTrips <- policyTrips %>% 
@@ -52,23 +64,6 @@ policyTrips <- policyTrips %>%
          start_x = as.double(start_x), 
          start_y = as.double(start_y), end_x = as.double(end_x), 
          end_y = as.double(end_y))
-
-##read unprepared policy trips for de-bugging
-policyTrips_unprepped <- readTripsTable(policyCaseDirectory)
-
-policyTrips_debugged <- read.table(file = "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all/output_trips_prepared_debugged.tsv",
-                                   sep ='\t', header = TRUE)
-policyTrips <- policyTrips_debugged %>% 
-  mutate(trip_number = as.double(trip_number),
-         dep_time = parse_hms(dep_time),
-         trav_time = parse_hms(trav_time),
-         wait_time = parse_hms(wait_time),
-         traveled_distance = as.double(traveled_distance),
-         euclidean_distance = as.double(euclidean_distance),
-         start_x = as.double(start_x), 
-         start_y = as.double(start_y), end_x = as.double(end_x), 
-         end_y = as.double(end_y))
-
 
 ########################################
 # Prepare folders
@@ -96,8 +91,9 @@ policyTrips <- policyTrips %>% filter(person %in% personsJoined$person)
 
 "Impacted Grenztrips"
 autoBase <- baseTrips %>% filter(main_mode == "car" | main_mode == "ride")
-impQuell_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, FALSE)
-impZiel_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, FALSE, TRUE)
+
+impQuell_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, "originating")
+impZiel_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, "destinating")
 impGrenz_trips_base <- rbind(impQuell_trips_base, impZiel_trips_base)
 impGrenz_trips_policy <- policyTrips %>% filter(trip_id %in% impGrenz_trips_base$trip_id)
 
@@ -110,7 +106,7 @@ impGrenz_trips <- impGrenz_trips %>%
   filter(travTime_diff < 20000)
 
 "Impacted Binnentrips"
-impBinnen_trips_base <- autoBase %>% filterByRegion(., shp, crs = 31468, TRUE, TRUE)
+impBinnen_trips_base <- autoBase %>% process_filter_by_shape(., shp, crs = crs, "inside")
 impBinnen_trips_policy <- policyTrips %>% filter(trip_id %in% impBinnen_trips_base$trip_id)
 
 impBinnen_trips <- merge(impBinnen_trips_policy, impBinnen_trips_base, by = "trip_id", suffixes = c("_policy","_base"))
@@ -138,32 +134,39 @@ impacted_trips <- impacted_trips %>%
 # Filter bedingt durch teilweise falsch erkannte Trips durch filterByRegion, siehe trips_falselyClassified.tsv
 
 "Grenztrips"
-prep_grenz_policy <- impGrenz_trips_policy %>%
-  filter(!main_mode == "ride") %>%
-  filter(!main_mode == "car") %>%
-  filter(!main_mode == "drt") %>%
-  filter(!main_mode == "bicycle")
-prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+ride"] <- "ride+bicycle"
-prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bicycle+car"] <- "car+bicycle"
+
+##Tilmann: warum filtern wir hier die Modi raus??
+### -> auskommentiert
+prep_grenz_policy <- impGrenz_trips_policy #%>%
+  #filter(!main_mode == "ride") %>%
+  #filter(!main_mode == "car") %>%
+  #filter(!main_mode == "drt") %>%
+  #filter(!main_mode == "bike")
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+ride"] <- "ride+bike"
+prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+car"] <- "car+bike"
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
+
 plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
+plot_compare_mainmode_sankey(trips_table1 = prep_grenz_base, trips_table2 = prep_grenz_policy)
 
 "Binnentrips"
-prep_binnen_policy <- impBinnen_trips_policy %>%
-  filter(!grepl("+", main_mode, fixed = TRUE)) %>%
-  filter(!main_mode == "car") %>%
-  filter(!main_mode == "ride") %>%
-  filter(!main_mode == "bicycle")
+prep_binnen_policy <- impBinnen_trips_policy #%>%
+  #filter(!grepl("+", main_mode, fixed = TRUE)) %>%
+  #filter(!main_mode == "car") %>%
+  #filter(!main_mode == "ride") %>%
+  #filter(!main_mode == "bike")
 prep_binnen_base <- impBinnen_trips_base %>% filter(trip_id %in% prep_binnen_policy$trip_id)
 plotModalShiftSankey(prep_binnen_base,prep_binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_binnen.png"))
+plot_compare_mainmode_sankey(prep_binnen_base,prep_binnen_policy)
 
 "All impacted trips"
 prep_policy <- rbind(prep_grenz_policy, prep_binnen_policy)
 prep_base <- rbind(prep_grenz_base, prep_binnen_base)
 plotModalShiftSankey(prep_base,prep_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_impacted.png"))
+plot_compare_mainmode_sankey(prep_base,prep_policy)
 
 # Zahlen Modal Split für betroffene Trips
 results_modalSplitAffected <- data.frame(key = character(), value = numeric()) %>%
@@ -179,20 +182,23 @@ results_modalSplitAffected <- data.frame(key = character(), value = numeric()) %
 ########################################
 "Modal Shift Sankeys - alle Trips"
 
-quell_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
-ziel_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+quell_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "originating")
+ziel_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "destinating")
 grenz_base <- rbind(quell_base, ziel_base)
-binnen_base <- baseTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+binnen_base <- baseTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "inside")
 
-quell_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, FALSE)
-ziel_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, FALSE, TRUE)
+quell_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "originating")
+ziel_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "destinating")
 grenz_policy <- rbind(quell_policy, ziel_policy)
-binnen_policy <- policyTrips %>% filterByRegion(., shp_berlin, crs = 31468, TRUE, TRUE)
+binnen_policy <- policyTrips %>% process_filter_by_shape(., shp_berlin, crs = crs, "inside")
 
 plotModalShiftSankey(grenz_base,grenz_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_grenz.png"))
+plot_compare_mainmode_sankey(grenz_base,grenz_policy)
+
 plotModalShiftSankey(binnen_base,binnen_policy)
 ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_all_binnen.png"))
+plot_compare_mainmode_sankey(binnen_base,binnen_policy)
 
 pr_trips_policy <- policyTrips %>% filter(grepl("+", main_mode, fixed = TRUE))
 pr_trips_base <- baseTrips %>% filter(trip_id %in% pr_trips_policy$trip_id)
@@ -268,71 +274,6 @@ ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travTime.png"))
 
-##### DEBUGGING
-#Tilmann: analysiere die negativen Reisezeit-Differenzen
-
-
-negativeTravTimeDiff <- impacted_trips %>%  
-  filter(travTime_diff < 0) %>% 
-  mutate(main_mode = main_mode_policy,
-         start_x = start_x_base,
-         start_y = start_y_base,
-         end_x = end_x_base,
-         end_y = end_y_base)
-
-matsim::plot_mainmode_barchart(negativeTravTimeDiff)
-
-negative_car <- negativeTravTimeDiff %>% 
-  filter(main_mode_policy == "car") %>% 
-  mutate(main_mode = main_mode_base)
-
-matsim::plot_mainmode_barchart(negative_car)
-matsim::plot_map_trips(negative_car, crs = 31468, optimized = TRUE)
-
-negative_drt <- negativeTravTimeDiff %>% 
-  filter(main_mode_policy == "drt") %>% 
-  mutate(main_mode = main_mode_base)
-
-matsim::plot_mainmode_barchart(negative_drt)
-matsim::plot_map_trips(negative_drt, crs = 31468, optimized = TRUE)
-hist(as.numeric(negative_drt$travTime_diff))
-hist(as.numeric(negative_drt$traveledDistance_diff))
-
-negative_walk <- negativeTravTimeDiff %>% 
-  filter(main_mode_policy == "walk") %>% 
-  mutate(main_mode = main_mode_base)
-
-matsim::plot_mainmode_barchart(negative_walk)
-matsim::plot_map_trips(negative_walk, crs = 31468, optimized = TRUE)
-hist(negative_walk$travTime_diff)
-hist(negative_walk$traveledDistance_diff)
-
-negative_pt_int <- negativeTravTimeDiff %>% 
-  filter(main_mode_policy == "pt_w_drt_used") %>% 
-  mutate(main_mode = main_mode_base)
-
-matsim::plot_mainmode_barchart(negative_pt_int)
-matsim::plot_map_trips(negative_pt_int, crs = 31468, optimized = TRUE)
-hist(as.numeric(negative_pt_int$travTime_diff))
-hist(negative_pt_int$traveledDistance_diff)
-
-
-###
-
-nonMatchingStartActs <- negativeTravTimeDiff %>% 
-  filter(start_activity_type_policy != start_activity_type_base)
-
-nonMatchingEndActs <- negativeTravTimeDiff %>% 
-  filter(end_activity_type_policy != end_activity_type_base)
-
-
-bb <- autoBase %>% 
-  filter(person == "412573301")
-
-pp <- impacted_trips_policy %>% 
-  filter(person == "412573301")
-
-
 ########################################
 # General results - traveledDistance of impacted_trips, impacted_binnen_trips, pr_trips
 
@@ -373,6 +314,40 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
   )
 ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
 
+########################################
+"Travel time components"
+
+#impGrenz_trips
+#impBinnen_trips
+#impacted_trips
+
+timeData <-
+  impacted_trips %>% 
+  mutate(pure_tt_policy = trav_time_policy - wait_time_policy,
+         waitTime_diff = wait_time_policy - wait_time_base,
+         pure_tt_diff = travTime_diff - waitTime_diff) %>% 
+  select(pure_tt_policy, wait_time_policy, main_mode_policy, waitTime_diff, pure_tt_diff) %>% 
+  gather(key = "time_type", value = "time", pure_tt_diff, waitTime_diff) %>% 
+  group_by(main_mode_policy, time_type) %>% 
+  summarise(avg_time = mean(time) / 60)
+
+ggplot(timeData, aes(x = main_mode_policy, y = avg_time, fill = time_type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Main Mode", y = "Time (minutes)", fill = "Time Type") +
+  ggtitle("Average Time Difference by Policy Main Mode - ALL IMPACTED TRIPS") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+ggsave(file.path(policyTripsOutputDir,"travTimeDiff_by_mainMode.png"))
+
+plot_ly(timeData, x = ~main_mode_policy, y = ~avg_time, type = 'bar', color = ~time_type) %>%
+  layout(
+    title = "Average Time Difference by Policy Main Mode - ALL IMPACTED TRIPS",
+    barmode = 'stack',
+    xaxis = list(title = "Main Mode", tickangle = -90),
+    yaxis = list(title = "Average Time (minutes)"),
+    legend = list(title = list(text = 'Time Type'))
+  )
 
 ########################################
 # Boxplots & Results - by different criteria

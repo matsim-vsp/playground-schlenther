@@ -76,22 +76,22 @@ class DrtVehicleCreatorForBanScenario {
 
 	public static void main(String[] args) {
 
-		String networkFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
+		String networkFile = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.2/input/berlin-v6.2-network-with-pt.xml.gz";
 
 		//in our case it the ban area and in the simulation the service area will actually differ (be bigger)
-		String drtServiceAreaShapeFile = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
-		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv");
-		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:31468", "EPSG:31468");
+		String drtServiceAreaShapeFile = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
+		URL prStationsFileURL = IOUtils.resolveFileOrResource("scenarios/berlin-v6.2/berlin-v6.2-pr-stations-ring.tsv");
+		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:25832");
 
-		float shareOfVehiclesAssignedToStations = 1.0f;
-		String vehiclesFilePrefix = "scenarios/berlin/replaceCarByDRT/noModeChoice/vehicles/vehicles-2023-08-11/hundekopf-drt-v5.5.stationShare" + shareOfVehiclesAssignedToStations + "-";
+		float shareOfVehiclesAssignedToStations = 0.0f;
+		String vehiclesFilePrefix = "scenarios/berlin-v6.2/drtVehicles/hundekopf-drt-v6.2.stationShare" + shareOfVehiclesAssignedToStations + "-";
 
 
 		Set<Integer> numbersOfVehicles = new HashSet<>();
 //		numbersOfVehicles.add(500);
 //		numbersOfVehicles.add(750);
-//		numbersOfVehicles.add(1000);
-		numbersOfVehicles.add(1500);
+		numbersOfVehicles.add(5000);
+		numbersOfVehicles.add(7500);
 		int seats = 8;
 
 		DrtVehicleCreatorForBanScenario vehicleCreator = new DrtVehicleCreatorForBanScenario(networkFile, drtServiceAreaShapeFile, ct);
@@ -121,11 +121,12 @@ class DrtVehicleCreatorForBanScenario {
 		this.ct = ct;
 		
 		Config config = ConfigUtils.createConfig();
+		config.global().setCoordinateSystem("EPSG:25832");
 		config.network().setInputFile(networkfile);
 		this.scenario = ScenarioUtils.loadScenario(config);
 		
 		shpUtils = new BerlinShpUtils(drtServiceAreaShapeFile);
-		RunDrtOpenBerlinScenario.addDRTmode(scenario, drtNetworkMode, drtServiceAreaShapeFile, 750);
+		RunDrtOpenBerlinScenario.addDRTmode(scenario, drtNetworkMode, drtServiceAreaShapeFile, 500);
 		
 		Set<String> modes = new HashSet<>();
 		modes.add(drtNetworkMode);

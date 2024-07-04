@@ -60,6 +60,8 @@ final class ReplaceCarByDRT {
 	static final String PR_ACTIVITY_TYPE = "P+R";
 	private static boolean hasWarnedHardcodedChainMode = false;
 
+	private static MutableInt notHomeLogWarnCnt = new MutableInt(0);
+
 	/**
 	 *
 	 * @param scenario
@@ -412,7 +414,13 @@ final class ReplaceCarByDRT {
 		//person attribute
 		Activity firstAct = (Activity) person.getSelectedPlan().getPlanElements().get(0);
 		if (PopulationUtils.getSubpopulation(person).equals("person") && !firstAct.getType().startsWith("home")){
-			log.warn("first act of agent " + person.getId() + " is not home");
+			if (notHomeLogWarnCnt.getValue() < 10){
+				log.warn("first act of agent " + person.getId() + " is not home");
+				notHomeLogWarnCnt.increment();
+				if (notHomeLogWarnCnt.getValue() == 10) {
+					log.warn("this warning is suppressed from now on.");
+				}
+			}
 		}
 		Boolean firstActInProhibitionZone = isActivityInGeoms(scenario, firstAct, carFreeGeoms);
 		PopulationUtils.putPersonAttribute(person, "firstActInProhibitionZone", firstActInProhibitionZone);

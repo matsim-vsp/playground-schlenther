@@ -132,6 +132,7 @@ final class ReplaceCarByDRT {
 	 */
 
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
+															  Set<String> subpopulations,
 															  Set<String> modesToBeReplaced,
 															  Set<String> replacingModes,
 															  boolean keepOriginalPlan,
@@ -156,7 +157,17 @@ final class ReplaceCarByDRT {
 		// but it slightly worsens inner trips
 		PRStationChoice prStationChoice = PRStationChoice.both;
 
-		for (Person person : scenario.getPopulation().getPersons().values()) {
+		//filter subpopulations to ban from area (you might want to allow commercial person traffic and ban private car trips only)
+		Set<? extends Person> agents = scenario.getPopulation().getPersons().values().stream()
+				.filter(p -> {
+					for (String subpopulation : subpopulations) {
+						if (PopulationUtils.getSubpopulation(p).contains(subpopulation)) return true;
+					}
+					return false;
+				})
+				.collect(Collectors.toSet());
+
+		for (Person person : agents) {
 
 			Boolean firstActInProhibitionZone = putAttrIsFirstActInProhibitionZone(scenario, person, carFreeGeoms);
 

@@ -66,6 +66,13 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 					"If the plan has border-crossing trips, a ptOnly plan that does not make use of P+R is created automatically.")
 	private static String REPLACING_MODES;
 
+	@CommandLine.Option(names = "--subpopulations",
+			defaultValue = "person",
+			description = "Set of character strings which is used to determine subpopulations to get banned. " +
+					"Use comma as separator! " +
+					"Each subpopulation containing either of the given values gets banned.")
+	private static String SUBPOPULATIONS;
+
 	@CommandLine.Option(names = "--ban-area",
 			defaultValue = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp",
 			description = "Path to (single geom) shape file depicting the area where private cars are banned from. If you adjust, think about adjusting the drt area+stops file, as well!")
@@ -274,6 +281,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 
 		// replace all car+ride trips - cut border-crossing trips in two parts assuming P+R stations
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,
+				Set.of(SUBPOPULATIONS.split(",")),
 				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(REPLACING_MODES.split(",")),
                 BASE_CASE,

@@ -47,6 +47,7 @@ public class ReplaceCarByDRTTest {
 				"https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO,
+				Set.of("person"),
 				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(TransportMode.drt, TransportMode.pt),
 				false,

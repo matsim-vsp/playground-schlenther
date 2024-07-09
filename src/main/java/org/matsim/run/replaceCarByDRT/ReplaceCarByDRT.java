@@ -111,7 +111,7 @@ final class ReplaceCarByDRT {
 	 * in the other plan it chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>outside</i> the prohibition zone.<br>
 	 * Additionally, another plan is added where the agent does not use P+R logic but just uses pt for all trips in all subtours that touched the prohibition zone with car, <br>
 	 * or for all trips that used ride inside the prohibition zone (possible in combination with other modes in the same subtour).<br>
-	 * So if replacingModes is {drt,pt} and agent had 1 original plan, it will then have 4-5 plans:
+	 * So if replacingModes is {drt,pt} and keepOriginalPlan == false and agent had 1 original plan, it will then have 4-5 plans:
 	 * <ul>
 	 *    <li>two where the type contains 'drt'</li>
 	 *    <li>two where the type contains 'pt'</li>
@@ -132,6 +132,7 @@ final class ReplaceCarByDRT {
 	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
 															  Set<String> modesToBeReplaced,
 															  Set<String> replacingModes,
+															  boolean keepOriginalPlan,
 															  URL url2CarFreeSingleGeomShapeFile,
 															  URL url2PRStations,
 															  MainModeIdentifier mainModeIdentifier,
@@ -192,7 +193,11 @@ final class ReplaceCarByDRT {
 				}
 
 				//mark plan for removal
-				originalPlansToRemove.add(plan);
+				if(! keepOriginalPlan){
+					originalPlansToRemove.add(plan);
+				} else {
+					plan.setType("original");
+				}
 
 //				If we have only inner trips, we do not want to create ptOnly plan because it will be the same as a pt plan (when pt is configured as replacing mode) and thus increase the chance of choosing pt naturally.
 				if(nrOfInnerTripsToWithModesToReplace != tripsToReplace.size() &&

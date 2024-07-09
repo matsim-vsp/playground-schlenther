@@ -81,6 +81,11 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 			description = "Can be one of [nowhere, motorway, motorwayAndPrimaryAndTrunk]. Determines the type of roads inside in the ban area, where cars are allowed to drive, but not to park.")
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 
+    @CommandLine.Option(names = "--base-case",
+            defaultValue = "false",
+            description = "If true, then network remains untouched, agents keep their original plan but also receive the P+R (and ptOnly) variants.")
+	private static boolean BASE_CASE;
+
 	public static void main(String[] args) {
 		MATSimApplication.run(BerlinReplaceCarByDrtScenario.class, args);
 	}
@@ -258,10 +263,12 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 				break;
 		}
 
-		//ban car and ride from the shp-provided area
-		ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario,
-				IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
-				roadTypesWithCarAllowed);
+        if(! BASE_CASE){
+            //ban car and ride from the shp-provided area
+            ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario,
+                    IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
+                    roadTypesWithCarAllowed);
+        }
 
 		OpenBerlinIntermodalPtDrtRouterModeIdentifier mainModeIdentifier = new OpenBerlinIntermodalPtDrtRouterModeIdentifier();
 
@@ -269,6 +276,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(scenario,
 				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(REPLACING_MODES.split(",")),
+                BASE_CASE,
 				IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
 				IOUtils.resolveFileOrResource(URL_2_PR_STATIONS),
 				mainModeIdentifier,

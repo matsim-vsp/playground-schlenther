@@ -88,10 +88,17 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 			description = "Can be one of [nowhere, motorway, motorwayAndPrimaryAndTrunk]. Determines the type of roads inside in the ban area, where cars are allowed to drive, but not to park.")
 	private static CarsAllowedOnRoadTypesInsideBanArea ROAD_TYPES_CAR_ALLOWED;
 
-    @CommandLine.Option(names = "--base-case",
-            defaultValue = "false",
-            description = "If true, then network remains untouched, agents keep their original plan but also receive the P+R (and ptOnly) variants.")
-	private static boolean BASE_CASE;
+    @CommandLine.Option(names = "--case",
+            defaultValue = "policyCase",
+            description = "Can be either of [policyCase, originalNetworkAndAllPlanAlternatives]. See code comments for further description.")
+	private static Case CASE;
+
+	private enum Case {
+		//selective mode choice, network is changed according to ban area, violating plans are copied+mutated and deleted
+		policyCase,
+		//network remains untouched, agents keep their original plan but also receive the P+R (and ptOnly) variants.
+		originalNetworkAndAllPlanAlternatives
+	}
 
 	public static void main(String[] args) {
 		MATSimApplication.run(BerlinReplaceCarByDrtScenario.class, args);
@@ -270,7 +277,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 				break;
 		}
 
-        if(! BASE_CASE){
+        if(!CASE.equals(Case.originalNetworkAndAllPlanAlternatives)){
             //ban car and ride from the shp-provided area
             ReplaceCarByDRT.banCarAndRideFromNetworkArea(scenario,
                     IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
@@ -284,7 +291,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 				Set.of(SUBPOPULATIONS.split(",")),
 				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(REPLACING_MODES.split(",")),
-                BASE_CASE,
+                CASE.equals(Case.originalNetworkAndAllPlanAlternatives),
 				IOUtils.resolveFileOrResource(URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE),
 				IOUtils.resolveFileOrResource(URL_2_PR_STATIONS),
 				mainModeIdentifier,

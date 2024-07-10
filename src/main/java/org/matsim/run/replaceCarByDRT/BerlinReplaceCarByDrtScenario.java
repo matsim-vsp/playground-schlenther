@@ -197,8 +197,8 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 			dvrpConfigGroup.networkModes.add(drtConfigGroup.getMode());
 		}
 
-		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
-				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
+//		Preconditions.checkArgument(!drtConfigGroup.getDrtSpeedUpParams().isPresent(),
+//				"you are using drt-speed-up. this scenario setup is meant for experiments without mode choice, so basically, drt-speed-up should not be necessary.");
 
 //		// Setting operational scheme to stop based
 //		drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.stopbased;

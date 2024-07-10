@@ -49,6 +49,7 @@ public class ReplaceCarByDRTTest {
 		ReplaceCarByDRT.prepareInputPlansForCarProhibitionWithPRLogic(SCENARIO,
 				Set.of(TransportMode.car, TransportMode.ride),
 				Set.of(TransportMode.drt, TransportMode.pt),
+				false,
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp"),
 				IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv"),
 				new OpenBerlinIntermodalPtDrtRouterModeIdentifier(),

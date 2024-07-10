@@ -11,8 +11,8 @@
 
 	<properties>
 		<!-- release -->
-		<matsim.version>2025.0-PR3292</matsim.version>
-		<berlin.version>9287fc381f</berlin.version> <!--matsim-berlin 9287fc381f (which is basically v6.2). This version uses MATSim 2025.0-PR3292 -->
+		<matsim.version>2025.0-PR3350</matsim.version>
+		<berlin.version>v6.3</berlin.version> <!--matsim-berlin v6.3. This version uses MATSim 2025.0-PR3350 -->
 
 		<!-- PR (= pull request) release -->
 		<!--		<matsim.version>13.1-PR1536</matsim.version> -->

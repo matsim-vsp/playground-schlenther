@@ -27,13 +27,14 @@ public class RunTripsPreparation {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if ( args.length==0 ){
-            String rScriptCommand = "C:/Program Files/R/R-4.3.1/bin/Rscript.exe";
+            String rScriptCommand = "C:/Program Files/R/R-4.4.1beta/bin/Rscript.exe";
             String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
-            String pr_stations = "scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv";
+            String pr_stations = "scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv";
 
-            String runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptBike/";
-            String runId = "berlin-v6.1-drt";
+            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly";
+            String runId = "ptDrt10pOnly";
+
 
 //            List<String> sensitivityRuns = new ArrayList<String>();
 //            sensitivityRuns.add("extraPtPlan-true");

@@ -42,13 +42,17 @@ public class RunScorePreparation {
 
     public static void main(String[] args) {
         if ( args.length==0 ){
-            String runDirectory = "D:/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0/";
-            String runId = "berlin-v6.1";
+            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly/";
+            String runId = "ptDrt10pOnly";
+
+            //base case
+//            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/";
+//            String runId = "berlin-v6.3";
 
 //            String population = runDirectory + "berlin-v6.1.output_plans.xml.gz";
             String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
-            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv");
+            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv");
             String boundary_shp = "scenarios/berlin-v6.1/shp/hundekopf-plus-500m-25832.shp";
 
             RunScorePreparation scorePreparation = new RunScorePreparation(runDirectory, runId, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
@@ -86,6 +90,7 @@ public class RunScorePreparation {
         try {
             CSVWriter writer = new CSVWriter(Files.newBufferedWriter(Paths.get(outputFileName)), '\t', CSVWriter.NO_QUOTE_CHARACTER, '"', "\n");
             writer.writeNext(new String[]{"person",
+                    "subpopulation",
                     "executed_score",
                     "home-activity-zone",
                     "income",
@@ -131,6 +136,7 @@ public class RunScorePreparation {
                 String homeY = String.valueOf(home.getY());
 
                 writer.writeNext(new String[]{person.getId().toString(),
+                        PopulationUtils.getSubpopulation(person),
                         String.valueOf(person.getSelectedPlan().getScore()),
                         livingLocation,
                         String.valueOf(income),

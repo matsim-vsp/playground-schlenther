@@ -23,8 +23,8 @@ library(plotly)
  shp_berlin <- st_read(args[6])
 
 #### for berlin v6
- #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
- #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
+ shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
+ shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
  crs = 25832
  # #1pct
  # baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
@@ -34,23 +34,27 @@ library(plotly)
  #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt"
  # kein wahrer bs cs cntd, da nur selective mode choice
  #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0"
+ 
+ baseCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/"
+ policyCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
+ 
 
 ##### for berlin v5
- shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
- shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
- crs = 31468
+ #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+ #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
+ #crs = 31468
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
-baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
-policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+#baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
 
 
 
 # read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
-policy_filename <- "output_trips_prepared_debugged.tsv"
+policy_filename <- "output_trips_prepared_offline.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
 baseTrips <- read_output_trips(baseCaseDirectory)
@@ -75,7 +79,7 @@ dir.create(paste0(policyCaseDirectory,"/analysis/trips"))
 policyTripsOutputDir <- paste0(policyCaseDirectory,"/analysis/trips")
 
 ########################################
-# Filter out all agents with scoreDiff > -400 (those are 3 persons in the roadTypes_all case)
+# Filter out all agents with scoreDiff > -400 (those are 3 persons in the v5.5 roadTypes_all case)
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
@@ -83,7 +87,11 @@ policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_
 personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
 personsJoined <- personsJoined %>%
   add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
-personsJoined <- personsJoined %>% filter(score_diff > -400)
+#personsJoined <- personsJoined %>% filter(score_diff > -400)
+
+#filter subpopulation
+personsJoined <- personsJoined %>%
+  filter(subpopulation_base == "person")
 
 baseTrips <- baseTrips %>% filter(person %in% personsJoined$person)
 policyTrips <- policyTrips %>% filter(person %in% personsJoined$person)

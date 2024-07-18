@@ -40,10 +40,10 @@ readTripsTable <- function (input_path = ".", n_max = Inf)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-input_path <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
-#input_path <- args[1]
+#input_path <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
+input_path <- args[1]
 policyTripsPrep <- readTripsTable(input_path)
-output_filename <- "output_trips_prepared_debugged.tsv"
+output_filename <- "output_trips_prepared.tsv"
 output_path <- file.path(input_path, output_filename)
 prStations_path <- args[2]
 
@@ -53,8 +53,8 @@ print(prStations_path)
 
 policyTripsPrep$prStation <- ""
 
-prStations <- read.table(file = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
-#prStations <- read.table(file = prStations_path, sep = "\t", header = TRUE)
+#prStations <- read.table(file = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
+prStations <- read.table(file = prStations_path, sep = "\t", header = TRUE)
 
 for(i in 1:nrow(prStations)) {
   print(prStations[i,"name"])

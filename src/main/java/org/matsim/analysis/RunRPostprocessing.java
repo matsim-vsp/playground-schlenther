@@ -33,24 +33,24 @@ public class RunRPostprocessing {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         if ( args.length==0 ){
-            String rScriptCommand = "C:/Program Files/R/R-4.3.1/bin/Rscript.exe";
+            String rScriptCommand = "C:/Program Files/R/R-4.4.1beta/bin/Rscript.exe";
 
             //shapes
             String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
-            String berlin_shp = "D:/svn/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
+            String berlin_shp = "D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
             String pr_stations = "scenarios/berlin-v6.1/berlin-v6.1-pr-stations-ring.tsv";
 
             //base case
-            String base_runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/";
-            String base_runId = "berlin-v6.1";
+            String base_runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/ ";
+            String base_runId = "berlin-v6.3";
 
             //policy case(s)
             List<String> sensitivityRuns = new ArrayList<String>();
             sensitivityRuns.add("extraPtPlan-true");
 
 //            for(String run : sensitivityRuns) {
-            String runId = "berlin-v6.1-drt";
-            String runDirectory = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt";
+            String runId = "ptDrt10pOnly";
+            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly";
 
                 RunRPostprocessing postprocessor = new RunRPostprocessing(runDirectory, runId, inner_city_shp, berlin_shp, pr_stations, rScriptCommand, base_runDirectory, base_runId);
                 postprocessor.run();

@@ -25,14 +25,16 @@ library(matsim)
  crs = 31468
  
  baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
- policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+ policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT/"
 
 basePersons <- read.table(file = file.path(baseCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 policyPersons <- read.table(file = file.path(policyCaseDirectory, "output_plans_selectedPlanScores.tsv"), sep = '\t', header = TRUE)
 
 personsJoined <- merge(policyPersons, basePersons, by = "person", suffixes = c("_policy","_base"))
 personsJoined <- personsJoined %>%
-  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base)
+  add_column(score_diff = personsJoined$executed_score_policy - personsJoined$executed_score_base) %>% 
+  filter(subpopulation_base == "person")
+
 personsJoined <- personsJoined %>% filter(score_diff > -400)
 
 ########################################
@@ -45,7 +47,7 @@ dir.create(paste0(policyCaseDirectory,"/analysis/score"))
 # Prepare basic trips
 
 baseTrips <- read_output_trips(baseCaseDirectory)
-policy_trips_filename <- "output_trips_prepared_debugged.tsv"
+policy_trips_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_trips_filename)
 
 policyTrips <- read.table(file = policy_inputfile, sep ='\t', header = TRUE)
@@ -182,7 +184,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_general.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_general.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by hasPRActivity
@@ -211,8 +216,8 @@ for (case in cases){
     stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "Agent nutzt mind. 1 P+R-Station (Maßnahmenfall vs Basisfall)",
+      title = paste0("Score Differences (",case,")"),
+      subtitle = "Agent uses 1+ P+R stations",
       caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
       y = "Score Δ"
     ) +
@@ -227,7 +232,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_hasPRActivity.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_hasPRActivity.png"),
+         units = "cm",
+         width = 30,
+         height = 15)
   
   ########################################
   # Results by livesInsideBoundaryZone_policy
@@ -271,7 +279,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_livesInsideBoundaryZone_policy.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_livesInsideBoundaryZone_policy.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by isCarUser_policy
@@ -315,7 +326,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_isCarUser_policy.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_isCarUser_policy.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by homeActivityZone
@@ -357,7 +371,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by noOfActivities
@@ -397,7 +414,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_noOfActivities.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_noOfActivities.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by travelledDistance
@@ -427,7 +447,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_scoreByTravelledDistance.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_scoreByTravelledDistance.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   
   ########################################
@@ -470,7 +493,10 @@ for (case in cases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_mainMode.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_mainMode.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Results by last PR Station
@@ -494,7 +520,10 @@ for (case in cases){
       axis.title.x = element_blank(),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
     )
-  ggsave(file.path(policyCaseOutputDir,"boxplot_lastPRStation.png"))
+  ggsave(file.path(policyCaseOutputDir,"boxplot_lastPRStation.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # Dump results tables

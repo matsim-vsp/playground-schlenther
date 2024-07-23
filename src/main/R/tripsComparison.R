@@ -23,9 +23,9 @@ library(plotly)
  shp_berlin <- st_read(args[6])
 
 #### for berlin v6
- shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
- shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
- crs = 25832
+ #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
+ #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
+ #crs = 25832
  # #1pct
  # baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
  # policyCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt"
@@ -35,26 +35,26 @@ library(plotly)
  # kein wahrer bs cs cntd, da nur selective mode choice
  #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0"
  
- baseCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/"
- policyCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
+ #baseCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/"
+ #policyCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
  
 
 ##### for berlin v5
- #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
- #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
- #crs = 31468
+ shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+ shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
+ crs = 31468
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
-#baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
-#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
 
 
 
 # read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
-policy_filename <- "output_trips_prepared_offline.tsv"
+policy_filename <- "output_trips_prepared_debugged.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
 baseTrips <- read_output_trips(baseCaseDirectory)
@@ -70,6 +70,21 @@ policyTrips <- policyTrips %>%
          start_x = as.double(start_x), 
          start_y = as.double(start_y), end_x = as.double(end_x), 
          end_y = as.double(end_y))
+
+
+
+
+####
+#we had put 5 minutes for P+R duration which we now deduct again. for more recent versions (than v5.5), this shouldn't apply and should be outcommented
+
+## if you aren't sure, compare for 1 agent against original output trips table
+#policyTrips_original <- read_output_trips(policyCaseDirectory)
+
+#policyTrips <- policyTrips %>%
+#  mutate(trav_time = if_else(!is.na(prStation) & prStation != "",
+#                             as_hms(as.numeric(trav_time) - 300),
+#                             trav_time))
+
 
 ########################################
 # Prepare folders
@@ -147,7 +162,7 @@ impacted_trips <- impacted_trips %>%
 
 ##Tilmann: warum filtern wir hier die Modi raus??
 ### -> auskommentiert
-prep_grenz_policy <- impGrenz_trips_policy #%>%
+#prep_grenz_policy <- impGrenz_trips_policy #%>%
   #filter(!main_mode == "ride") %>%
   #filter(!main_mode == "car") %>%
   #filter(!main_mode == "drt") %>%
@@ -161,7 +176,7 @@ ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
 plot_compare_mainmode_sankey(trips_table1 = prep_grenz_base, trips_table2 = prep_grenz_policy)
 
 "Binnentrips"
-prep_binnen_policy <- impBinnen_trips_policy #%>%
+#prep_binnen_policy <- impBinnen_trips_policy #%>%
   #filter(!grepl("+", main_mode, fixed = TRUE)) %>%
   #filter(!main_mode == "car") %>%
   #filter(!main_mode == "ride") %>%
@@ -238,9 +253,9 @@ results_modalSplitAll <- data.frame(key = character(), value = numeric()) %>%
 ########################################
 # General results - travelTime of impacted_trips, impacted_binnen_trips, pr_trips
 
-impGrenz_trips$tripType <- "Betr. Quell-/Zielverkehr"
-impBinnen_trips$tripType <- "Betr. Binnenverkehr"
-impacted_trips$tripType <- "Betr. Verkehr"
+impGrenz_trips$tripType <- "Imp. OD Traffic"
+impBinnen_trips$tripType <- "Imp. inner traffic"
+impacted_trips$tripType <- "Imp. Traffic"
 
 boxplot_helper <- rbind(impGrenz_trips,impBinnen_trips,impacted_trips)
 
@@ -266,15 +281,15 @@ ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
   stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   labs(
-    title = "Verteilung der Reisezeit-Differenzen",
-    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
-    caption = "Reisezeit Δ = Reisezeit (Maßnahmenfall) - Reisezeit (Basisfall)",
-    y = "Reisezeit Δ [s]"
+    title = "Travel Time (TT) Differences",
+    subtitle = "Impacted Trips (Policy vs Base Case)",
+    caption = "Δ TT = TT (Policy) - TT (Base)",
+    y = "Δ TT [s]"
   ) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.title = element_text(color = "#0099f8", size = 30, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 15, hjust = 0.5),
     plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
     axis.text.x = element_text(size = 20),
@@ -282,7 +297,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = travTime_diff)) +
     axis.title.y = element_text(size = 20),
     axis.text.y = element_text(size = 20)
   )
-ggsave(file.path(policyTripsOutputDir,"boxplot_travTime.png"))
+ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_eng.png"))
 
 ########################################
 # General results - traveledDistance of impacted_trips, impacted_binnen_trips, pr_trips
@@ -304,17 +319,17 @@ for (tripType in tripTypes){
 ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
   geom_boxplot(fill = "#0099f8") +
   labs(
-    title = "Verteilung der Reiseweite-Differenzen",
-    subtitle = "Betroffene Trips (Maßnahmenfall vs Basisfall)",
-    caption = "Reiseweite Δ = Reiseweite (Maßnahmenfall) - Reiseweite (Basisfall)",
-    y = "Reiseweite Δ [m]"
+    title = "Traveled Distance (Dist) Difference",
+    subtitle = "Impacted Trips (Policy vs Base Case)",
+    caption = "Δ Dist = Dist (Policy) - Dist (Base)",
+    y = "Δ Dist [m]"
   ) +
   stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
   stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
   theme_classic() +
   theme(
-    plot.title = element_text(color = "#0099f8", size = 40, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+    plot.title = element_text(color = "#0099f8", size = 30, face = "bold", hjust = 0.5),
+    plot.subtitle = element_text(face = "bold.italic", size = 15, hjust = 0.5),
     plot.caption = element_text(face = "italic", size = 20),
     axis.ticks.x = element_blank(),
     axis.text.x = element_text(size = 20),
@@ -322,7 +337,7 @@ ggplot(boxplot_helper, aes(x = tripType, y = traveledDistance_diff)) +
     axis.title.y = element_text(size = 20),
     axis.text.y = element_text(size = 20)
   )
-ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance.png"))
+ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_eng.png"))
 
 ########################################
 "Travel time components"
@@ -343,10 +358,23 @@ timeData <-
 
 ggplot(timeData, aes(x = main_mode_policy, y = avg_time, fill = time_type)) +
   geom_bar(stat = "identity", position = "stack") +
-  labs(x = "Main Mode", y = "Time (minutes)", fill = "Time Type") +
-  ggtitle("Average Time Difference by Policy Main Mode - ALL IMPACTED TRIPS") +
+  labs(
+    title = "Average Time Difference by Policy Main Mode",
+    subtitle = "ALL IMPACTED TRIPS",
+    x = "Main Mode",
+    y = "Time (minutes)",
+    fill = "Time Type"
+  ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+  theme(
+        plot.title = element_text(color = "#0099f8", size = 30, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(face = "bold.italic", size = 20, hjust = 0.5),
+        plot.caption = element_text(face = "italic", size = 20),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 20, angle = 90, hjust = 1, vjust = 0.5),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size = 20),
+        axis.text.y = element_text(size = 20))
 
 ggsave(file.path(policyTripsOutputDir,"travTimeDiff_by_mainMode.png"))
 

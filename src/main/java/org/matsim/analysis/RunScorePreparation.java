@@ -10,7 +10,6 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.MatsimFacilitiesReader;
-import org.matsim.legacy.run.drt.OpenBerlinIntermodalPtDrtRouterModeIdentifier;
 import org.matsim.run.replaceCarByDRT.PRStation;
 import org.matsim.utils.gis.shp2matsim.ShpGeometryUtils;
 
@@ -41,8 +40,9 @@ public class RunScorePreparation {
     }
 
     public static void main(String[] args) {
-        if ( args.length==0 ){
-            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly/";
+        String runDirectory;
+        if (args.length == 0) {
+            /*String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly/";
             String runId = "ptDrt10pOnly";
 
             //base case
@@ -53,12 +53,23 @@ public class RunScorePreparation {
             String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
             URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv");
-            String boundary_shp = "scenarios/berlin-v6.1/shp/hundekopf-plus-500m-25832.shp";
+            String boundary_shp = "scenarios/berlin-v6.1/shp/hundekopf-plus-500m-25832.shp";*/
+
+
+            runDirectory = "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT/";
+//
+            String runId = "noDRT";
+
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+            URL pr_stations = IOUtils.resolveFileOrResource("scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv");
+            String boundary_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-boundaries-500m.shp";
+
 
             RunScorePreparation scorePreparation = new RunScorePreparation(runDirectory, runId, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
             scorePreparation.run();
         } else {
-            String runDirectory = args[0];
+            runDirectory = args[0];
             String runId = args[1];
             String inner_city_shp = args[2];
             String berlin_shp = args[3];
@@ -68,7 +79,6 @@ public class RunScorePreparation {
             RunScorePreparation scoresFromPlans = new RunScorePreparation(runDirectory, runId, inner_city_shp, berlin_shp, pr_stations, boundary_shp);
             scoresFromPlans.run();
         }
-
 
 
     }

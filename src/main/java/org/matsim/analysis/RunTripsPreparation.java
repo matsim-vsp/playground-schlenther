@@ -28,12 +28,18 @@ public class RunTripsPreparation {
 
         if ( args.length==0 ){
             String rScriptCommand = "C:/Program Files/R/R-4.4.1beta/bin/Rscript.exe";
-            String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
-            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
-            String pr_stations = "scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv";
 
-            String runDirectory = "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly";
-            String runId = "ptDrt10pOnly";
+//            String inner_city_shp = "scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp";
+//            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp";
+//            String pr_stations = "scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv";
+
+
+            String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
+            String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
+            String pr_stations = "scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-07-27-pr-stations.tsv";
+
+            String runDirectory = "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT";
+            String runId = "noDRT";
 
 
 //            List<String> sensitivityRuns = new ArrayList<String>();

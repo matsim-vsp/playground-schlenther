@@ -2,63 +2,80 @@ library(tidyr)
 library(lubridate)
 library(readr)
 library(dplyr)
+library(matsim)
+library(data.table)
 
 "This script prepares the output_trips table for the policy case. Mostly, it combines trips previously split into two trips at a P+R station."
 
-#load relevant MATSim R functions (change when MATSim R works on cluster, devtools not working)
-readTripsTable <- function (input_path = ".", n_max = Inf) 
-{
-  options(digits = 18)
-  trips_file <- ""
-  if (dir.exists(input_path)) {
-    files <- list.files(input_path, full.names = TRUE)
-    trip_file_indicies <- grep("output_trips.csv.gz$", files)
-    if (length(trip_file_indicies) == 1) {
-      trips_file <- files[trip_file_indicies]
-    }
-    else {
-      stop("There is supposed to be a single \"output_trips.csv.gz\" found in directory")
-    }
-  }
-  else {
-    trips_file <- input_path
-  }
-  trips_output_table <- read_delim(trips_file, delim = ";", 
-                                   locale = locale(decimal_mark = "."), n_max = n_max, 
-                                   col_types = cols(start_x = col_character(), start_y = col_character(), 
-                                                    end_x = col_character(), end_y = col_character(), 
-                                                    end_link = col_character(), start_link = col_character()))
-  trips_output_table <- trips_output_table %>% mutate(start_x = as.double(start_x), 
-                                                      start_y = as.double(start_y), end_x = as.double(end_x), 
-                                                      end_y = as.double(end_y))
-  attr(trips_output_table, "table_name") <- trips_file
-  return(trips_output_table)
-}
+##load relevant MATSim R functions (change when MATSim R works on cluster, devtools not working)
+#readTripsTable <- function (input_path = ".", n_max = Inf) 
+#{
+#  options(digits = 18)
+#  trips_file <- ""
+#  if (dir.exists(input_path)) {
+#    files <- list.files(input_path, full.names = TRUE)
+#    trip_file_indicies <- grep("output_trips.csv.gz$", files)
+#    if (length(trip_file_indicies) == 1) {
+#      trips_file <- files[trip_file_indicies]
+#    }
+#    else {
+#      stop("There is supposed to be a single \"output_trips.csv.gz\" found in directory")
+#    }
+#  }
+#  else {
+#    trips_file <- input_path
+#  }
+#  trips_output_table <- read_delim(trips_file, delim = ";", 
+#                                   locale = locale(decimal_mark = "."), n_max = n_max, 
+#                                   col_types = cols(start_x = col_character(), start_y = col_character(), 
+#                                                    end_x = col_character(), end_y = col_character(), 
+#                                                    end_link = col_character(), start_link = col_character()))
+#  trips_output_table <- trips_output_table %>% mutate(start_x = as.double(start_x), 
+#                                                      start_y = as.double(start_y), end_x = as.double(end_x), 
+#                                                      end_y = as.double(end_y))
+#  attr(trips_output_table, "table_name") <- trips_file
+#  return(trips_output_table)
+#}
 
 ########################################
 # Preparation of policyTrips
 
 args <- commandArgs(trailingOnly = TRUE)
 
-#input_path <- "D:/replaceCarByDRT/nitsch-final/runs-2023-09-01/10pct/roadTypesAllowed-all"
+#input_path <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
 input_path <- args[1]
-policyTripsPrep <- readTripsTable(input_path)
+
+policyTrips <- matsim::read_output_trips(input_path)
 output_filename <- "output_trips_prepared.tsv"
 output_path <- file.path(input_path, output_filename)
 prStations_path <- args[2]
 
-print(paste("Amount of rows in tripsTable: ", nrow(policyTripsPrep)))
+print(paste("Amount of rows in tripsTable: ", nrow(policyTrips)))
 print(input_path)
 print(prStations_path)
 
-policyTripsPrep$prStation <- ""
 
-#prStations <- read.table(file = "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/nitsch/berlin-no-inner-car-trips/scenarios/berlin/replaceCarByDRT/noModeChoice/prStations/2023-03-29-pr-stations.tsv", sep = '\t', header = TRUE)
+
+#prStations <- read.table(file = "D:/git/playground-schlenther/scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv",
+#                         sep = '\t',
+#                         header = TRUE)
 prStations <- read.table(file = prStations_path, sep = "\t", header = TRUE)
 
 for(i in 1:nrow(prStations)) {
   print(prStations[i,"name"])
 }
+
+policyPersons <- matsim::read_output_persons(input_path)
+
+
+####filter subpopulation --- be aware and adjust if you included car ban for other pops than persons
+policyPersons <- policyPersons %>% 
+  filter(subpopulation == "person")
+
+policyTripsPrep <- policyTrips %>% 
+  filter(person %in% policyPersons$person)
+
+policyTrips$prStation <- ""
 
 for(i in 1:nrow(policyTripsPrep)) {
   if(policyTripsPrep[i,"end_activity_type"] == "P+R"){
@@ -76,7 +93,7 @@ for(i in 1:nrow(policyTripsPrep)) {
       if(policyTripsPrep[i,"end_x"] == prStations[k,"x"]){
         if(policyTripsPrep[i,"end_y"] == prStations[k,"y"]){
           policyTripsPrep[i,"prStation"] <- prStations[k,"name"]
-          print(prStations[k,"name"])
+          #print(prStations[k,"name"])
         }
       }
     }
@@ -104,6 +121,8 @@ for(i in 1:nrow(policyTripsPrep)) {
 
   }
 }
+
+###########
 
 #merge main_mode fuer hin und rueckrichtung
 policyTripsPrep$main_mode[policyTripsPrep$main_mode == "pt+car"] <- "car+pt"

@@ -19,16 +19,44 @@ base_runId <- args[4]
 
 
 base_runId <- "berlin-v5.5-10pct"
-policy_runId <- "roadTypesAllowed_all"
+
 baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
-policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all"
+
+#policy_runId <- "roadtypesAllowed-all"
+#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all"
+
+policy_runId <- "noDRT"
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT"
+
+
 
 baseAirPollution <- read.table(file = file.path(baseCaseDirectory, paste0("analysis/airPollution/", base_runId,".emissionsPerLink.csv")),
                                sep = ";", header = TRUE)
 policyAirPollution <- read.table(file = file.path(policyCaseDirectory, paste0("analysis/airPollution/", policy_runId,".emissionsPerLink.csv")),
                                  sep = ";", header = TRUE)
-policyAirPollution <- read.table(file = "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv",
-                                 sep = ";", header = TRUE)
+#policyAirPollution <- read.table(file = "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/analysis/airPollution/roadtypesAllowed-all.emissionsPerLink.csv",
+#                                 sep = ";", header = TRUE)
+
+
+#### cost rates
+### UBA Methodenkonvention 3.1
+# https://www.umweltbundesamt.de/sites/default/files/medien/1410/publikationen/2020-12-21_methodenkonvention_3_1_kostensaetze.pdf
+
+####### Kostenstand 2020. Projektionsjahre....
+##   2030: 1% Zeitpräferenz = 215 €/t ; 0% Zeitpräferenz = 700 €
+##   2050:   250 €/t                  ;    765 €/t
+C02_cost_rate <- 700
+
+## jeweils Gesundheitsschäeden + nicht-gesundheitliche Schäden
+NOX_cost_rate <- 15800 + 3700
+pm2_5_cost_rate <- 255300 + 0 
+pm10_cost_rate <- 30000 + 0
+SO2_cost_rate <- 14900 + 1500
+NH3_cost_rate <- 24200 + 10900
+
+
+
+
 
 
 #####################################
@@ -39,15 +67,8 @@ CO2_abs <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL))
 CO2_rel <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL)) / sum(baseAirPollution$CO2_TOTAL) * 100
 
 ## Veränderung Kosten absolut [€ / Tag] 
-# 139€/t (Werte für 2030)
 
-####### Tilmann
-##   2030: 1% Zeitpräferenz = 215 €/t ; 0% Zeitpräferenz = 700 €
-##   2050:   250 €/t                  ;    765 €/t
-
-CO2_euro <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL)) / (1000 * 1000) * 700
-
-
+CO2_euro <- (sum(policyAirPollution$CO2_TOTAL) - sum(baseAirPollution$CO2_TOTAL)) / (1000 * 1000) * C02_cost_rate
 
 
 #####################################
@@ -59,7 +80,7 @@ NOx_rel <- (sum(policyAirPollution$NOx) - sum(baseAirPollution$NOx)) / sum(baseA
 
 ## Veränderung Kosten absolut [€ / Tag] 
 # 15.400€/t (Werte für 2010)
-NOx_euro <- (sum(policyAirPollution$NOx) - sum(baseAirPollution$NOx)) / (1000 * 1000) * 15400
+NOx_euro <- (sum(policyAirPollution$NOx) - sum(baseAirPollution$NOx)) / (1000 * 1000) * NOX_cost_rate
 
 #####################################
 # PM2_5 - Emissions & Costs
@@ -70,7 +91,7 @@ PM2_5_rel <- (sum(policyAirPollution$PM2_5) - sum(baseAirPollution$PM2_5)) / sum
 
 ## Veränderung Kosten absolut [€ / Tag] 
 # 364.100€/t (Werte für 2010)
-PM2_5_euro <- (sum(policyAirPollution$PM2_5) - sum(baseAirPollution$PM2_5)) / (1000 * 1000) * 364100
+PM2_5_euro <- (sum(policyAirPollution$PM2_5) - sum(baseAirPollution$PM2_5)) / (1000 * 1000) * pm2_5_cost_rate
 
 #####################################
 # PM_non_exhaust - Emissions & Costs
@@ -81,7 +102,7 @@ PM_non_exhaust_rel <- (sum(policyAirPollution$PM_non_exhaust) - sum(baseAirPollu
 
 ## Veränderung Kosten absolut [€ / Tag] 
 # 33.700€/t (Werte für 2010)
-PM_non_exhaust_euro <- (sum(policyAirPollution$PM_non_exhaust) - sum(baseAirPollution$PM_non_exhaust)) / (1000 * 1000) * 33700
+PM_non_exhaust_euro <- (sum(policyAirPollution$PM_non_exhaust) - sum(baseAirPollution$PM_non_exhaust)) / (1000 * 1000) * pm10_cost_rate
 
 #####################################
 # SO2 - Emissions & Costs
@@ -91,7 +112,7 @@ SO2_rel <- (sum(policyAirPollution$SO2) - sum(baseAirPollution$SO2)) / sum(baseA
 
 ## Veränderung Kosten absolut [€ / Tag] 
 # 13.200€/t (Werte für 2010)
-SO2_euro <- (sum(policyAirPollution$SO2) - sum(baseAirPollution$SO2)) / (1000 * 1000) * 13200
+SO2_euro <- (sum(policyAirPollution$SO2) - sum(baseAirPollution$SO2)) / (1000 * 1000) * SO2_cost_rate
 
 
 #####################################
@@ -103,17 +124,17 @@ NH3_rel <- (sum(policyAirPollution$NH3) - sum(baseAirPollution$NH3)) / sum(baseA
 
 ## Veränderung Kosten absolut [€ / Tag] & relativ [%]
 # 26.800€/t (Werte für 2010)
-NH3_euro <- (sum(policyAirPollution$NH3) - sum(baseAirPollution$NH3)) / (1000 * 1000) * 26800
-NH3_euro_rel <- 
+NH3_euro <- (sum(policyAirPollution$NH3) - sum(baseAirPollution$NH3)) / (1000 * 1000) * NH3_cost_rate
+
 
 
 #####################################
 # Overall - Emissions & Costs
 
-overall_euro_policy <- (sum(policyAirPollution$CO2_TOTAL) * 139)  + (sum(policyAirPollution$NOx) * 15400) + (sum(policyAirPollution$PM2_5) * 364100) +
-  (sum(policyAirPollution$PM_non_exhaust) * 33700) + (sum(policyAirPollution$SO2) * 13200) + (sum(policyAirPollution$NH3) * 26800) / (1000 * 1000)
-overall_euro_base <- (sum(baseAirPollution$CO2_TOTAL) * 139)  + (sum(baseAirPollution$NOx) * 15400) + (sum(baseAirPollution$PM2_5) * 364100) +
-  (sum(baseAirPollution$PM_non_exhaust) * 33700) + (sum(baseAirPollution$SO2) * 13200) + (sum(baseAirPollution$NH3) * 26800) / (1000 * 1000)
+overall_euro_policy <- (sum(policyAirPollution$CO2_TOTAL) * C02_cost_rate)  + (sum(policyAirPollution$NOx) * NOX_cost_rate) + (sum(policyAirPollution$PM2_5) * pm2_5_cost_rate) +
+  (sum(policyAirPollution$PM_non_exhaust) * pm10_cost_rate) + (sum(policyAirPollution$SO2) * SO2_cost_rate) + (sum(policyAirPollution$NH3) * NH3_cost_rate) / (1000 * 1000)
+overall_euro_base <- (sum(baseAirPollution$CO2_TOTAL) * C02_cost_rate)  + (sum(baseAirPollution$NOx) * NOX_cost_rate) + (sum(baseAirPollution$PM2_5) * pm2_5_cost_rate) +
+  (sum(baseAirPollution$PM_non_exhaust) * pm10_cost_rate) + (sum(baseAirPollution$SO2) * SO2_cost_rate) + (sum(baseAirPollution$NH3) * NH3_cost_rate) / (1000 * 1000)
 
 overall_euro_rel <- (overall_euro_policy - overall_euro_base) / overall_euro_base * 100
 overall_euro_abs <- CO2_euro + NOx_euro + PM2_5_euro + PM_non_exhaust_euro + SO2_euro + NH3_euro
@@ -129,4 +150,5 @@ results_airPollution <- data.frame(key = character(), Overall = numeric(), CO2_T
   add_row(key = "Δ abs. pro Tag [€]",Overall = overall_euro_abs, CO2_TOTAL = CO2_euro,NOx = NOx_euro,PM2_5 = PM2_5_euro,PM_non_exhaust = PM_non_exhaust_euro,SO2 = SO2_euro,NH3 = NH3_euro) %>%
   add_row(key = "Δ rel. € pro Tag [%]",Overall = overall_euro_rel, CO2_TOTAL = NA, NOx = NA, PM2_5 = NA, PM_non_exhaust = NA, SO2 = NA, NH3 = NA)
 
-write.table(results_airPollution,file.path(policyCaseDirectory,"analysis/airPollution/results_airPollution.tsv"),row.names = FALSE, sep = "\t")
+write.table(results_airPollution,file.path(policyCaseDirectory,"analysis/airPollution/results_airPollutionUBA3.1.tsv"),row.names = FALSE, sep = "\t")
+

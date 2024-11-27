@@ -23,38 +23,34 @@ library(plotly)
  shp_berlin <- st_read(args[6])
 
 #### for berlin v6
- #shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
- #shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
- #crs = 25832
+ shp <- st_read("D:/git/playground-schlenther/scenarios/berlin-v6.1/shp/hundekopf-carBanArea-25832.shp")
+ shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.1/input/shp/Berlin_25832.shp")
+ crs = 25832
  # #1pct
  # baseCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/baseCaseCnt/"
  # policyCaseDirectory <- "//sshfs.r/schlenther@cluster.math.tu-berlin.de/net/ils/schlenther/berlin/2024-berlin-autofrei/output-1pct/drtHndKpf1.5kV-prRing-ptDrt"
  # #policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-06-02/extraPtPlan-true/drtStopBased-true/massConservation-true/"
 
- #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt"
- # kein wahrer bs cs cntd, da nur selective mode choice
- #baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/2024-06/output-1pct/baseCaseCnt-iter0"
- 
- #baseCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/"
- #policyCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
+ baseCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/traditionalBaseCaseCnt/"
+ policyCaseDirectory <- "E:/schlenther/berlin/2024-berlin-v6.3-autofrei/output-10pct/speedUp/drtHndKpf7.5kV-prRing-ptDrt10pOnly"
  
 
 ##### for berlin v5
- shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
- shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
- crs = 31468
+# shp <- st_read("D:/git/playground-schlenther/scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp")
+# shp_berlin <- st_read("D:/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp")
+# crs = 31468
 # 10pct
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-all/"
 
-baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
-policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all/"
+#baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT/"
 
 
 
 
 # read the table which was created by policyTripsPreparation.R (which sticks together both parts of P+R trips)
-policy_filename <- "output_trips_prepared_debugged.tsv"
+policy_filename <- "output_trips_prepared.tsv"
 policy_inputfile <- file.path(policyCaseDirectory, policy_filename)
 
 baseTrips <- read_output_trips(baseCaseDirectory)
@@ -70,8 +66,6 @@ policyTrips <- policyTrips %>%
          start_x = as.double(start_x), 
          start_y = as.double(start_y), end_x = as.double(end_x), 
          end_y = as.double(end_y))
-
-
 
 
 ####
@@ -162,7 +156,8 @@ impacted_trips <- impacted_trips %>%
 
 ##Tilmann: warum filtern wir hier die Modi raus??
 ### -> auskommentiert
-#prep_grenz_policy <- impGrenz_trips_policy #%>%
+prep_grenz_policy <- impGrenz_trips_policy 
+#%>%
   #filter(!main_mode == "ride") %>%
   #filter(!main_mode == "car") %>%
   #filter(!main_mode == "drt") %>%
@@ -172,11 +167,15 @@ prep_grenz_policy$main_mode[prep_grenz_policy$main_mode == "bike+car"] <- "car+b
 prep_grenz_base <- impGrenz_trips_base %>% filter(trip_id %in% prep_grenz_policy$trip_id)
 
 plotModalShiftSankey(prep_grenz_base, prep_grenz_policy)
-ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"))
+ggsave(file.path(policyTripsOutputDir,"modalShiftSankey_grenz.png"),
+       units = "cm",
+       width = 25,
+       height = 15)
 plot_compare_mainmode_sankey(trips_table1 = prep_grenz_base, trips_table2 = prep_grenz_policy)
 
 "Binnentrips"
-#prep_binnen_policy <- impBinnen_trips_policy #%>%
+prep_binnen_policy <- impBinnen_trips_policy 
+#%>%
   #filter(!grepl("+", main_mode, fixed = TRUE)) %>%
   #filter(!main_mode == "car") %>%
   #filter(!main_mode == "ride") %>%
@@ -432,7 +431,10 @@ for (case in tripCases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_mainMode.png"))
+  ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_mainMode.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   "Boxplot - Q/Z-Trips by transport mode (travelledDistance)"
   ggplot(caseTrips, aes(x = reorder(main_mode_policy,traveledDistance_diff,median), y = traveledDistance_diff)) +
@@ -457,7 +459,10 @@ for (case in tripCases){
       axis.title.y = element_text(size = 20),
       axis.text.y = element_text(size = 20)
     )
-  ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_mainMode.png"))
+  ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_mainMode.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   ########################################
   # by PR Station (travTime, travelledDistance)
@@ -482,7 +487,10 @@ for (case in tripCases){
       axis.text.y = element_text(size = 20),
       axis.title.y = element_text(size = 20)
     )
-  ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_PRStation.png"))
+  ggsave(file.path(policyTripsOutputDir,"boxplot_travTime_PRStation.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
   
   "Boxplot"
@@ -505,7 +513,10 @@ for (case in tripCases){
       axis.text.y = element_text(size = 20),
       axis.title.y = element_text(size = 20)
     )
-  ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_PRStation.png"))
+  ggsave(file.path(policyTripsOutputDir,"boxplot_travelledDistance_PRStation.png"),
+         units = "cm",
+         width = 8,
+         height = 6)
   
 }
 

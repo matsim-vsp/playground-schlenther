@@ -16,8 +16,9 @@ args <- commandArgs(trailingOnly = TRUE)
 policyCaseDirectory <- args[1]
 baseCaseDirectory <- args[3]
 
-# baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/"
-# policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/roadtypesAllowed-motorway/"
+baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT"
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all"
 
 baseNoise <- read.table(file = file.path(baseCaseDirectory, "analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"), sep = ';', header = TRUE)
 policyNoise <- read.table(file = file.path(policyCaseDirectory, "analysis/noise/noise-analysis/damages_receiverPoint_merged_xyt.csv.gz"), sep = ';', header = TRUE)

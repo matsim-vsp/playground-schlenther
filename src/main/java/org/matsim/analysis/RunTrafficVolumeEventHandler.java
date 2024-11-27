@@ -34,8 +34,8 @@ public class RunTrafficVolumeEventHandler {
 
     public static void main(String[] args) {
         if(args.length == 0) {
-            String runDirectory = "scenarios/output/runs-2023-09-01/10pct/noDRT/";
-            String runId = "noDRT";
+            String runDirectory = "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/";
+            String runId = "berlin-v5.5-10pct";
             String inner_city_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-carBanArea.shp";
             String berlin_shp = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-shp/berlin.shp";
             String boundary_shp = "scenarios/berlin/replaceCarByDRT/noModeChoice/shp/hundekopf-boundaries-500m.shp";
@@ -80,9 +80,9 @@ public class RunTrafficVolumeEventHandler {
         events.finishProcessing();
 
         //write to CSV file
-        String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyTrafficVolume_vehicles.tsv";
-        String mileageOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyMileage_vehicles.tsv";
-        String HTVOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_hourlyTrafficVolume_vehicles.tsv";
+        String outputFileName1 = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyTrafficVolume_vehicles_new.tsv";
+        String mileageOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_dailyMileage_vehicles_new.tsv";
+        String HTVOutputFileName = inputFile.substring(0, inputFile.lastIndexOf(".xml")) + "_hourlyTrafficVolume_vehicles_new.tsv";
         DTVPerLink2CSV(handler1.getDTVPerLink_Total(), handler1.getDTVPerLink_DRT(), handler1.getDTVPerLink_nonDRT(), network, innerCity, berlin, boundary, outputFileName1);
         mileagePerLink2CSV(handler1.getDTVPerLink_Total(), handler1.getDTVPerLink_DRT(), handler1.getDTVPerLink_nonDRT(), network, innerCity, berlin, boundary, mileageOutputFileName);
         HTVPerLink2CSV(handler1.getHTVPerLink_Total(), network, innerCity, berlin, HTVOutputFileName);

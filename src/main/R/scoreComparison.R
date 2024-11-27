@@ -186,8 +186,8 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_general.png"),
          units = "cm",
-         width = 8,
-         height = 6)
+         width = 30,
+         height = 15)
   
   ########################################
   # Results by hasPRActivity
@@ -200,14 +200,14 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in hasPRActivityCategories){
-    iterator <- iterator + 1
-    results_hasPRActivity[iterator, ] <- list(entry, 
-                                              mean(casePersons[which(casePersons$hasPRActivity_policy == entry),24]), 
-                                              quantile((casePersons[which(casePersons$hasPRActivity_policy == entry),24]), probs = 0.05), 
-                                              sd(casePersons[which(casePersons$hasPRActivity_policy == entry),24])
-    )
-  }
+  #for (entry in hasPRActivityCategories){
+  #  iterator <- iterator + 1
+  #  results_hasPRActivity[iterator, ] <- list(entry, 
+  #                                            mean(casePersons[which(casePersons$hasPRActivity_policy == entry),24]), 
+  #                                            quantile((casePersons[which(casePersons$hasPRActivity_policy == entry),24]), probs = 0.05), 
+  #                                            sd(casePersons[which(casePersons$hasPRActivity_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
@@ -247,14 +247,14 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in livesInsideBoundaryZone_policyCategories){
-    iterator <- iterator + 1
-    results_livesInsideBoundaryZone_policy[iterator, ] <- list(entry, 
-                                              mean(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), 
-                                              quantile((casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), probs = 0.05), 
-                                              sd(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24])
-    )
-  }
+  #for (entry in livesInsideBoundaryZone_policyCategories){
+  #  iterator <- iterator + 1
+  #  results_livesInsideBoundaryZone_policy[iterator, ] <- list(entry, 
+  #                                            mean(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), 
+  #                                            quantile((casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24]), probs = 0.05), 
+  #                                            sd(casePersons[which(casePersons$livesInsideBoundaryZone_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
@@ -263,9 +263,9 @@ for (case in cases){
     stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "lebt max. 500m außerhalb der Verbotszone (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score-Differenzen (",case,")"),
+      subtitle = "lives max. 500m outside ban area",
+      caption = "Score Δ = Score(policy) - Score(base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -281,8 +281,8 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_livesInsideBoundaryZone_policy.png"),
          units = "cm",
-         width = 8,
-         height = 6)
+         width = 30,
+         height = 15)
   
   ########################################
   # Results by isCarUser_policy
@@ -294,14 +294,14 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in isCarUser_policyCategories){
-    iterator <- iterator + 1
-    results_isCarUser_policy[iterator, ] <- list(entry, 
-                                                        mean(casePersons[which(casePersons$isCarUser_policy == entry),24]), 
-                                                        quantile((casePersons[which(casePersons$isCarUser_policy == entry),24]), probs = 0.05), 
-                                                        sd(casePersons[which(casePersons$isCarUser_policy == entry),24])
-    )
-  }
+  #for (entry in isCarUser_policyCategories){
+  #  iterator <- iterator + 1
+  #  results_isCarUser_policy[iterator, ] <- list(entry, 
+  #                                                      mean(casePersons[which(casePersons$isCarUser_policy == entry),24]), 
+  #                                                      quantile((casePersons[which(casePersons$isCarUser_policy == entry),24]), probs = 0.05), 
+  #                                                      sd(casePersons[which(casePersons$isCarUser_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
@@ -310,9 +310,9 @@ for (case in cases){
     stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nutzt privaten Pkw (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score differences (",case,")"),
+      subtitle = "uses private car",
+      caption = "Score Δ = Score(policy) - Score(base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -328,8 +328,8 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_isCarUser_policy.png"),
          units = "cm",
-         width = 8,
-         height = 6)
+         width = 30,
+         height = 15)
   
   ########################################
   # Results by homeActivityZone
@@ -339,14 +339,14 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in homeActivityZoneCategories){
-    iterator <- iterator + 1
-    results_homeActivityZone[iterator, ] <- list(entry, 
-                                                 mean(casePersons[which(casePersons$home.activity.zone_policy == entry),24]), 
-                                                 quantile((casePersons[which(casePersons$home.activity.zone_policy == entry),24]), probs = 0.05), 
-                                                 sd(casePersons[which(casePersons$home.activity.zone_policy == entry),24])
-    )
-  }
+  #for (entry in homeActivityZoneCategories){
+  #  iterator <- iterator + 1
+  #  results_homeActivityZone[iterator, ] <- list(entry, 
+   #                                              mean(casePersons[which(casePersons$home.activity.zone_policy == entry),24]), 
+  #                                               quantile((casePersons[which(casePersons$home.activity.zone_policy == entry),24]), probs = 0.05), 
+  #                                               sd(casePersons[which(casePersons$home.activity.zone_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
@@ -355,9 +355,9 @@ for (case in cases){
     stat_summary(fun = mean, geom = "text", aes(label = round(after_stat(y),2)), size = 8, vjust = -1.0, hjust = 1.1) +
     stat_summary(fun = mean, geom = "point", color = "red", size = 3) +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach Wohnort (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score differences (",case,")"),
+      subtitle = "by home location",
+      caption = "Score Δ = Score(Policy) - Score(Base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -373,8 +373,8 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"),
          units = "cm",
-         width = 8,
-         height = 6)
+         width = 30,
+         height = 15)
   
   ########################################
   # Results by noOfActivities
@@ -384,23 +384,23 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in noOfActivitiesCategories){
-    iterator <- iterator + 1
-    results_noOfActivities[iterator, ] <- list(entry, 
-                                               mean(casePersons[which(casePersons$noOfActivities_policy == entry),24]), 
-                                               quantile((casePersons[which(casePersons$noOfActivities_policy == entry),24]), probs = 0.05), 
-                                               sd(casePersons[which(casePersons$noOfActivities_policy == entry),24])
-    )
-  }
+  #for (entry in noOfActivitiesCategories){
+  #  iterator <- iterator + 1
+  #  results_noOfActivities[iterator, ] <- list(entry, 
+  #                                             mean(casePersons[which(casePersons$noOfActivities_policy == entry),24]), 
+  #                                             quantile((casePersons[which(casePersons$noOfActivities_policy == entry),24]), probs = 0.05), 
+  #                                             sd(casePersons[which(casePersons$noOfActivities_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
   ggplot(casePersons, aes(x = noOfActivities_policy, group = noOfActivities_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach Anzahl an Aktivitäten (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score differences (",case,")"),
+      subtitle = "by nr of activities",
+      caption = "Score Δ = Score(Policy) - Score(Base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -430,9 +430,9 @@ for (case in cases){
   ggplot(casePersons_bins, aes(x = bin, group = bin, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach Reiseweite (Maßnahmenfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score Differences (",case,")"),
+      subtitle = "by travel distance",
+      caption = "Score Δ = Score(Policy) - Score(Base)",
       x = "travelledDistance_policy",
       y = "Score Δ"
     ) +
@@ -463,23 +463,23 @@ for (case in cases){
   iterator = 0
   
   "Results table"
-  for (entry in mainModeCategories){
-    iterator <- iterator + 1
-    results_mainMode[iterator, ] <- list(entry, 
-                                         mean(casePersons[which(casePersons$mainMode_policy == entry),24]), 
-                                         quantile((casePersons[which(casePersons$mainMode_policy == entry),24]), probs = 0.05), 
-                                         sd(casePersons[which(casePersons$mainMode_policy == entry),24])
-    )
-  }
+  #for (entry in mainModeCategories){
+  #  iterator <- iterator + 1
+  #  results_mainMode[iterator, ] <- list(entry, 
+  #                                       mean(casePersons[which(casePersons$mainMode_policy == entry),24]), 
+  #                                       quantile((casePersons[which(casePersons$mainMode_policy == entry),24]), probs = 0.05), 
+  #                                       sd(casePersons[which(casePersons$mainMode_policy == entry),24])
+  #  )
+  #}
   
   
   "Boxplot"
   ggplot(casePersons, aes(x = mainMode_policy, y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach Hauptverkehrsmittel (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score Differences (",case,")"),
+      subtitle = "by main mode",
+      caption = "Score Δ = Score(Policy) - Score(Base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -507,9 +507,9 @@ for (case in cases){
   ggplot(onlyPR, aes(x = reorder(LastPRStation_policy, score_diff, median), y = score_diff)) +
     geom_boxplot(fill = "#0099f8") +
     labs(
-      title = paste0("Verteilung der Score-Differenzen (",case,")"),
-      subtitle = "nach zuletzt genutzter P+R-Station (Maßnahmenfall vs Basisfall)",
-      caption = "Score Δ = Score(Maßnahmenfall) - Score(Basisfall)",
+      title = paste0("Score Differences (",case,")"),
+      subtitle = "by last used P+R station",
+      caption = "Score Δ = Score(Policy) - Score(Base)",
       y = "Score Δ"
     ) +
     theme_classic() +
@@ -522,8 +522,8 @@ for (case in cases){
     )
   ggsave(file.path(policyCaseOutputDir,"boxplot_lastPRStation.png"),
          units = "cm",
-         width = 8,
-         height = 6)
+         width = 30,
+         height = 15)
   
   ########################################
   # Dump results tables
@@ -590,7 +590,10 @@ ggplot(betroffenePersonen_noCarUser, aes(x = home.activity.zone_policy, y = scor
     axis.title.y = element_text(size = 20),
     axis.text.y = element_text(size = 20)
   )
-ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_noCarUser_byHomeZone.png"))
+ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_noCarUser_byHomeZone.png"),
+       units = "cm",
+       width = 30,
+       height = 15)
 
 ggplot(betroffenePersonen_carUser, aes(x = home.activity.zone_policy, y = score_diff)) +
   geom_boxplot(fill = "#0099f8") +
@@ -613,7 +616,10 @@ ggplot(betroffenePersonen_carUser, aes(x = home.activity.zone_policy, y = score_
     axis.title.y = element_text(size = 20),
     axis.text.y = element_text(size = 20)
   )
-ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_carUser_byHomeZone.png"))
+ggsave(file.path(paste0(policyCaseDirectory,"/analysis/score/"),"boxplot_betr_carUser_byHomeZone.png"),
+       units = "cm",
+       width = 30,
+       height = 15)
 
 ########################################
 # Looking at other metrics (total economic loss, percentage of impacted agents)
@@ -648,10 +654,14 @@ ggplot(betroffenePersonen, aes(x = home.activity.zone_policy, y = score_diff)) +
     axis.title.y = element_text(size = 20),
     axis.text.y = element_text(size = 20)
   )
-ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"))
+ggsave(file.path(policyCaseOutputDir,"boxplot_homeActivityZone.png"),
+       units = "cm",
+       width = 30,
+       height = 15)
 
 ########################################
 # Dump tables
 
 write.table(results_carUsers,file.path(policyCaseDirectory,"/analysis/score/amount_carUsers.tsv") ,row.names = FALSE, sep = "\t")
 write.table(results_otherScoreMetrics,file.path(policyCaseDirectory, "/analysis/score/score_otherMetrics.tsv") ,row.names = FALSE, sep = "\t")
+

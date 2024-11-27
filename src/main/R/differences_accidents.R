@@ -18,9 +18,17 @@ baseCaseDirectory <- args[3]
 base_runId <- args[4]
 
 # baseCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/baseCaseContinued-10pct/analysis/accidents/"
-# base_runId <- "berlin-v5.5-10pct"
+
 # policyCaseDirectory <- "C:/Users/loren/Documents/TU_Berlin/Semester_6/Masterarbeit/scenarios/output/runs-2023-09-01/10pct/noDRT/analysis/accidents/"
-# policy_runId <- "noDRT"
+
+
+baseCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/baseCaseContinued-10pct/"
+base_runId <- "berlin-v5.5-10pct"
+
+policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/roadtypesAllowed-all"
+policy_runId <- "roadtypesAllowed-all"
+#policyCaseDirectory <- "D:/Projekte/berlin-noprivate-cars/lorenz/runs-2023-09-01/10pct/noDRT/"
+#policy_runId <- "noDRT"
 
 baseAccidents <- read.table(file = file.path(baseCaseDirectory, paste0("analysis/accidents/ITERS/it.0/",base_runId,".0.accidentCosts_BVWP.csv")), sep = ';', header = TRUE)
 policyAccidents <- read.table(file = file.path(policyCaseDirectory, paste0("analysis/accidents/ITERS/it.0/",policy_runId,".0.accidentCosts_BVWP.csv")), sep = ';', header = TRUE)
@@ -56,9 +64,10 @@ baseAccidents_brandenburg <- baseAccidents_regions %>% filter(zone == "Brandenbu
 
 results_accidentCosts <- data.frame(key = character(), value = numeric()) %>%
   add_row(key = "Veränderung Unfallkosten pro Tag [€]", value = sum(differenceAccidents$Costs.per.Day..EUR.)) %>%
-  add_row(key = "Relative Änderung zum BaseCase [%]", value = (sum(policyAccidents$Costs.per.Day..EUR.) - sum(baseAccidents$Costs.per.Day..EUR.)) / sum(baseAccidents$Costs.per.Day..EUR.) * 100) %>%
-  add_row(key = "Relative Änderung zum BaseCase (Zone) [%]", value = (sum(policyAccidents_zone$Costs.per.Day..EUR.) - sum(baseAccidents_zone$Costs.per.Day..EUR.)) / sum(baseAccidents_zone$Costs.per.Day..EUR.) * 100) %>%
-  add_row(key = "Relative Änderung zum BaseCase (restl. Berlin) [%]", value = (sum(policyAccidents_rberlin$Costs.per.Day..EUR.) - sum(baseAccidents_rberlin$Costs.per.Day..EUR.)) / sum(baseAccidents_rberlin$Costs.per.Day..EUR.) * 100) %>%
-  add_row(key = "Relative Änderung zum BaseCase (Brandenburg) [%]", value = (sum(policyAccidents_brandenburg$Costs.per.Day..EUR.) - sum(baseAccidents_brandenburg$Costs.per.Day..EUR.)) / sum(baseAccidents_brandenburg$Costs.per.Day..EUR.) * 100)
+  add_row(key = "Relative Änderung zum BaseCase [%]", value = (sum(policyAccidents$Costs.per.Day..EUR.) - sum(baseAccidents$Costs.per.Day..EUR.)) / sum(baseAccidents$Costs.per.Day..EUR.) * 100) 
+#%>%
+  #add_row(key = "Relative Änderung zum BaseCase (Zone) [%]", value = (sum(policyAccidents_zone$Costs.per.Day..EUR.) - sum(baseAccidents_zone$Costs.per.Day..EUR.)) / sum(baseAccidents_zone$Costs.per.Day..EUR.) * 100) %>%
+  #add_row(key = "Relative Änderung zum BaseCase (restl. Berlin) [%]", value = (sum(policyAccidents_rberlin$Costs.per.Day..EUR.) - sum(baseAccidents_rberlin$Costs.per.Day..EUR.)) / sum(baseAccidents_rberlin$Costs.per.Day..EUR.) * 100) %>%
+  #add_row(key = "Relative Änderung zum BaseCase (Brandenburg) [%]", value = (sum(policyAccidents_brandenburg$Costs.per.Day..EUR.) - sum(baseAccidents_brandenburg$Costs.per.Day..EUR.)) / sum(baseAccidents_brandenburg$Costs.per.Day..EUR.) * 100)
 
 write.table(results_accidentCosts,file.path(policyCaseDirectory,"analysis/accidents/results_accidentCosts.tsv"),row.names = FALSE, sep = "\t")

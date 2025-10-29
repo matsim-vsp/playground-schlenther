@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -108,7 +109,7 @@ final class ReplaceCarByDRT {
 	 * Plans that use car and touch the prohibition zone provided by {@code url2CarFreeSingleGeomShapeFile} are mutated and copied. <br>
 	 * Those plans are mutated such that agents use a P+R logic instead, meaning they drive to/from P+R stations provided in {@code url2PRStations} with car and choose one of {@code replacingModes} inside the prohibition area. <br>
 	 * Creates two copies of each P+R plan per replacingMode and assigns a corresponding plan type, such that agents can choose between the replacing modes (pseudo mode choice). <br>
-	 * Each of these copies represents another choice logic for the PR stations (1x PRStationChoice.closestToInside + 1x PRStationChoice.closestToInside), <br>
+	 * Each of these copies represents another choice logic for the PR stations (1x PRStationChoice.closestToInside + 1x PRStationChoice.closestToOutside), <br>
 	 * meaning that in one plan the agent chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>inside</i> the prohibition zone and <br>
 	 * in the other plan it chooses one {@code PRStation} from the {@code kPrstations} that are closest to the activity <i>outside</i> the prohibition zone.<br>
 	 * Additionally, another plan is added where the agent does not use P+R logic but just uses pt for all trips in all subtours that touched the prohibition zone with car, <br>
@@ -120,7 +121,7 @@ final class ReplaceCarByDRT {
 	 *    <li>one where the type is 'ptOnly', <i>if</i> the original plan has bordercrossing trips</li>
 	 * </ul>
 	 *
-	 *
+	 * //TODO: think about naming the type <replacingMode>_<stationChoice> such that it doesn't throw out one of the two  stationChoice options
 	 *
 	 * @param scenario
 	 * @param modesToBeReplaced modes that forbidden in {@code url2CarFreeSingleGeomShapeFile}
@@ -131,10 +132,10 @@ final class ReplaceCarByDRT {
 	 * @param kPrStations defines the choice set size for P+R station selection. Will always consider the closest stations.
 	 */
 
-	static void prepareInputPlansForCarProhibitionWithPRLogic(Scenario scenario,
+	static void prepareInputPlansForCarProhibitionWithPRLogic(@NotNull Scenario scenario,
 															  Set<String> subpopulations,
 															  Set<String> modesToBeReplaced,
-															  Set<String> replacingModes,
+															  @NotNull Set<String> replacingModes,
 															  boolean keepOriginalPlan,
 															  URL url2CarFreeSingleGeomShapeFile,
 															  URL url2PRStations,

@@ -51,7 +51,7 @@ import java.util.*;
 
 /**
  *
- * For all trips that originate <i>or</i> end within the drt service area, car and ride is not allowed.
+ * For all trips that originate <i>and/or</i> end within the given area, car and ride is not allowed.
  * See {@link ReplaceCarByDRT} for more documentation.
  */
 @CommandLine.Command( header = ":: BerlinReplaceCarByDrtScenario ::", version = "0.2")
@@ -123,7 +123,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 		ScoringConfigGroup.ModeParams ptParams = config.scoring().getModes().get(TransportMode.pt);
 		ScoringConfigGroup.ModeParams drtParams = config.scoring().getModes().get(drtCfg.getMode());
 		Preconditions.checkArgument(ptParams.getDailyMonetaryConstant() == drtParams.getDailyMonetaryConstant(), "in this scenario, we assume fare integration of pt and drt.\n" +
-				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt");
+				"in the open berlin scenario, pt fare is modeled via dailyMonetaryConstant. So should it be for drt"); //TODO check whether this holds true for berlin v6.4
 
 		//sets the drt mode to be dvrp network mode. sets fare compensations for agents using both pt and drt
 		configureDVRPAndDRT(dvrpConfigGroup, drtCfg, ptParams, compensatorsConfig);

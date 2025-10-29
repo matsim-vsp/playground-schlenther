@@ -108,7 +108,6 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 	public Config prepareConfig(Config config) {
 		super.prepareConfig(config); // side effects: mutates config
 
-
 		disableModeChoiceAndDistributeStrategyWeights(config);
 
 		ScoringConfigGroup.ActivityParams actParams = new ScoringConfigGroup.ActivityParams(ReplaceCarByDRT.PR_ACTIVITY_TYPE);

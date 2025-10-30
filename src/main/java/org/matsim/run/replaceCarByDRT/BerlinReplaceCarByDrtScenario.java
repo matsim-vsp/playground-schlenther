@@ -79,7 +79,7 @@ public final class BerlinReplaceCarByDrtScenario extends OpenBerlinDrtScenario {
 	private static String URL_2_CAR_FREE_SINGLE_GEOM_SHAPE_FILE;
 
 	@CommandLine.Option(names = "--pr-stations",
-			defaultValue = "scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv",
+			defaultValue = "scenarios/berlin-v6.3/berlin-v6.3-pr-stations-ring.tsv", //TODO update to v6.4
 			description = "Path to the .tsv file containing the PR station specifications.")
 	protected static String URL_2_PR_STATIONS;
 

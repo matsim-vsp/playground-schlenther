@@ -84,5 +84,13 @@ public final class PRStation {
 
 	public void setLinkId(Id<Link> linkId) {this.linkId = linkId; }
 
+	@Override
+	public String toString() {
+		return "PRStation{" +
+				"name='" + name + '\'' +
+				", linkId=" + linkId +
+				", coord=" + coord +
+				'}';
+	}
 
 }
